@@ -18,6 +18,15 @@ public class Resume {
     @Column(nullable = false)
     private String filename;
 
+    @Column(name = "file_path")
+    private String filePath;
+
+    @Column(name = "file_size")
+    private Long fileSize;
+
+    @Column(name = "mime_type")
+    private String mimeType;
+
     @Column(columnDefinition = "TEXT")
     private String extractedText;
 
@@ -55,6 +64,30 @@ public class Resume {
 
     public void setFilename(String filename) {
         this.filename = filename;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(Long fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    public String getMimeType() {
+        return mimeType;
+    }
+
+    public void setMimeType(String mimeType) {
+        this.mimeType = mimeType;
     }
 
     public String getExtractedText() {
