@@ -65,4 +65,30 @@ public class JobController {
         jobService.deleteJob(id, user);
         return ResponseEntity.ok().build();
     }
+
+    // Simple keyword search endpoint
+    @GetMapping("/search")
+    public ResponseEntity<PagedResponse<JobResponse>> searchJobs(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection) {
+        return ResponseEntity.ok(jobService.searchJobs(keyword, page, size, sortBy, sortDirection));
+    }
+
+    // Advanced search with multiple filters
+    @GetMapping("/search/advanced")
+    public ResponseEntity<PagedResponse<JobResponse>> advancedSearchJobs(
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String company,
+            @RequestParam(required = false) String skills,
+            @RequestParam(required = false) String experienceLevel,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection) {
+        return ResponseEntity.ok(jobService.advancedSearchJobs(
+                title, company, skills, experienceLevel, page, size, sortBy, sortDirection));
+    }
 }

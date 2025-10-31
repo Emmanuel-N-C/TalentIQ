@@ -74,6 +74,77 @@ public class JobService {
                 jobPage.isFirst()
         );
     }
+    // Simple keyword search across multiple fields
+    public PagedResponse<JobResponse> searchJobs(String keyword, int page, int size, String sortBy, String sortDirection) {
+        // Validate and set defaults
+        if (page < 0) page = 0;
+        if (size <= 0 || size > 100) size = 10;
+        if (sortBy == null || sortBy.isEmpty()) sortBy = "createdAt";
+
+        // Create sort and pageable
+        Sort sort = sortDirection != null && sortDirection.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Search by keyword
+        Page<Job> jobPage = jobRepository.searchByKeyword(keyword, pageable);
+
+        // Convert to JobResponse DTOs
+        List<JobResponse> jobResponses = jobPage.getContent().stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+
+        return new PagedResponse<>(
+                jobResponses,
+                jobPage.getNumber(),
+                jobPage.getSize(),
+                jobPage.getTotalElements(),
+                jobPage.getTotalPages(),
+                jobPage.isLast(),
+                jobPage.isFirst()
+        );
+    }
+
+    // Advanced search with multiple filters
+    public PagedResponse<JobResponse> advancedSearchJobs(String title, String company, String skills,
+                                                         String experienceLevel, int page, int size,
+                                                         String sortBy, String sortDirection) {
+        // Validate and set defaults
+        if (page < 0) page = 0;
+        if (size <= 0 || size > 100) size = 10;
+        if (sortBy == null || sortBy.isEmpty()) sortBy = "createdAt";
+
+        // Convert null or empty strings to empty string (not null) for proper query handling
+        title = (title == null || title.trim().isEmpty()) ? "" : title.trim();
+        company = (company == null || company.trim().isEmpty()) ? "" : company.trim();
+        skills = (skills == null || skills.trim().isEmpty()) ? "" : skills.trim();
+        experienceLevel = (experienceLevel == null || experienceLevel.trim().isEmpty()) ? "" : experienceLevel.trim();
+
+        // Create sort and pageable
+        Sort sort = sortDirection != null && sortDirection.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Perform advanced search
+        Page<Job> jobPage = jobRepository.advancedSearch(title, company, skills, experienceLevel, pageable);
+
+        // Convert to JobResponse DTOs
+        List<JobResponse> jobResponses = jobPage.getContent().stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+
+        return new PagedResponse<>(
+                jobResponses,
+                jobPage.getNumber(),
+                jobPage.getSize(),
+                jobPage.getTotalElements(),
+                jobPage.getTotalPages(),
+                jobPage.isLast(),
+                jobPage.isFirst()
+        );
+    }
 
     public Job getJobById(Long id) {
         return jobRepository.findById(id)
