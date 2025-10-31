@@ -2,6 +2,7 @@ package com.talentiq.backend.controller;
 
 import com.talentiq.backend.dto.JobRequest;
 import com.talentiq.backend.dto.JobResponse;
+import com.talentiq.backend.dto.PagedResponse;
 import com.talentiq.backend.model.User;
 import com.talentiq.backend.service.JobService;
 import jakarta.validation.Valid;
@@ -28,9 +29,20 @@ public class JobController {
         return ResponseEntity.ok(jobService.createJob(request, user));
     }
 
+    // Original endpoint - returns all jobs without pagination (for backward compatibility)
     @GetMapping
     public ResponseEntity<List<JobResponse>> getAllJobs() {
         return ResponseEntity.ok(jobService.getAllJobs());
+    }
+
+    // New paginated endpoint
+    @GetMapping("/paginated")
+    public ResponseEntity<PagedResponse<JobResponse>> getAllJobsPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDirection) {
+        return ResponseEntity.ok(jobService.getAllJobsPaginated(page, size, sortBy, sortDirection));
     }
 
     @GetMapping("/{id}")

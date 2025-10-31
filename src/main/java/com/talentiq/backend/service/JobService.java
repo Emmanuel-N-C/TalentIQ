@@ -2,10 +2,15 @@ package com.talentiq.backend.service;
 
 import com.talentiq.backend.dto.JobRequest;
 import com.talentiq.backend.dto.JobResponse;
+import com.talentiq.backend.dto.PagedResponse;
 import com.talentiq.backend.model.Job;
 import com.talentiq.backend.model.User;
 import com.talentiq.backend.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,6 +39,40 @@ public class JobService {
         return jobRepository.findAll().stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
+    }
+
+    public PagedResponse<JobResponse> getAllJobsPaginated(int page, int size, String sortBy, String sortDirection) {
+        // Validate and set defaults
+        if (page < 0) page = 0;
+        if (size <= 0 || size > 100) size = 10; // Max 100 items per page
+        if (sortBy == null || sortBy.isEmpty()) sortBy = "createdAt";
+
+        // Create sort object
+        Sort sort = sortDirection != null && sortDirection.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        // Create pageable object
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // Get paginated results
+        Page<Job> jobPage = jobRepository.findAll(pageable);
+
+        // Convert to JobResponse DTOs
+        List<JobResponse> jobResponses = jobPage.getContent().stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+
+        // Create and return PagedResponse
+        return new PagedResponse<>(
+                jobResponses,
+                jobPage.getNumber(),
+                jobPage.getSize(),
+                jobPage.getTotalElements(),
+                jobPage.getTotalPages(),
+                jobPage.isLast(),
+                jobPage.isFirst()
+        );
     }
 
     public Job getJobById(Long id) {
