@@ -10,7 +10,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/resumes")
@@ -20,7 +22,7 @@ public class ResumeController {
     @Autowired
     private ResumeService resumeService;
 
-    // Upload resume with actual file
+    // Upload resume with automatic text extraction
     @PostMapping("/upload")
     @PreAuthorize("hasRole('JOB_SEEKER')")
     public ResponseEntity<ResumeResponse> uploadResume(
@@ -34,6 +36,19 @@ public class ResumeController {
     @PreAuthorize("hasRole('JOB_SEEKER')")
     public ResponseEntity<List<ResumeResponse>> getUserResumes(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(resumeService.getUserResumes(user));
+    }
+
+    // Get extracted text from a specific resume
+    @GetMapping("/{id}/text")
+    @PreAuthorize("hasRole('JOB_SEEKER')")
+    public ResponseEntity<Map<String, String>> getExtractedText(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user) {
+        String extractedText = resumeService.getExtractedText(id, user);
+        Map<String, String> response = new HashMap<>();
+        response.put("resumeId", id.toString());
+        response.put("extractedText", extractedText);
+        return ResponseEntity.ok(response);
     }
 
     // Delete resume
