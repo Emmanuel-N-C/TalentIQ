@@ -1,6 +1,7 @@
 package com.talentiq.backend.service;
 
 import com.talentiq.backend.dto.JobRequest;
+import com.talentiq.backend.dto.JobResponse;
 import com.talentiq.backend.model.Job;
 import com.talentiq.backend.model.User;
 import com.talentiq.backend.repository.JobRepository;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class JobService {
@@ -15,7 +17,7 @@ public class JobService {
     @Autowired
     private JobRepository jobRepository;
 
-    public Job createJob(JobRequest request, User recruiter) {
+    public JobResponse createJob(JobRequest request, User recruiter) {
         Job job = new Job();
         job.setTitle(request.getTitle());
         job.setDescription(request.getDescription());
@@ -24,11 +26,14 @@ public class JobService {
         job.setExperienceLevel(request.getExperienceLevel());
         job.setRecruiter(recruiter);
 
-        return jobRepository.save(job);
+        job = jobRepository.save(job);
+        return convertToResponse(job);
     }
 
-    public List<Job> getAllJobs() {
-        return jobRepository.findAll();
+    public List<JobResponse> getAllJobs() {
+        return jobRepository.findAll().stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
     public Job getJobById(Long id) {
@@ -36,7 +41,12 @@ public class JobService {
                 .orElseThrow(() -> new RuntimeException("Job not found with id: " + id));
     }
 
-    public Job updateJob(Long id, JobRequest request, User recruiter) {
+    public JobResponse getJobResponseById(Long id) {
+        Job job = getJobById(id);
+        return convertToResponse(job);
+    }
+
+    public JobResponse updateJob(Long id, JobRequest request, User recruiter) {
         Job job = getJobById(id);
 
         if (!job.getRecruiter().getId().equals(recruiter.getId())) {
@@ -49,7 +59,8 @@ public class JobService {
         job.setSkillsRequired(request.getSkillsRequired());
         job.setExperienceLevel(request.getExperienceLevel());
 
-        return jobRepository.save(job);
+        job = jobRepository.save(job);
+        return convertToResponse(job);
     }
 
     public void deleteJob(Long id, User recruiter) {
@@ -60,5 +71,21 @@ public class JobService {
         }
 
         jobRepository.delete(job);
+    }
+
+    // Helper method to convert Job entity to JobResponse DTO
+    private JobResponse convertToResponse(Job job) {
+        return new JobResponse(
+                job.getId(),
+                job.getTitle(),
+                job.getDescription(),
+                job.getCompany(),
+                job.getSkillsRequired(),
+                job.getExperienceLevel(),
+                job.getRecruiter().getId(),
+                job.getRecruiter().getFullName(),
+                job.getCreatedAt(),
+                job.getUpdatedAt()
+        );
     }
 }

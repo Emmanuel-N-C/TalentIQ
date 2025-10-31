@@ -1,7 +1,7 @@
 package com.talentiq.backend.controller;
 
 import com.talentiq.backend.dto.JobRequest;
-import com.talentiq.backend.model.Job;
+import com.talentiq.backend.dto.JobResponse;
 import com.talentiq.backend.model.User;
 import com.talentiq.backend.service.JobService;
 import jakarta.validation.Valid;
@@ -23,26 +23,26 @@ public class JobController {
 
     @PostMapping
     @PreAuthorize("hasRole('RECRUITER')")
-    public ResponseEntity<Job> createJob(@Valid @RequestBody JobRequest request,
-                                         @AuthenticationPrincipal User user) {
+    public ResponseEntity<JobResponse> createJob(@Valid @RequestBody JobRequest request,
+                                                 @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(jobService.createJob(request, user));
     }
 
     @GetMapping
-    public ResponseEntity<List<Job>> getAllJobs() {
+    public ResponseEntity<List<JobResponse>> getAllJobs() {
         return ResponseEntity.ok(jobService.getAllJobs());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Job> getJobById(@PathVariable Long id) {
-        return ResponseEntity.ok(jobService.getJobById(id));
+    public ResponseEntity<JobResponse> getJobById(@PathVariable Long id) {
+        return ResponseEntity.ok(jobService.getJobResponseById(id));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('RECRUITER')")
-    public ResponseEntity<Job> updateJob(@PathVariable Long id,
-                                         @Valid @RequestBody JobRequest request,
-                                         @AuthenticationPrincipal User user) {
+    public ResponseEntity<JobResponse> updateJob(@PathVariable Long id,
+                                                 @Valid @RequestBody JobRequest request,
+                                                 @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(jobService.updateJob(id, request, user));
     }
 
