@@ -10,6 +10,7 @@ public class ResumeResponse {
     private String mimeType;
     private LocalDateTime uploadedAt;
     private Long userId;
+    private String extractedTextPreview; // First 200 characters
 
     public ResumeResponse() {
     }
@@ -80,5 +81,13 @@ public class ResumeResponse {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public String getExtractedTextPreview() {
+        return extractedTextPreview;
+    }
+
+    public void setExtractedTextPreview(String extractedTextPreview) {
+        this.extractedTextPreview = extractedTextPreview;
     }
 }

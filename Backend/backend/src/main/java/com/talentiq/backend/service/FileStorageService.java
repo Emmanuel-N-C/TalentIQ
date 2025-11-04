@@ -15,86 +15,69 @@ import java.util.UUID;
 @Service
 public class FileStorageService {
 
-    @Value("${file.upload-dir}")
+    @Value("${file.upload-dir:uploads/resumes}")
     private String uploadDir;
 
-    // Initialize storage location
-    public void init() {
+    /**
+     * Store uploaded file and return file path
+     */
+    public String storeFile(MultipartFile file) {
         try {
+            // Create upload directory if it doesn't exist
             Path uploadPath = Paths.get(uploadDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
+                System.out.println("📁 Created upload directory: " + uploadPath.toAbsolutePath());
             }
-        } catch (IOException e) {
-            throw new RuntimeException("Could not create upload directory!", e);
-        }
-    }
 
-    // Store file and return the stored file path
-    public String storeFile(MultipartFile file) {
-        // Initialize directory if not exists
-        init();
+            // Validate filename
+            String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
+            if (originalFilename.contains("..")) {
+                throw new RuntimeException("Invalid filename: " + originalFilename);
+            }
 
-        // Validate file
-        if (file.isEmpty()) {
-            throw new RuntimeException("Failed to store empty file");
-        }
-
-        // Get original filename
-        String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
-
-        // Validate filename
-        if (originalFilename.contains("..")) {
-            throw new RuntimeException("Invalid file path: " + originalFilename);
-        }
-
-        // Validate file type
-        String contentType = file.getContentType();
-        if (!isValidFileType(contentType)) {
-            throw new RuntimeException("Invalid file type. Only PDF and DOCX files are allowed.");
-        }
-
-        try {
             // Generate unique filename to avoid conflicts
             String fileExtension = getFileExtension(originalFilename);
-            String uniqueFilename = UUID.randomUUID().toString() + fileExtension;
+            String uniqueFilename = UUID.randomUUID().toString() + "_" + originalFilename;
 
             // Store file
-            Path targetLocation = Paths.get(uploadDir).resolve(uniqueFilename);
+            Path targetLocation = uploadPath.resolve(uniqueFilename);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-            // Return the stored file path
-            return targetLocation.toString();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to store file: " + originalFilename, e);
+            System.out.println("✅ File stored successfully: " + targetLocation.toAbsolutePath());
+
+            // Return absolute path
+            return targetLocation.toAbsolutePath().toString();
+
+        } catch (IOException ex) {
+            System.err.println("❌ Error storing file: " + ex.getMessage());
+            throw new RuntimeException("Failed to store file: " + ex.getMessage(), ex);
         }
     }
 
-    // Validate file type
-    private boolean isValidFileType(String contentType) {
-        return contentType != null && (
-                contentType.equals("application/pdf") ||
-                        contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document") ||
-                        contentType.equals("application/msword")
-        );
-    }
-
-    // Get file extension
-    private String getFileExtension(String filename) {
-        int lastDotIndex = filename.lastIndexOf('.');
-        if (lastDotIndex > 0) {
-            return filename.substring(lastDotIndex);
-        }
-        return "";
-    }
-
-    // Delete file
+    /**
+     * Delete file from disk
+     */
     public void deleteFile(String filePath) {
         try {
             Path path = Paths.get(filePath);
-            Files.deleteIfExists(path);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to delete file: " + filePath, e);
+            if (Files.exists(path)) {
+                Files.delete(path);
+                System.out.println("🗑️ File deleted: " + filePath);
+            }
+        } catch (IOException ex) {
+            System.err.println("❌ Error deleting file: " + filePath);
+            ex.printStackTrace();
         }
+    }
+
+    /**
+     * Get file extension
+     */
+    private String getFileExtension(String filename) {
+        if (filename == null || !filename.contains(".")) {
+            return "";
+        }
+        return filename.substring(filename.lastIndexOf("."));
     }
 }
