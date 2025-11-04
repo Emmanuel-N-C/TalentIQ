@@ -4,6 +4,8 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ResumeAnalyzer from './components/ai/ResumeAnalyzer';
 import JobMatcher from './components/ai/JobMatcher';
+import ResumeOptimizer from './components/resume/ResumeOptimizer';
+import ATSChecker from './components/resume/ATSChecker';
 
 // Public pages
 import Landing from './pages/public/Landing';
@@ -58,7 +60,8 @@ function App() {
                 <Route path="browse" element={<BrowseJobs />} />
                 <Route path="interview-prep" element={<InterviewPrep />} />
                 <Route path="resumes" element={<MyResumes />} />
-                <Route path="resume-analyzer" element={<ResumeAnalyzer />} />
+                <Route path="resume-optimizer" element={<ResumeOptimizer />} />  {/* NEW */}
+                <Route path="ats-checker" element={<ATSChecker />} />  {/* NEW */}
                 <Route path="job-matcher" element={<JobMatcher />} /> 
                 <Route path="matches" element={<MyMatches />} />
               </Route>

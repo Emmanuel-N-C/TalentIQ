@@ -325,12 +325,165 @@ Analyze now:`,
     }
   };
 
+  // ... existing code ...
+
+  // NEW: Optimize resume (generic CV improvement, no job required)
+  const optimizeResume = async (resumeText) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      checkGroqConfig();
+      console.log(`🤖 Optimizing resume using model: ${groqConfig.modelName}`);
+      
+      const { text } = await generateText({
+        model: defaultProviders.analysis,
+        prompt: `You are a professional resume writer and career coach. Analyze this resume and provide actionable advice to improve it overall.
+
+RESUME TEXT:
+${resumeText}
+
+Focus on:
+1. Overall quality score (0-100)
+2. Formatting and structure
+3. Content clarity and impact
+4. What sections to add/improve/remove
+5. Writing style and action verbs
+6. Quantifiable achievements
+7. Professional presentation
+
+IMPORTANT: Return ONLY valid JSON with NO markdown formatting, NO explanations:
+
+{
+  "qualityScore": 75,
+  "detectedSkills": ["JavaScript", "React", "Node.js", "AWS"],
+  "strengths": [
+    "Clear work history with dates",
+    "Good use of action verbs",
+    "Includes relevant certifications"
+  ],
+  "weaknesses": [
+    "Missing professional summary section",
+    "Some bullet points lack quantifiable results",
+    "Education section needs more details"
+  ],
+  "recommendations": [
+    "Add a compelling professional summary at the top (3-4 lines)",
+    "Quantify achievements with numbers (e.g., 'Increased sales by 30%')",
+    "Add links to LinkedIn, GitHub, or portfolio",
+    "Use consistent bullet point formatting throughout",
+    "Remove outdated skills like Flash or IE6 support"
+  ],
+  "sectionsToAdd": [
+    "Professional Summary",
+    "Key Achievements section",
+    "Volunteer Experience (if relevant)"
+  ],
+  "sectionsToRemove": [
+    "References (use 'available upon request' instead)",
+    "Hobbies (unless directly relevant to job)"
+  ],
+  "formattingTips": [
+    "Use consistent date formatting (MM/YYYY)",
+    "Ensure margins are at least 0.5 inches",
+    "Use standard fonts like Arial, Calibri, or Times New Roman",
+    "Keep to 1-2 pages maximum"
+  ],
+  "summary": "Your resume has a solid foundation with clear work history and relevant skills. To take it to the next level, focus on adding quantifiable achievements and a compelling professional summary. The structure is good, but some sections need refinement for maximum impact."
+}
+
+Analyze now:`,
+      });
+      
+      console.log('✅ Received resume optimization from Groq');
+      const optimization = parseAIResponse(text);
+      
+      console.log(`📊 Quality Score: ${optimization.qualityScore}/100`);
+      return optimization;
+    } catch (err) {
+      throw handleAIError(err, 'optimizeResume');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // NEW: ATS Checker (job-specific analysis)
+  const checkATS = async (resumeText, jobDescription) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      checkGroqConfig();
+      console.log(`🤖 Running ATS check using model: ${groqConfig.modelName}`);
+      
+      const { text } = await generateText({
+        model: defaultProviders.analysis,
+        prompt: `You are an ATS (Applicant Tracking System) expert. Analyze how well this resume would perform against this specific job's ATS system.
+
+RESUME:
+${resumeText}
+
+JOB DESCRIPTION:
+${jobDescription}
+
+Provide ATS-specific analysis:
+1. ATS Compatibility Score (0-100) - how well the resume passes ATS filters
+2. Keyword match analysis
+3. Missing critical keywords from job description
+4. Formatting issues that might confuse ATS
+5. Specific recommendations to improve ATS score for THIS job
+
+IMPORTANT: Return ONLY valid JSON with NO markdown formatting, NO explanations:
+
+{
+  "atsScore": 78,
+  "keywordMatchRate": 65,
+  "matchedKeywords": ["Python", "Machine Learning", "TensorFlow", "Agile"],
+  "missingKeywords": ["Docker", "Kubernetes", "CI/CD", "AWS Lambda"],
+  "criticalMissing": ["Docker", "Kubernetes"],
+  "formattingIssues": [
+    "Tables might not be parsed correctly by ATS",
+    "Headers contain complex formatting that ATS may skip"
+  ],
+  "recommendations": [
+    "Add 'Docker' and 'Kubernetes' in skills section if you have experience",
+    "Include exact phrases from job description like 'CI/CD pipeline'",
+    "Remove table formatting in work experience section",
+    "Ensure all dates are in MM/YYYY format",
+    "Add a skills section if missing"
+  ],
+  "alignment": {
+    "technical": 75,
+    "experience": 80,
+    "education": 90,
+    "overall": 78
+  },
+  "summary": "Your resume has a decent ATS compatibility score. The main issue is missing some critical keywords like 'Docker' and 'Kubernetes' that appear frequently in the job description. Adding these (if you have the skills) and removing complex formatting will significantly improve your chances of passing the ATS filter."
+}
+
+Analyze now:`,
+      });
+      
+      console.log('✅ Received ATS check from Groq');
+      const atsResult = parseAIResponse(text);
+      
+      console.log(`📊 ATS Score: ${atsResult.atsScore}/100`);
+      return atsResult;
+    } catch (err) {
+      throw handleAIError(err, 'checkATS');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     error,
     generateInterviewQuestions,
     evaluateAnswer,
     matchResumeToJob,
-    analyzeResume,  // NEW: Export the analyze resume function
+    analyzeResume,
+    optimizeResume,  // NEW: Generic resume optimization
+    checkATS,        // NEW: Job-specific ATS check
   };
 }
