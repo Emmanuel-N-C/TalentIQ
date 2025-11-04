@@ -35,3 +35,7 @@ build/
 # Ignore Spring Boot properties file
 **/application.properties
 
+# Ignore uploaded resumes
+/uploads/
+uploads/
+uploads/resumes/

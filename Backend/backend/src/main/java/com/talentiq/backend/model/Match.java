@@ -1,5 +1,6 @@
 package com.talentiq.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -13,19 +14,21 @@ public class Match {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "resume_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Resume resume;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "job_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Job job;
 
-    @Column(nullable = false)
+    @Column(name = "match_score")
     private Double matchScore;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "analysis_result", columnDefinition = "TEXT")
     private String analysisResult;
 
-    @Column(nullable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     public Match() {

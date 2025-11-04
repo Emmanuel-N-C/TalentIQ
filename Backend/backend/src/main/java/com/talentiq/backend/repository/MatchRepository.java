@@ -8,6 +8,8 @@ import java.util.List;
 
 @Repository
 public interface MatchRepository extends JpaRepository<Match, Long> {
-    List<Match> findByResumeId(Long resumeId);
-    List<Match> findByJobId(Long jobId);
+
+    List<Match> findByResumeUserId(Long userId);
+
+    List<Match> findByResumeUserIdOrderByIdDesc(Long userId);
 }
