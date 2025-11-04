@@ -249,11 +249,88 @@ Analyze now:`,
     }
   };
 
+  // Analyze resume for ATS scoring (NEW FUNCTION)
+  const analyzeResume = async (resumeText) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      checkGroqConfig();
+      console.log(`🤖 Analyzing resume using model: ${groqConfig.modelName}`);
+      
+      const { text } = await generateText({
+        model: defaultProviders.analysis,
+        prompt: `You are an ATS (Applicant Tracking System) expert and resume analyst. Analyze this resume comprehensively.
+
+RESUME TEXT:
+${resumeText}
+
+Provide a detailed analysis including:
+1. ATS Score (0-100) - how well the resume would perform in ATS systems
+2. All technical and soft skills extracted from the resume
+3. Key strengths of this resume
+4. Areas that need improvement
+5. Specific actionable recommendations
+6. Overall professional summary
+
+Consider:
+- Keyword density and relevance
+- Formatting and structure
+- Quantifiable achievements
+- Missing important sections
+- ATS-friendly formatting
+- Industry-standard terminology
+
+IMPORTANT: Return ONLY valid JSON with NO markdown formatting, NO explanations:
+
+{
+  "atsScore": 75,
+  "skills": ["JavaScript", "React", "Node.js", "AWS", "Agile", "Team Leadership"],
+  "strengths": [
+    "Strong technical background with 5+ years experience",
+    "Clear quantifiable achievements with metrics",
+    "Well-formatted and easy to read",
+    "Includes relevant certifications"
+  ],
+  "improvements": [
+    "Missing keywords like 'CI/CD' and 'DevOps'",
+    "Education section could be more prominent",
+    "No professional summary at the top",
+    "Some bullet points lack quantifiable metrics"
+  ],
+  "recommendations": [
+    "Add a professional summary highlighting key strengths",
+    "Include 'CI/CD', 'Docker', and 'Kubernetes' if you have experience",
+    "Move education section higher if recent graduate",
+    "Add links to GitHub, LinkedIn, or portfolio",
+    "Use more action verbs: 'Led', 'Developed', 'Optimized', 'Implemented'",
+    "Quantify all achievements with numbers or percentages"
+  ],
+  "summary": "Solid resume with good technical content and relevant experience. Main areas for improvement are adding more industry-standard keywords for ATS optimization and including quantifiable metrics in all achievement statements. The formatting is clean, which is excellent for ATS parsing. Consider adding a professional summary to quickly highlight your value proposition."
+}
+
+Analyze now:`,
+      });
+      
+      console.log('✅ Received resume analysis from Groq');
+      const analysis = parseAIResponse(text);
+      
+      console.log(`📊 ATS Score: ${analysis.atsScore}/100`);
+      console.log(`🔧 Skills found: ${analysis.skills.length}`);
+      return analysis;
+    } catch (err) {
+      throw handleAIError(err, 'analyzeResume');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     error,
     generateInterviewQuestions,
     evaluateAnswer,
     matchResumeToJob,
+    analyzeResume,  // NEW: Export the analyze resume function
   };
 }

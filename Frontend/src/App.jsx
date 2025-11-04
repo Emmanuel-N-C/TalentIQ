@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import ResumeAnalyzer from './components/ai/ResumeAnalyzer';
 
 // Public pages
 import Landing from './pages/public/Landing';
@@ -47,6 +48,7 @@ function App() {
               
               {/* PUBLIC Interview Prep for Testing - NO AUTH REQUIRED */}
               <Route path="/interview-prep" element={<InterviewPrep />} />
+              <Route path="/resume-analyzer" element={<ResumeAnalyzer />} />
               
               {/* Job Seeker Routes */}
               <Route path="/jobseeker" element={<ProtectedRoute role="jobseeker" />}>
@@ -54,6 +56,7 @@ function App() {
                 <Route path="browse" element={<BrowseJobs />} />
                 <Route path="interview-prep" element={<InterviewPrep />} />
                 <Route path="resumes" element={<MyResumes />} />
+                <Route path="resume-analyzer" element={<ResumeAnalyzer />} />
                 <Route path="matches" element={<MyMatches />} />
               </Route>
               
