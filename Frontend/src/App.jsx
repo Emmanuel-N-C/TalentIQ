@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ResumeAnalyzer from './components/ai/ResumeAnalyzer';
+import JobMatcher from './components/ai/JobMatcher';
 
 // Public pages
 import Landing from './pages/public/Landing';
@@ -15,6 +16,7 @@ import BrowseJobs from './pages/jobseeker/BrowseJobs';
 import InterviewPrep from './pages/jobseeker/InterviewPrep';
 import MyResumes from './pages/jobseeker/MyResumes';
 import MyMatches from './pages/jobseeker/MyMatches';
+
 
 // Recruiter pages
 import RecruiterDashboard from './pages/recruiter/Dashboard';
@@ -57,6 +59,7 @@ function App() {
                 <Route path="interview-prep" element={<InterviewPrep />} />
                 <Route path="resumes" element={<MyResumes />} />
                 <Route path="resume-analyzer" element={<ResumeAnalyzer />} />
+                <Route path="job-matcher" element={<JobMatcher />} /> 
                 <Route path="matches" element={<MyMatches />} />
               </Route>
               

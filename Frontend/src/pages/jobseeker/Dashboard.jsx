@@ -41,6 +41,14 @@ export default function JobSeekerDashboard() {
           <h3 className="text-xl font-bold mb-2">✨ Job Matches</h3>
           <p className="text-gray-600">View AI-matched opportunities</p>
         </Link>
+
+        <Link
+          to="/jobseeker/job-matcher"
+          className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition"
+        >
+          <h3 className="text-xl font-bold mb-2">🎯 Job Matcher</h3>
+          <p className="text-gray-600">Find how well your resume matches specific jobs</p>
+        </Link>
       </div>
     </div>
   );
