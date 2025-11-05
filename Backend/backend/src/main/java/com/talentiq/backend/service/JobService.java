@@ -4,8 +4,10 @@ import com.talentiq.backend.dto.JobRequest;
 import com.talentiq.backend.dto.JobResponse;
 import com.talentiq.backend.dto.PagedResponse;
 import com.talentiq.backend.model.Job;
+import com.talentiq.backend.model.Match;
 import com.talentiq.backend.model.User;
 import com.talentiq.backend.repository.JobRepository;
+import com.talentiq.backend.repository.MatchRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -21,6 +23,9 @@ public class JobService {
 
     @Autowired
     private JobRepository jobRepository;
+
+    @Autowired
+    private MatchRepository matchRepository;
 
     public JobResponse createJob(JobRequest request, User recruiter) {
         Job job = new Job();
@@ -180,7 +185,16 @@ public class JobService {
             throw new RuntimeException("You don't have permission to delete this job");
         }
 
+        // FIXED: Delete all matches associated with this job first
+        List<Match> relatedMatches = matchRepository.findByJobId(id);
+        if (!relatedMatches.isEmpty()) {
+            System.out.println("🗑️ Deleting " + relatedMatches.size() + " matches associated with job " + id);
+            matchRepository.deleteAll(relatedMatches);
+        }
+
+        // Now delete the job
         jobRepository.delete(job);
+        System.out.println("✅ Successfully deleted job " + id);
     }
 
     // Helper method to convert Job entity to JobResponse DTO

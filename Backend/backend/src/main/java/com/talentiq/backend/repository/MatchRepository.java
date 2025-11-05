@@ -12,4 +12,7 @@ public interface MatchRepository extends JpaRepository<Match, Long> {
     List<Match> findByResumeUserId(Long userId);
 
     List<Match> findByResumeUserIdOrderByIdDesc(Long userId);
+
+    // NEW: Find all matches for a specific job
+    List<Match> findByJobId(Long jobId);
 }
