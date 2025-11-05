@@ -35,7 +35,7 @@ export default function MyJobs() {
   };
 
   const handleDelete = async (jobId) => {
-    if (!window.confirm('Are you sure you want to delete this job posting? This action cannot be undone.')) {
+    if (!window.confirm('Are you sure you want to delete this job posting? This will also delete all applications. This action cannot be undone.')) {
       return;
     }
 
@@ -58,6 +58,14 @@ export default function MyJobs() {
     navigate(`/recruiter/jobs/edit/${jobId}`);
   };
 
+  const handleViewApplications = (jobId) => {
+    navigate(`/recruiter/jobs/${jobId}/applications`);
+  };
+
+  const handleViewStats = (jobId) => {
+    navigate(`/recruiter/jobs/${jobId}/stats`);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -65,6 +73,9 @@ export default function MyJobs() {
       </div>
     );
   }
+
+  // Calculate total applications
+  const totalApplications = jobs.reduce((sum, job) => sum + (job.applicationCount || 0), 0);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -94,9 +105,8 @@ export default function MyJobs() {
           <div className="text-gray-600 mt-1">Posted This Week</div>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="text-3xl font-bold text-blue-600">0</div>
+          <div className="text-3xl font-bold text-blue-600">{totalApplications}</div>
           <div className="text-gray-600 mt-1">Total Applications</div>
-          <div className="text-xs text-gray-500 mt-1">(Coming soon)</div>
         </div>
       </div>
 
@@ -129,6 +139,12 @@ export default function MyJobs() {
                     <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
                       {job.experienceLevel}
                     </span>
+                    {/* NEW: Application Count Badge */}
+                    {job.applicationCount > 0 && (
+                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                        {job.applicationCount} {job.applicationCount === 1 ? 'Application' : 'Applications'}
+                      </span>
+                    )}
                   </div>
                   
                   <p className="text-gray-600 font-medium mb-3">{job.company}</p>
@@ -158,7 +174,7 @@ export default function MyJobs() {
                   <div className="flex items-center gap-6 text-sm text-gray-500">
                     <span>📅 Posted {format(new Date(job.createdAt), 'MMM dd, yyyy')}</span>
                     <span>👁️ 0 views</span>
-                    <span>📄 0 applications</span>
+                    <span>📄 {job.applicationCount || 0} applications</span>
                   </div>
                 </div>
 
@@ -171,17 +187,23 @@ export default function MyJobs() {
                     ✏️ Edit
                   </button>
                   <button
+                    onClick={() => handleViewApplications(job.id)}
+                    className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition font-medium whitespace-nowrap"
+                  >
+                    📄 Applications ({job.applicationCount || 0})
+                  </button>
+                  <button
+                    onClick={() => handleViewStats(job.id)}
+                    className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition font-medium whitespace-nowrap"
+                  >
+                    📊 View Stats
+                  </button>
+                  <button
                     onClick={() => handleDelete(job.id)}
                     disabled={deletingId === job.id}
                     className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition font-medium disabled:opacity-50 whitespace-nowrap"
                   >
                     {deletingId === job.id ? '⏳ Deleting...' : '🗑️ Delete'}
-                  </button>
-                  <button
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium whitespace-nowrap"
-                    disabled
-                  >
-                    📊 View Stats
                   </button>
                 </div>
               </div>

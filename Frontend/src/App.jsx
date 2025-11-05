@@ -18,13 +18,15 @@ import BrowseJobs from './pages/jobseeker/BrowseJobs';
 import InterviewPrep from './pages/jobseeker/InterviewPrep';
 import MyResumes from './pages/jobseeker/MyResumes';
 import MyMatches from './pages/jobseeker/MyMatches';
-
+import MyApplications from './pages/jobseeker/MyApplications'; // NEW
 
 // Recruiter pages
 import RecruiterDashboard from './pages/recruiter/Dashboard';
 import MyJobs from './pages/recruiter/MyJobs';
 import CreateJob from './pages/recruiter/CreateJob';
 import EditJob from './pages/recruiter/EditJob';
+import JobApplications from './pages/recruiter/JobApplications'; // NEW
+import JobStats from './pages/recruiter/JobStats'; // NEW
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -60,10 +62,11 @@ function App() {
                 <Route path="browse" element={<BrowseJobs />} />
                 <Route path="interview-prep" element={<InterviewPrep />} />
                 <Route path="resumes" element={<MyResumes />} />
-                <Route path="resume-optimizer" element={<ResumeOptimizer />} />  {/* NEW */}
-                <Route path="ats-checker" element={<ATSChecker />} />  {/* NEW */}
+                <Route path="resume-optimizer" element={<ResumeOptimizer />} />
+                <Route path="ats-checker" element={<ATSChecker />} />
                 <Route path="job-matcher" element={<JobMatcher />} /> 
                 <Route path="matches" element={<MyMatches />} />
+                <Route path="applications" element={<MyApplications />} /> {/* NEW */}
               </Route>
               
               {/* Recruiter Routes */}
@@ -72,6 +75,8 @@ function App() {
                 <Route path="jobs" element={<MyJobs />} />
                 <Route path="jobs/create" element={<CreateJob />} />
                 <Route path="jobs/edit/:id" element={<EditJob />} />
+                <Route path="jobs/:jobId/applications" element={<JobApplications />} /> {/* NEW */}
+                <Route path="jobs/:jobId/stats" element={<JobStats />} /> {/* NEW */}
               </Route>
               
               {/* Admin Routes */}

@@ -72,6 +72,15 @@ export default function JobSeekerDashboard() {
           <h3 className="text-xl font-bold mb-2">✨ Job Matches</h3>
           <p className="text-gray-600">View AI-matched opportunities</p>
         </Link>
+
+        {/* My Applications */}
+        <Link
+          to="/jobseeker/applications"
+          className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition"
+        >
+          <h3 className="text-xl font-bold mb-2">📄 My Applications</h3>
+          <p className="text-gray-600">Track your job applications</p>
+        </Link>
       </div>
     </div>
   );
