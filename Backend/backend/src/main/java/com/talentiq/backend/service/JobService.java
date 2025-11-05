@@ -3,9 +3,11 @@ package com.talentiq.backend.service;
 import com.talentiq.backend.dto.JobRequest;
 import com.talentiq.backend.dto.JobResponse;
 import com.talentiq.backend.dto.PagedResponse;
+import com.talentiq.backend.model.Application;
 import com.talentiq.backend.model.Job;
 import com.talentiq.backend.model.Match;
 import com.talentiq.backend.model.User;
+import com.talentiq.backend.repository.ApplicationRepository;
 import com.talentiq.backend.repository.JobRepository;
 import com.talentiq.backend.repository.MatchRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,9 @@ public class JobService {
 
     @Autowired
     private MatchRepository matchRepository;
+
+    @Autowired
+    private ApplicationRepository applicationRepository;
 
     public JobResponse createJob(JobRequest request, User recruiter) {
         Job job = new Job();
@@ -185,7 +190,14 @@ public class JobService {
             throw new RuntimeException("You don't have permission to delete this job");
         }
 
-        // FIXED: Delete all matches associated with this job first
+        // Delete all applications associated with this job first
+        List<Application> relatedApplications = applicationRepository.findByJobId(id);
+        if (!relatedApplications.isEmpty()) {
+            System.out.println("🗑️ Deleting " + relatedApplications.size() + " applications associated with job " + id);
+            applicationRepository.deleteAll(relatedApplications);
+        }
+
+        // Delete all matches associated with this job
         List<Match> relatedMatches = matchRepository.findByJobId(id);
         if (!relatedMatches.isEmpty()) {
             System.out.println("🗑️ Deleting " + relatedMatches.size() + " matches associated with job " + id);
@@ -199,7 +211,7 @@ public class JobService {
 
     // Helper method to convert Job entity to JobResponse DTO
     private JobResponse convertToResponse(Job job) {
-        return new JobResponse(
+        JobResponse response = new JobResponse(
                 job.getId(),
                 job.getTitle(),
                 job.getDescription(),
@@ -211,5 +223,11 @@ public class JobService {
                 job.getCreatedAt(),
                 job.getUpdatedAt()
         );
+
+        // Add application count
+        long applicationCount = applicationRepository.countByJobId(job.getId());
+        response.setApplicationCount(applicationCount);
+
+        return response;
     }
 }

@@ -3,6 +3,7 @@ package com.talentiq.backend.dto;
 import java.time.LocalDateTime;
 
 public class JobResponse {
+
     private Long id;
     private String title;
     private String description;
@@ -13,14 +14,14 @@ public class JobResponse {
     private String recruiterName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long applicationCount; // NEW FIELD
 
     public JobResponse() {
     }
 
     public JobResponse(Long id, String title, String description, String company,
-                       String skillsRequired, String experienceLevel,
-                       Long recruiterId, String recruiterName,
-                       LocalDateTime createdAt, LocalDateTime updatedAt) {
+                       String skillsRequired, String experienceLevel, Long recruiterId,
+                       String recruiterName, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -31,6 +32,7 @@ public class JobResponse {
         this.recruiterName = recruiterName;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.applicationCount = 0L; // Default value
     }
 
     // Getters and Setters
@@ -112,5 +114,13 @@ public class JobResponse {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Long getApplicationCount() {
+        return applicationCount;
+    }
+
+    public void setApplicationCount(Long applicationCount) {
+        this.applicationCount = applicationCount;
     }
 }
