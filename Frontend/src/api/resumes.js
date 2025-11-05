@@ -32,3 +32,11 @@ export const deleteResume = async (resumeId) => {
   const response = await apiClient.delete(`/resumes/${resumeId}`);
   return response.data;
 };
+
+// Download resume file
+export const downloadResume = async (resumeId) => {
+  const response = await apiClient.get(`/resumes/${resumeId}/download`, {
+    responseType: 'blob'
+  });
+  return response;
+};
