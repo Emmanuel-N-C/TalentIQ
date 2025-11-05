@@ -27,3 +27,21 @@ export const getJobById = async (jobId) => {
   const response = await apiClient.get(`/jobs/${jobId}`);
   return response.data;
 };
+
+// Create job (recruiters only)
+export const createJob = async (jobData) => {
+  const response = await apiClient.post('/jobs', jobData);
+  return response.data;
+};
+
+// Update job
+export const updateJob = async (jobId, jobData) => {
+  const response = await apiClient.put(`/jobs/${jobId}`, jobData);
+  return response.data;
+};
+
+// Delete job
+export const deleteJob = async (jobId) => {
+  const response = await apiClient.delete(`/jobs/${jobId}`);
+  return response.data;
+};

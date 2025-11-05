@@ -476,14 +476,61 @@ Analyze now:`,
     }
   };
 
+    // Generate AI job description
+  const generateJobDescription = async (title, company, experienceLevel = 'Mid-Level') => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      checkGroqConfig();
+      console.log(`🤖 Generating job description using model: ${groqConfig.modelName}`);
+      
+      const { text } = await generateText({
+        model: defaultProviders.interview,
+        prompt: `You are an expert recruiter and technical writer. Generate a professional, detailed job description for the following position:
+
+Job Title: ${title}
+Company: ${company}
+Experience Level: ${experienceLevel}
+
+Create a comprehensive job description that includes:
+1. A compelling overview (2-3 sentences)
+2. Key responsibilities (5-7 bullet points)
+3. Required qualifications (4-6 bullet points)
+4. Preferred qualifications (2-3 bullet points)
+5. What makes this opportunity exciting
+
+IMPORTANT: Return ONLY valid JSON with NO markdown formatting:
+
+{
+  "description": "A full, well-formatted job description as a single string with line breaks (\\n) separating sections. Include section headers like 'About the Role:', 'Responsibilities:', 'Required Qualifications:', etc.",
+  "suggestedSkills": ["skill1", "skill2", "skill3", "skill4", "skill5"]
+}
+
+Generate now:`,
+      });
+      
+      console.log('✅ Received job description from Groq');
+      const result = parseAIResponse(text);
+      
+      console.log(`📝 Generated description with ${result.suggestedSkills.length} skills`);
+      return result;
+    } catch (err) {
+      throw handleAIError(err, 'generateJobDescription');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
-    loading,
-    error,
     generateInterviewQuestions,
     evaluateAnswer,
     matchResumeToJob,
     analyzeResume,
-    optimizeResume,  // NEW: Generic resume optimization
-    checkATS,        // NEW: Job-specific ATS check
+    optimizeResume,
+    checkATS,
+    generateJobDescription, 
+    loading,
+    error,
   };
 }
