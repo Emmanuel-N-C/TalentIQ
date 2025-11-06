@@ -5,10 +5,13 @@ import com.talentiq.backend.dto.JobResponse;
 import com.talentiq.backend.dto.PagedResponse;
 import com.talentiq.backend.dto.UpdateRoleRequest;
 import com.talentiq.backend.dto.UserManagementResponse;
+import com.talentiq.backend.model.Application;
 import com.talentiq.backend.model.Job;
+import com.talentiq.backend.model.Match;
 import com.talentiq.backend.model.Resume;
 import com.talentiq.backend.model.Role;
 import com.talentiq.backend.model.User;
+import com.talentiq.backend.repository.ApplicationRepository;
 import com.talentiq.backend.repository.JobRepository;
 import com.talentiq.backend.repository.MatchRepository;
 import com.talentiq.backend.repository.ResumeRepository;
@@ -19,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,6 +41,9 @@ public class AdminService {
 
     @Autowired
     private MatchRepository matchRepository;
+
+    @Autowired
+    private ApplicationRepository applicationRepository;
 
     // Get all users with pagination
     public PagedResponse<UserManagementResponse> getAllUsers(int page, int size, String sortBy, String sortDirection) {
@@ -81,21 +88,39 @@ public class AdminService {
         return convertToUserResponse(user);
     }
 
-    // Delete user (with cascade cleanup)
+    // Delete user (with cascade cleanup) - PREVENT DELETING ADMINS
+    @Transactional
     public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        // PREVENT DELETING ADMIN USERS
+        if (user.getRole() == Role.ADMIN) {
+            throw new RuntimeException("Cannot delete admin users. Please change their role first.");
+        }
 
         // Clean up related data before deleting user
         // 1. Delete user's resumes
         List<Resume> userResumes = resumeRepository.findByUserId(userId);
         resumeRepository.deleteAll(userResumes);
 
-        // 2. Delete jobs created by this user (if recruiter)
+        // 2. Delete applications by this user
+        List<Application> userApplications = applicationRepository.findByUserId(userId);
+        applicationRepository.deleteAll(userApplications);
+
+        // 3. Delete jobs created by this user (if recruiter)
         List<Job> userJobs = jobRepository.findByRecruiterId(userId);
+        for (Job job : userJobs) {
+            // Delete related matches and applications for each job
+            List<Match> jobMatches = matchRepository.findByJobId(job.getId());
+            matchRepository.deleteAll(jobMatches);
+
+            List<Application> jobApplications = applicationRepository.findByJobId(job.getId());
+            applicationRepository.deleteAll(jobApplications);
+        }
         jobRepository.deleteAll(userJobs);
 
-        // 3. Now safe to delete the user
+        // 4. Now safe to delete the user
         userRepository.delete(user);
     }
 
@@ -131,11 +156,21 @@ public class AdminService {
         );
     }
 
-    // Delete any job (admin override)
+    // Delete any job (admin override) - WITH CASCADE DELETE
+    @Transactional
     public void deleteJobAdmin(Long jobId) {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found with id: " + jobId));
 
+        // Delete related matches first
+        List<Match> jobMatches = matchRepository.findByJobId(jobId);
+        matchRepository.deleteAll(jobMatches);
+
+        // Delete related applications
+        List<Application> jobApplications = applicationRepository.findByJobId(jobId);
+        applicationRepository.deleteAll(jobApplications);
+
+        // Now safe to delete the job
         jobRepository.delete(job);
     }
 
