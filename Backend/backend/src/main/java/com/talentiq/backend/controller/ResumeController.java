@@ -4,6 +4,9 @@ import com.talentiq.backend.dto.ResumeResponse;
 import com.talentiq.backend.model.User;
 import com.talentiq.backend.service.ResumeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -49,6 +52,31 @@ public class ResumeController {
         response.put("resumeId", id.toString());
         response.put("extractedText", extractedText);
         return ResponseEntity.ok(response);
+    }
+
+    // Download/Preview resume file
+    @GetMapping("/{id}/file")
+    @PreAuthorize("hasRole('JOB_SEEKER')")
+    public ResponseEntity<Resource> downloadResumeFile(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user) {
+        Resource file = resumeService.getResumeFile(id, user);
+        String filename = resumeService.getResumeFilename(id, user);
+
+        // Determine content type based on file extension
+        String contentType = "application/octet-stream";
+        if (filename.toLowerCase().endsWith(".pdf")) {
+            contentType = "application/pdf";
+        } else if (filename.toLowerCase().endsWith(".docx")) {
+            contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        } else if (filename.toLowerCase().endsWith(".doc")) {
+            contentType = "application/msword";
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                .body(file);
     }
 
     // Delete resume

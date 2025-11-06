@@ -28,6 +28,9 @@ public class MatchService {
     @Autowired
     private JobRepository jobRepository;
 
+    /**
+     * Save a match (save a job for later)
+     */
     @Transactional
     public MatchResponse saveMatch(MatchRequest request, User user) {
         System.out.println("📝 Saving match for user: " + user.getEmail());
@@ -35,17 +38,29 @@ public class MatchService {
         System.out.println("Job ID: " + request.getJobId());
         System.out.println("Match Score: " + request.getMatchScore());
 
+        // Verify resume exists and belongs to user
         Resume resume = resumeRepository.findById(request.getResumeId())
                 .orElseThrow(() -> new RuntimeException("Resume not found with id: " + request.getResumeId()));
 
-        // Verify resume belongs to user
         if (!resume.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("You can only save matches for your own resumes");
         }
 
+        // Verify job exists
         Job job = jobRepository.findById(request.getJobId())
                 .orElseThrow(() -> new RuntimeException("Job not found with id: " + request.getJobId()));
 
+        // Check if match already exists
+        List<Match> existingMatches = matchRepository.findByResumeUserIdOrderByIdDesc(user.getId());
+        for (Match existing : existingMatches) {
+            if (existing.getJob().getId().equals(job.getId()) &&
+                    existing.getResume().getId().equals(resume.getId())) {
+                System.out.println("⚠️ Match already exists, returning existing match");
+                return convertToResponse(existing);
+            }
+        }
+
+        // Create new match
         Match match = new Match();
         match.setResume(resume);
         match.setJob(job);
@@ -58,6 +73,9 @@ public class MatchService {
         return convertToResponse(savedMatch);
     }
 
+    /**
+     * Get all saved jobs for a user
+     */
     public List<MatchResponse> getUserMatches(User user) {
         List<Match> matches = matchRepository.findByResumeUserIdOrderByIdDesc(user.getId());
         return matches.stream()
@@ -65,7 +83,9 @@ public class MatchService {
                 .collect(Collectors.toList());
     }
 
-    // NEW: Delete match method
+    /**
+     * Delete a saved job
+     */
     @Transactional
     public void deleteMatch(Long matchId, User user) {
         System.out.println("🗑️ Deleting match ID: " + matchId + " for user: " + user.getEmail());
@@ -75,14 +95,16 @@ public class MatchService {
 
         // Verify match belongs to user (check through resume ownership)
         if (!match.getResume().getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("You can only delete your own matches");
+            throw new RuntimeException("Unauthorized: You can only delete your own saved jobs");
         }
 
         matchRepository.delete(match);
         System.out.println("✅ Match deleted successfully");
     }
 
-    // Convert Match entity to MatchResponse DTO
+    /**
+     * Convert Match entity to MatchResponse DTO
+     */
     private MatchResponse convertToResponse(Match match) {
         return new MatchResponse(
                 match.getId(),

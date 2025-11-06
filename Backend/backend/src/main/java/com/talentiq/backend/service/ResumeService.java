@@ -5,9 +5,14 @@ import com.talentiq.backend.model.Resume;
 import com.talentiq.backend.model.User;
 import com.talentiq.backend.repository.ResumeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,87 +28,151 @@ public class ResumeService {
     @Autowired
     private ResumeParserService resumeParserService;
 
-    // Upload resume with actual file and text extraction
+    /**
+     * Upload a resume with automatic text extraction
+     */
+    @Transactional
     public ResumeResponse uploadResume(MultipartFile file, User user) {
+        System.out.println("📤 Uploading resume for user: " + user.getEmail());
+
         // Validate file
-        if (file == null || file.isEmpty()) {
+        if (file.isEmpty()) {
             throw new RuntimeException("Please select a file to upload");
         }
 
-        // Store file and get path
-        String filePath = fileStorageService.storeFile(file);
-
-        // Extract text from the uploaded file
-        String extractedText = null;
-        try {
-            extractedText = resumeParserService.extractText(filePath);
-        } catch (Exception e) {
-            // Log the error but don't fail the upload
-            System.err.println("Warning: Failed to extract text from resume: " + e.getMessage());
-            extractedText = "Text extraction failed: " + e.getMessage();
+        String filename = file.getOriginalFilename();
+        if (!resumeParserService.isSupportedFormat(filename)) {
+            throw new RuntimeException("Unsupported file format. Please upload PDF, DOCX, DOC, or TXT files.");
         }
 
-        // Create resume record
-        Resume resume = new Resume();
-        resume.setFilename(file.getOriginalFilename());
-        resume.setFilePath(filePath);
-        resume.setFileSize(file.getSize());
-        resume.setMimeType(file.getContentType());
-        resume.setExtractedText(extractedText);
-        resume.setUser(user);
+        try {
+            // Store file
+            String filePath = fileStorageService.storeFile(file);
 
-        resume = resumeRepository.save(resume);
+            // Extract text from resume
+            String extractedText = resumeParserService.extractText(filePath);
 
-        return convertToResponse(resume);
+            if (extractedText == null || extractedText.trim().isEmpty()) {
+                throw new RuntimeException("Failed to extract text from resume. The file might be empty or corrupted.");
+            }
+
+            // Create Resume entity
+            Resume resume = new Resume();
+            resume.setUser(user);
+            resume.setFilename(filename);
+            resume.setFilePath(filePath);
+            resume.setFileSize(file.getSize());
+            resume.setMimeType(file.getContentType());
+            resume.setExtractedText(extractedText);
+
+            // Save to database
+            Resume savedResume = resumeRepository.save(resume);
+
+            System.out.println("✅ Resume uploaded successfully with ID: " + savedResume.getId());
+
+            return convertToResponse(savedResume);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error uploading resume: " + e.getMessage());
+            throw new RuntimeException("Failed to upload resume: " + e.getMessage(), e);
+        }
     }
 
-    // Get user's resumes
+    /**
+     * Get all resumes for a user
+     */
     public List<ResumeResponse> getUserResumes(User user) {
-        List<Resume> resumes = resumeRepository.findByUserId(user.getId());
+        List<Resume> resumes = resumeRepository.findByUserIdOrderByUploadedAtDesc(user.getId());
         return resumes.stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
 
-    // Get resume by ID
-    public Resume getResumeById(Long resumeId) {
-        return resumeRepository.findById(resumeId)
-                .orElseThrow(() -> new RuntimeException("Resume not found with id: " + resumeId));
-    }
-
-    // Get extracted text from resume
+    /**
+     * Get extracted text from a specific resume
+     */
     public String getExtractedText(Long resumeId, User user) {
-        Resume resume = getResumeById(resumeId);
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow(() -> new RuntimeException("Resume not found with id: " + resumeId));
 
-        // Check ownership
+        // Verify ownership
         if (!resume.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("You don't have permission to access this resume");
+            throw new RuntimeException("You can only access your own resumes");
         }
 
         return resume.getExtractedText();
     }
 
-    // Delete resume
-    public void deleteResume(Long resumeId, User user) {
-        Resume resume = getResumeById(resumeId);
+    /**
+     * Get resume file as Resource for download/preview
+     */
+    public Resource getResumeFile(Long resumeId, User user) {
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow(() -> new RuntimeException("Resume not found with id: " + resumeId));
 
-        // Check ownership
+        // Verify ownership
         if (!resume.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("You don't have permission to delete this resume");
+            throw new RuntimeException("You can only access your own resumes");
         }
 
-        // Delete file from disk
-        if (resume.getFilePath() != null) {
-            fileStorageService.deleteFile(resume.getFilePath());
-        }
+        try {
+            Path filePath = Paths.get(resume.getFilePath());
+            Resource resource = new UrlResource(filePath.toUri());
 
-        // Delete database record
-        resumeRepository.delete(resume);
+            if (resource.exists() && resource.isReadable()) {
+                return resource;
+            } else {
+                throw new RuntimeException("Resume file not found or not readable");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error loading resume file: " + e.getMessage());
+        }
     }
 
-    // Helper method to convert Resume to ResumeResponse
+    /**
+     * Get resume filename
+     */
+    public String getResumeFilename(Long resumeId, User user) {
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow(() -> new RuntimeException("Resume not found with id: " + resumeId));
+
+        // Verify ownership
+        if (!resume.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("You can only access your own resumes");
+        }
+
+        return resume.getFilename();
+    }
+
+    /**
+     * Delete a resume
+     */
+    @Transactional
+    public void deleteResume(Long resumeId, User user) {
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow(() -> new RuntimeException("Resume not found with id: " + resumeId));
+
+        // Verify ownership
+        if (!resume.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("You can only delete your own resumes");
+        }
+
+        System.out.println("🗑️ Deleting resume: " + resume.getFilename());
+
+        // Delete file from disk
+        fileStorageService.deleteFile(resume.getFilePath());
+
+        // Delete from database
+        resumeRepository.delete(resume);
+
+        System.out.println("✅ Resume deleted successfully");
+    }
+
+    /**
+     * Convert Resume entity to ResumeResponse DTO
+     */
     private ResumeResponse convertToResponse(Resume resume) {
-        return new ResumeResponse(
+        ResumeResponse response = new ResumeResponse(
                 resume.getId(),
                 resume.getFilename(),
                 resume.getFilePath(),
@@ -112,5 +181,16 @@ public class ResumeService {
                 resume.getUploadedAt(),
                 resume.getUser().getId()
         );
+
+        // Add preview of extracted text (first 200 characters)
+        if (resume.getExtractedText() != null && !resume.getExtractedText().isEmpty()) {
+            String preview = resume.getExtractedText().substring(
+                    0,
+                    Math.min(200, resume.getExtractedText().length())
+            );
+            response.setExtractedTextPreview(preview + "...");
+        }
+
+        return response;
     }
 }
