@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/admin")
 @CrossOrigin(origins = "http://localhost:5173")
@@ -29,6 +31,12 @@ public class AdminController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection) {
         return ResponseEntity.ok(adminService.getAllUsers(page, size, sortBy, sortDirection));
+    }
+
+    // Get detailed user statistics by user ID
+    @GetMapping("/users/{userId}/stats")
+    public ResponseEntity<Map<String, Object>> getUserStats(@PathVariable Long userId) {
+        return ResponseEntity.ok(adminService.getUserStats(userId));
     }
 
     // Update user role

@@ -24,7 +24,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -75,6 +77,35 @@ public class AdminService {
                 userPage.isLast(),
                 userPage.isFirst()
         );
+    }
+
+    // Get detailed user statistics
+    public Map<String, Object> getUserStats(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        Map<String, Object> stats = new HashMap<>();
+
+        // Get role-specific stats
+        if (user.getRole() == Role.RECRUITER) {
+            long jobsPosted = jobRepository.findByRecruiterId(userId).size();
+            stats.put("jobsPosted", jobsPosted);
+            stats.put("resumesUploaded", 0);
+            stats.put("applicationsSubmitted", 0);
+        } else if (user.getRole() == Role.JOB_SEEKER) {
+            long resumesUploaded = resumeRepository.findByUserId(userId).size();
+            long applicationsSubmitted = applicationRepository.findByUserId(userId).size();
+            stats.put("jobsPosted", 0);
+            stats.put("resumesUploaded", resumesUploaded);
+            stats.put("applicationsSubmitted", applicationsSubmitted);
+        } else {
+            // Admin user
+            stats.put("jobsPosted", 0);
+            stats.put("resumesUploaded", 0);
+            stats.put("applicationsSubmitted", 0);
+        }
+
+        return stats;
     }
 
     // Update user role
