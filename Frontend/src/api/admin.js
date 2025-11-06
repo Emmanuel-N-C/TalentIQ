@@ -7,10 +7,17 @@ export const fetchAdminStats = async () => {
 };
 
 // Get all users with pagination and sorting
-export const getAllUsers = async (page = 0, size = 10, sortBy = 'createdAt', sortDirection = 'desc') => {
-  const response = await apiClient.get('/admin/users', {
-    params: { page, size, sortBy, sortDirection }
-  });
+export const getAllUsers = async (page = 0, size = 10, sortBy = 'createdAt', sortDirection = 'desc', role = null) => {
+  const params = { page, size, sortBy, sortDirection };
+  if (role) params.role = role;
+  
+  const response = await apiClient.get('/admin/users', { params });
+  return response.data;
+};
+
+// Get user details with stats
+export const getUserStats = async (userId) => {
+  const response = await apiClient.get(`/admin/users/${userId}/stats`);
   return response.data;
 };
 
@@ -31,6 +38,12 @@ export const getAllJobsAdmin = async (page = 0, size = 10, sortBy = 'createdAt',
   const response = await apiClient.get('/admin/jobs', {
     params: { page, size, sortBy, sortDirection }
   });
+  return response.data;
+};
+
+// Get single job details
+export const getJobDetails = async (jobId) => {
+  const response = await apiClient.get(`/jobs/${jobId}`);
   return response.data;
 };
 
