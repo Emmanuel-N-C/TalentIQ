@@ -1,26 +1,17 @@
 import { useState, useEffect } from 'react';
-import { getUserResumes, deleteResume, getResumeText } from '../../api/resumes';
-import { useAI } from '../../hooks/useAI';
+import { getUserResumes, deleteResume, getResumeFileBlob } from '../../api/resumes';
 import ResumeUpload from '../../components/resume/ResumeUpload';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
 export default function MyResumes() {
   const [resumes, setResumes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
   const [selectedResume, setSelectedResume] = useState(null);
-  const [resumeText, setResumeText] = useState('');
-  
-  // AI Analysis States
-  const [showAnalyzeModal, setShowAnalyzeModal] = useState(false);
-  const [resumeToAnalyze, setResumeToAnalyze] = useState(null);
-  const [jobDescription, setJobDescription] = useState('');
-  const [analysisResult, setAnalysisResult] = useState(null);
-  
-  const { matchResumeToJob, loading: aiLoading } = useAI();
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
 
-  // Fetch resumes on mount
   useEffect(() => {
     fetchResumes();
   }, []);
@@ -46,52 +37,37 @@ export default function MyResumes() {
     try {
       await deleteResume(resumeId);
       toast.success('Resume deleted successfully');
-      fetchResumes(); // Refresh list
+      fetchResumes();
     } catch (error) {
       console.error('Error deleting resume:', error);
       toast.error('Failed to delete resume');
     }
   };
 
-  const handleViewText = async (resume) => {
+  const handlePreview = async (resume) => {
+    setSelectedResume(resume);
+    setLoadingPreview(true);
+    
+    // Fetch file as blob and create object URL
     try {
-      const data = await getResumeText(resume.id);
-      setResumeText(data.extractedText);
-      setSelectedResume(resume);
+      const blobUrl = await getResumeFileBlob(resume.id);
+      setPreviewUrl(blobUrl);
     } catch (error) {
-      console.error('Error fetching resume text:', error);
-      toast.error('Failed to load resume text');
+      console.error('Error loading preview:', error);
+      toast.error('Failed to load preview');
+      setSelectedResume(null);
+    } finally {
+      setLoadingPreview(false);
     }
   };
 
-  // NEW: Handle Analyze Click
-  const handleAnalyzeClick = async (resume) => {
-    setResumeToAnalyze(resume);
-    setShowAnalyzeModal(true);
-    setAnalysisResult(null);
-    setJobDescription('');
-  };
-
-  // NEW: Perform AI Analysis
-  const handlePerformAnalysis = async () => {
-    if (!jobDescription.trim()) {
-      toast.error('Please paste a job description');
-      return;
+  const handleClosePreview = () => {
+    // Clean up blob URL to prevent memory leaks
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
     }
-
-    try {
-      // Get resume text first
-      const data = await getResumeText(resumeToAnalyze.id);
-      const resumeTextData = data.extractedText;
-
-      // Perform AI analysis
-      const result = await matchResumeToJob(resumeTextData, jobDescription);
-      setAnalysisResult(result);
-      toast.success('Analysis complete!');
-    } catch (error) {
-      console.error('Error analyzing resume:', error);
-      toast.error('Failed to analyze resume');
-    }
+    setSelectedResume(null);
   };
 
   const formatFileSize = (bytes) => {
@@ -100,6 +76,10 @@ export default function MyResumes() {
     const sizes = ['Bytes', 'KB', 'MB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const getToken = () => {
+    return localStorage.getItem('token');
   };
 
   if (loading) {
@@ -111,258 +91,137 @@ export default function MyResumes() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">My Resumes</h1>
-        <button
-          onClick={() => setShowUpload(!showUpload)}
-          className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700"
-        >
-          {showUpload ? 'View Resumes' : '➕ Upload New Resume'}
-        </button>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">My Resumes</h1>
+        <p className="mt-2 text-gray-600">Manage your uploaded resumes</p>
       </div>
 
-      {showUpload ? (
-        <ResumeUpload
-          onUploadSuccess={() => {
-            setShowUpload(false);
-            fetchResumes();
-          }}
-        />
-      ) : (
+      {/* Upload Button */}
+      {!showUpload && (
+        <button
+          onClick={() => setShowUpload(true)}
+          className="mb-6 bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          + Upload New Resume
+        </button>
+      )}
+
+      {/* Upload Component */}
+      {showUpload && (
         <>
-          {resumes.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📄</div>
-              <h2 className="text-2xl font-semibold mb-2">No resumes yet</h2>
-              <p className="text-gray-600 mb-6">
-                Upload your first resume to get started
-              </p>
-              <button
-                onClick={() => setShowUpload(true)}
-                className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700"
-              >
-                Upload Resume
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {resumes.map((resume) => (
-                <div
-                  key={resume.id}
-                  className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="text-4xl">📄</div>
-                    <button
-                      onClick={() => handleDelete(resume.id)}
-                      className="text-red-600 hover:text-red-700"
-                      title="Delete resume"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-
-                  <h3 className="font-semibold text-lg mb-2 truncate" title={resume.filename}>
-                    {resume.filename}
-                  </h3>
-
-                  <div className="text-sm text-gray-600 space-y-1 mb-4">
-                    <p>📊 {formatFileSize(resume.fileSize)}</p>
-                    <p>📅 {format(new Date(resume.uploadedAt), 'MMM dd, yyyy')}</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => handleViewText(resume)}
-                      className="w-full bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition"
-                    >
-                      👁️ View Text
-                    </button>
-                    <button
-                      onClick={() => handleAnalyzeClick(resume)}
-                      className="w-full bg-green-100 text-green-700 px-4 py-2 rounded-lg hover:bg-green-200 transition"
-                    >
-                      🤖 Analyze for Job
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <ResumeUpload
+            onUploadSuccess={() => {
+              setShowUpload(false);
+              fetchResumes();
+            }}
+          />
+          <button
+            onClick={() => setShowUpload(false)}
+            className="mt-4 text-gray-600 hover:text-gray-800"
+          >
+            Cancel
+          </button>
         </>
       )}
 
-      {/* Resume Text Modal */}
-      {selectedResume && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[80vh] overflow-hidden">
-            <div className="p-6 border-b flex justify-between items-center">
-              <h2 className="text-2xl font-bold">{selectedResume.filename}</h2>
-              <button
-                onClick={() => setSelectedResume(null)}
-                className="text-gray-600 hover:text-gray-800 text-2xl"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto max-h-[60vh]">
-              <pre className="whitespace-pre-wrap font-sans text-gray-800">
-                {resumeText}
-              </pre>
-            </div>
-          </div>
+      {/* Resumes List */}
+      {resumes.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <div className="text-6xl mb-4">📄</div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No resumes yet</h3>
+          <p className="text-gray-600">Upload your first resume to get started</p>
         </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {resumes.map((resume) => (
+              <div
+                key={resume.id}
+                className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 break-words">
+                      {resume.filename}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {formatFileSize(resume.fileSize)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {format(new Date(resume.uploadedAt), 'MMM dd, yyyy')}
+                    </p>
+                  </div>
+                </div>
+
+                {resume.extractedTextPreview && (
+                  <div className="mb-4 p-3 bg-gray-50 rounded text-sm text-gray-600">
+                    {resume.extractedTextPreview}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handlePreview(resume)}
+                    className="flex-1 bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors"
+                  >
+                    Preview
+                  </button>
+                  <button
+                    onClick={() => handleDelete(resume.id)}
+                    className="px-4 py-2 border border-red-600 text-red-600 rounded hover:bg-red-50 transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
-      {/* AI Analysis Modal */}
-      {showAnalyzeModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto my-8">
-            <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
-              <h2 className="text-2xl font-bold">
-                🤖 Analyze: {resumeToAnalyze?.filename}
-              </h2>
+      {/* Resume Preview Modal - Shows actual PDF/DOCX */}
+      {selectedResume && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-6xl w-full h-[90vh] flex flex-col">
+            <div className="p-4 border-b flex justify-between items-center">
+              <h2 className="text-xl font-bold">{selectedResume.filename}</h2>
               <button
-                onClick={() => setShowAnalyzeModal(false)}
-                className="text-gray-600 hover:text-gray-800 text-2xl"
+                onClick={handleClosePreview}
+                className="text-gray-600 hover:text-gray-800 text-2xl font-bold"
               >
                 ✕
               </button>
             </div>
-
-            <div className="p-6">
-              {!analysisResult ? (
-                <>
-                  <label className="block text-sm font-medium mb-2">
-                    Paste Job Description
-                  </label>
-                  <textarea
-                    value={jobDescription}
-                    onChange={(e) => setJobDescription(e.target.value)}
-                    className="w-full h-64 p-3 border rounded-lg mb-4"
-                    placeholder="Paste the job description you want to apply for..."
-                  />
-                  <button
-                    onClick={handlePerformAnalysis}
-                    disabled={aiLoading}
-                    className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 disabled:opacity-50"
+            <div className="flex-1 overflow-hidden">
+              {loadingPreview ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+                </div>
+              ) : selectedResume.filename.toLowerCase().endsWith('.pdf') ? (
+                <iframe
+                  src={previewUrl ? `${previewUrl}#toolbar=0&navpanes=0&view=FitH` : ''}
+                  className="w-full h-full"
+                  title="Resume Preview"
+                  style={{ border: 'none' }}
+                />
+              ) : selectedResume.filename.toLowerCase().match(/\.(docx?|doc)$/) ? (
+                <div className="flex flex-col items-center justify-center h-full bg-gray-50">
+                  <div className="text-6xl mb-4">📄</div>
+                  <p className="text-gray-700 mb-4">Word documents cannot be previewed directly in browser</p>
+                  <a
+                    href={previewUrl}
+                    download={selectedResume.filename}
+                    className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700"
                   >
-                    {aiLoading ? 'Analyzing...' : '🚀 Analyze Match'}
-                  </button>
-                </>
+                    Download to View
+                  </a>
+                </div>
               ) : (
-                <div className="space-y-6">
-                  {/* Match Score */}
-                  <div className="bg-white rounded-lg border-2 border-gray-200 p-6">
-                    <h3 className="text-2xl font-bold mb-4">Match Score</h3>
-                    <div className="flex items-center gap-4">
-                      <div className="text-6xl font-bold text-primary-600">
-                        {analysisResult.matchScore}%
-                      </div>
-                      <div className="flex-1">
-                        <div className="w-full bg-gray-200 rounded-full h-4">
-                          <div
-                            className="bg-primary-600 h-4 rounded-full transition-all"
-                            style={{ width: `${analysisResult.matchScore}%` }}
-                          />
-                        </div>
-                        <p className="text-sm text-gray-600 mt-2">
-                          {analysisResult.matchScore >= 80
-                            ? '🎉 Excellent match! Apply with confidence'
-                            : analysisResult.matchScore >= 60
-                            ? '👍 Good match, consider tailoring your resume'
-                            : '⚠️ Low match, significant improvements needed'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Matching Skills */}
-                  <div className="bg-green-50 rounded-lg border-2 border-green-200 p-6">
-                    <h3 className="text-xl font-bold mb-3 text-green-800">
-                      ✅ Matching Skills
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {analysisResult.matchingSkills.map((skill, idx) => (
-                        <span
-                          key={idx}
-                          className="px-3 py-1 bg-green-200 text-green-800 rounded-full text-sm font-medium"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Missing Skills */}
-                  <div className="bg-red-50 rounded-lg border-2 border-red-200 p-6">
-                    <h3 className="text-xl font-bold mb-3 text-red-800">
-                      ❌ Missing Skills
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {analysisResult.missingSkills.map((skill, idx) => (
-                        <span
-                          key={idx}
-                          className="px-3 py-1 bg-red-200 text-red-800 rounded-full text-sm font-medium"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Strengths */}
-                  <div className="bg-blue-50 rounded-lg border-2 border-blue-200 p-6">
-                    <h3 className="text-xl font-bold mb-3 text-blue-800">
-                      💪 Your Strengths for This Role
-                    </h3>
-                    <ul className="list-disc list-inside space-y-2">
-                      {analysisResult.strengths.map((strength, idx) => (
-                        <li key={idx} className="text-gray-700">
-                          {strength}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Recommendations */}
-                  <div className="bg-purple-50 rounded-lg border-2 border-purple-200 p-6">
-                    <h3 className="text-xl font-bold mb-3 text-purple-800">
-                      💡 Recommendations
-                    </h3>
-                    <ul className="list-disc list-inside space-y-2">
-                      {analysisResult.recommendations.map((rec, idx) => (
-                        <li key={idx} className="text-gray-700">
-                          {rec}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Summary */}
-                  <div className="bg-gray-50 rounded-lg border-2 border-gray-200 p-6">
-                    <h3 className="text-xl font-bold mb-3">📝 Summary</h3>
-                    <p className="text-gray-700">{analysisResult.summary}</p>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-4">
-                    <button
-                      onClick={() => {
-                        setAnalysisResult(null);
-                        setJobDescription('');
-                      }}
-                      className="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700"
-                    >
-                      🔄 Analyze Another Job
-                    </button>
-                    <button
-                      onClick={() => setShowAnalyzeModal(false)}
-                      className="flex-1 bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700"
-                    >
-                      ✓ Done
-                    </button>
+                <div className="flex items-center justify-center h-full bg-gray-50">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">📄</div>
+                    <p className="text-gray-700">Preview not available for this file type</p>
                   </div>
                 </div>
               )}

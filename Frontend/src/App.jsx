@@ -3,7 +3,6 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ResumeAnalyzer from './components/ai/ResumeAnalyzer';
-import JobMatcher from './components/ai/JobMatcher';
 import ResumeOptimizer from './components/resume/ResumeOptimizer';
 import ATSChecker from './components/resume/ATSChecker';
 
@@ -17,16 +16,16 @@ import JobSeekerDashboard from './pages/jobseeker/Dashboard';
 import BrowseJobs from './pages/jobseeker/BrowseJobs';
 import InterviewPrep from './pages/jobseeker/InterviewPrep';
 import MyResumes from './pages/jobseeker/MyResumes';
-import MyMatches from './pages/jobseeker/MyMatches';
-import MyApplications from './pages/jobseeker/MyApplications'; // NEW
+import SavedJobs from './pages/jobseeker/SavedJobs';
+import MyApplications from './pages/jobseeker/MyApplications';
 
 // Recruiter pages
 import RecruiterDashboard from './pages/recruiter/Dashboard';
 import MyJobs from './pages/recruiter/MyJobs';
 import CreateJob from './pages/recruiter/CreateJob';
 import EditJob from './pages/recruiter/EditJob';
-import JobApplications from './pages/recruiter/JobApplications'; // NEW
-import JobStats from './pages/recruiter/JobStats'; // NEW
+import JobApplications from './pages/recruiter/JobApplications';
+import JobStats from './pages/recruiter/JobStats';
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -64,9 +63,8 @@ function App() {
                 <Route path="resumes" element={<MyResumes />} />
                 <Route path="resume-optimizer" element={<ResumeOptimizer />} />
                 <Route path="ats-checker" element={<ATSChecker />} />
-                <Route path="job-matcher" element={<JobMatcher />} /> 
-                <Route path="matches" element={<MyMatches />} />
-                <Route path="applications" element={<MyApplications />} /> {/* NEW */}
+                <Route path="saved-jobs" element={<SavedJobs />} />
+                <Route path="applications" element={<MyApplications />} />
               </Route>
               
               {/* Recruiter Routes */}
@@ -75,8 +73,8 @@ function App() {
                 <Route path="jobs" element={<MyJobs />} />
                 <Route path="jobs/create" element={<CreateJob />} />
                 <Route path="jobs/edit/:id" element={<EditJob />} />
-                <Route path="jobs/:jobId/applications" element={<JobApplications />} /> {/* NEW */}
-                <Route path="jobs/:jobId/stats" element={<JobStats />} /> {/* NEW */}
+                <Route path="jobs/:jobId/applications" element={<JobApplications />} />
+                <Route path="jobs/:jobId/stats" element={<JobStats />} />
               </Route>
               
               {/* Admin Routes */}

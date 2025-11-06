@@ -1,18 +1,18 @@
 import apiClient from './client';
 
-// Save match result
-export const saveMatch = async (matchData) => {
-  const response = await apiClient.post('/match/save', matchData);
-  return response.data;
-};
-
-// Get user's matches
-export const getUserMatches = async () => {
+// Get user's saved jobs (matches)
+export const getMyMatches = async () => {
   const response = await apiClient.get('/match/user');
   return response.data;
 };
 
-// Delete match - NEW
+// Save a match (save a job)
+export const saveMatch = async (matchData) => {
+  const response = await apiClient.post('/match', matchData);
+  return response.data;
+};
+
+// Delete a match (remove saved job)
 export const deleteMatch = async (matchId) => {
   const response = await apiClient.delete(`/match/${matchId}`);
   return response.data;

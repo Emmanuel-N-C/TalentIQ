@@ -47,6 +47,18 @@ export default function Navbar() {
                 >
                   Dashboard
                 </Link>
+                
+                {/* Show Saved Jobs link for job seekers */}
+                {user?.role === 'jobseeker' && (
+                  <Link
+                    to="/jobseeker/saved-jobs"
+                    className="text-gray-700 hover:text-primary-600 px-3 py-2 flex items-center gap-1"
+                  >
+                    <span>💾</span>
+                    <span>Saved Jobs</span>
+                  </Link>
+                )}
+                
                 <button
                   onClick={handleLogout}
                   className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"

@@ -40,3 +40,16 @@ export const downloadResume = async (resumeId) => {
   });
   return response;
 };
+
+// Get resume file as blob for preview (with authentication)
+export const getResumeFileBlob = async (resumeId) => {
+  const response = await apiClient.get(`/resumes/${resumeId}/file`, {
+    responseType: 'blob'
+  });
+  return URL.createObjectURL(response.data);
+};
+
+// Legacy function - kept for backward compatibility but not recommended for iframe use
+export const getResumeFileUrl = (resumeId) => {
+  return `http://localhost:8080/api/resumes/${resumeId}/file`;
+};
