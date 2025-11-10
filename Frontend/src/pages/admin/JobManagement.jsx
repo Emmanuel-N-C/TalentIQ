@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAllJobsAdmin, deleteJobAdmin } from '../../api/admin';
 import JobTable from '../../components/admin/JobTable';
+import { Briefcase } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function JobManagement() {
@@ -47,10 +48,14 @@ export default function JobManagement() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="p-8">
+      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Job Management</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+          <Briefcase className="w-8 h-8" />
+          Job Management
+        </h1>
+        <p className="text-slate-400 mt-2">
           Oversee all job postings on the platform ({totalElements} total)
         </p>
       </div>

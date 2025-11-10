@@ -39,6 +39,7 @@ import ProtectedRoute from './components/layout/ProtectedRoute';
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
 import RecruiterSidebar from './components/layout/RecruiterSidebar';
+import AdminSidebar from './components/layout/AdminSidebar';
 
 // Layout wrapper component for authenticated users
 function AuthenticatedLayout({ children }) {
@@ -53,10 +54,20 @@ function AuthenticatedLayout({ children }) {
   const showNewLayout = user && isProtectedRoute;
 
   if (showNewLayout) {
+    // Determine which sidebar to show based on user role
+    let SidebarComponent;
+    if (user?.role === 'recruiter') {
+      SidebarComponent = RecruiterSidebar;
+    } else if (user?.role === 'admin') {
+      SidebarComponent = AdminSidebar;
+    } else {
+      SidebarComponent = Sidebar;
+    }
+
     return (
       <div className="flex min-h-screen bg-slate-900">
         {/* Sidebar - conditionally render based on user role */}
-        {user?.role === 'recruiter' ? <RecruiterSidebar /> : <Sidebar />}
+        <SidebarComponent />
         
         <div className="flex-1 flex flex-col">
           {/* New Navbar */}
@@ -71,10 +82,9 @@ function AuthenticatedLayout({ children }) {
     );
   }
 
-  // Public pages - old layout
+  // Public pages - NO NAVBAR, just content
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
+    <div className="min-h-screen">
       {children}
     </div>
   );
