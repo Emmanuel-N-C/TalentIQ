@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { getJobDetails } from '../../api/admin';
 import { formatDate } from '../../utils/formatters';
+import ConfirmDialog from '../common/ConfirmDialog';
 import { X, Briefcase, Building2, FileText, Award } from 'lucide-react';
 
 export default function JobDetailsModal({ jobId, onClose, onDelete }) {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   useEffect(() => {
     loadJobDetails();
@@ -24,15 +26,17 @@ export default function JobDetailsModal({ jobId, onClose, onDelete }) {
     }
   };
 
-  const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
-      setDeleting(true);
-      try {
-        await onDelete(jobId);
-        onClose();
-      } catch (error) {
-        setDeleting(false);
-      }
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setDeleting(true);
+    try {
+      await onDelete(jobId);
+      onClose();
+    } catch (error) {
+      setDeleting(false);
     }
   };
 
@@ -137,7 +141,7 @@ export default function JobDetailsModal({ jobId, onClose, onDelete }) {
                   Close
                 </button>
                 <button
-                  onClick={handleDelete}
+                  onClick={handleDeleteClick}
                   disabled={deleting}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
@@ -152,6 +156,20 @@ export default function JobDetailsModal({ jobId, onClose, onDelete }) {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {job && (
+        <ConfirmDialog
+          isOpen={showDeleteDialog}
+          onClose={() => setShowDeleteDialog(false)}
+          onConfirm={handleDeleteConfirm}
+          title="Delete Job Posting"
+          message={`Are you sure you want to delete "${job.title}" at ${job.company}? This will permanently remove the job posting and all associated applications. This action cannot be undone.`}
+          confirmText="Delete Job"
+          cancelText="Cancel"
+          type="danger"
+        />
+      )}
     </div>
   );
 }

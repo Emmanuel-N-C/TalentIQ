@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { uploadResume } from '../../api/resumes';
 import toast from 'react-hot-toast';
+import { Upload, FileText, X, Lightbulb } from 'lucide-react';
 
 export default function ResumeUpload({ onUploadSuccess }) {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -109,15 +110,15 @@ export default function ResumeUpload({ onUploadSuccess }) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6">Upload Your Resume</h2>
+    <div className="max-w-2xl mx-auto">
+      <h2 className="text-2xl font-bold text-white mb-6">Upload Your Resume</h2>
 
       {/* Drag & Drop Area */}
       <div
-        className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+        className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${
           dragActive
-            ? 'border-primary-500 bg-primary-50'
-            : 'border-gray-300 bg-white'
+            ? 'border-blue-500 bg-blue-500/10'
+            : 'border-slate-600 bg-slate-800/30'
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -134,48 +135,52 @@ export default function ResumeUpload({ onUploadSuccess }) {
 
         <div className="space-y-4">
           {/* Icon */}
-          <div className="text-6xl">📄</div>
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-700/50 rounded-full mb-4">
+            <FileText className="w-10 h-10 text-slate-400" />
+          </div>
 
           {/* Text */}
           <div>
-            <p className="text-lg font-semibold mb-2">
+            <p className="text-lg font-semibold text-white mb-2">
               {selectedFile ? 'File Selected' : 'Drag & Drop your resume here'}
             </p>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-slate-400 mb-4">
               or{' '}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="text-primary-600 hover:text-primary-700 font-medium"
+                className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
               >
                 browse files
               </button>
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-slate-500">
               Supported formats: PDF, DOCX, DOC, TXT (Max 10MB)
             </p>
           </div>
 
           {/* Selected File Info */}
           {selectedFile && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div className="mt-4 p-4 bg-slate-700/50 rounded-lg border border-slate-600">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <span className="text-2xl">📎</span>
+                  <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-blue-400" />
+                  </div>
                   <div className="text-left">
-                    <p className="font-medium text-gray-900">
+                    <p className="font-medium text-white">
                       {selectedFile.name}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-slate-400">
                       {formatFileSize(selectedFile.size)}
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setSelectedFile(null)}
-                  className="text-red-600 hover:text-red-700"
+                  className="text-red-400 hover:text-red-300 transition-colors p-2 hover:bg-red-500/10 rounded-lg"
                 >
-                  ✕
+                  <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -185,12 +190,12 @@ export default function ResumeUpload({ onUploadSuccess }) {
           {uploading && (
             <div className="mt-4">
               <div className="flex justify-between mb-2">
-                <span className="text-sm font-medium">Uploading...</span>
-                <span className="text-sm font-medium">{uploadProgress}%</span>
+                <span className="text-sm font-medium text-white">Uploading...</span>
+                <span className="text-sm font-medium text-blue-400">{uploadProgress}%</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-slate-700 rounded-full h-2">
                 <div
-                  className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
@@ -201,21 +206,37 @@ export default function ResumeUpload({ onUploadSuccess }) {
           <button
             onClick={handleUpload}
             disabled={!selectedFile || uploading}
-            className="mt-4 bg-primary-600 text-white px-8 py-3 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="mt-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 mx-auto"
           >
-            {uploading ? 'Uploading...' : '📤 Upload Resume'}
+            <Upload className="w-5 h-5" />
+            {uploading ? 'Uploading...' : 'Upload Resume'}
           </button>
         </div>
       </div>
 
       {/* Tips */}
-      <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-        <h3 className="font-semibold text-blue-900 mb-2">💡 Tips for best results:</h3>
-        <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-          <li>Use PDF format for best text extraction</li>
-          <li>Ensure your resume is well-formatted and readable</li>
-          <li>Include relevant keywords for your target job</li>
-          <li>Keep file size under 10MB</li>
+      <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+        <h3 className="font-semibold text-blue-400 mb-3 flex items-center gap-2">
+          <Lightbulb className="w-5 h-5" />
+          Tips for best results:
+        </h3>
+        <ul className="text-sm text-slate-300 space-y-2">
+          <li className="flex items-start gap-2">
+            <span className="text-blue-400 mt-0.5">•</span>
+            <span>Use PDF format for best text extraction</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-blue-400 mt-0.5">•</span>
+            <span>Ensure your resume is well-formatted and readable</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-blue-400 mt-0.5">•</span>
+            <span>Include relevant keywords for your target job</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-blue-400 mt-0.5">•</span>
+            <span>Keep file size under 10MB</span>
+          </li>
         </ul>
       </div>
     </div>

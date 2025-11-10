@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getAllJobs, deleteJob } from '../../api/jobs';
 import { useAuth } from '../../context/AuthContext';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { Briefcase, Edit, Trash2, Eye, BarChart3, PlusCircle, Calendar, FileText, TrendingUp, Clock } from 'lucide-react';
@@ -10,6 +11,8 @@ export default function MyJobs() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -32,16 +35,20 @@ export default function MyJobs() {
     }
   };
 
-  const handleDelete = async (jobId) => {
-    if (!window.confirm('Are you sure you want to delete this job posting? This will also delete all applications. This action cannot be undone.')) {
-      return;
-    }
+  const handleDeleteClick = (job) => {
+    setJobToDelete(job);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!jobToDelete) return;
 
     try {
-      setDeletingId(jobId);
-      await deleteJob(jobId);
+      setDeletingId(jobToDelete.id);
+      await deleteJob(jobToDelete.id);
       toast.success('Job deleted successfully');
-      setJobs(jobs.filter(job => job.id !== jobId));
+      setJobs(jobs.filter(job => job.id !== jobToDelete.id));
+      setJobToDelete(null);
     } catch (error) {
       console.error('Error deleting job:', error);
       toast.error(error.response?.data?.message || 'Failed to delete job');
@@ -234,7 +241,7 @@ export default function MyJobs() {
                       View Stats
                     </button>
                     <button
-                      onClick={() => handleDelete(job.id)}
+                      onClick={() => handleDeleteClick(job)}
                       disabled={deletingId === job.id}
                       className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition font-medium disabled:opacity-50 whitespace-nowrap flex items-center gap-2"
                     >
@@ -256,6 +263,21 @@ export default function MyJobs() {
             ))}
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmDialog
+          isOpen={showDeleteDialog}
+          onClose={() => {
+            setShowDeleteDialog(false);
+            setJobToDelete(null);
+          }}
+          onConfirm={handleDeleteConfirm}
+          title="Delete Job Posting"
+          message={`Are you sure you want to delete "${jobToDelete?.title}" at ${jobToDelete?.company}? This will permanently remove the job posting and all ${jobToDelete?.applicationCount || 0} associated applications. This action cannot be undone.`}
+          confirmText="Delete Job"
+          cancelText="Cancel"
+          type="danger"
+        />
       </div>
     </div>
   );

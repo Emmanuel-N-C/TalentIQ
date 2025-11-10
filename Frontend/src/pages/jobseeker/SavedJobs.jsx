@@ -4,6 +4,7 @@ import { getAllJobs } from '../../api/jobs';
 import { applyToJob, getMyApplications } from '../../api/applications';
 import { getUserResumes } from '../../api/resumes';
 import { useNavigate, Link } from 'react-router-dom';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { Bookmark, Trash2, Eye, Send, X, Briefcase } from 'lucide-react';
 
@@ -13,6 +14,8 @@ export default function SavedJobs() {
   const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState(null);
   const [applying, setApplying] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [jobToDelete, setJobToDelete] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,16 +47,22 @@ export default function SavedJobs() {
     }
   };
 
-  const handleRemove = async (matchId) => {
-    if (window.confirm('Remove this saved job?')) {
-      try {
-        await deleteMatch(matchId);
-        toast.success('Job removed from saved list');
-        loadData();
-      } catch (error) {
-        console.error('Error removing job:', error);
-        toast.error('Failed to remove job');
-      }
+  const handleRemoveClick = (job) => {
+    setJobToDelete(job);
+    setShowDeleteDialog(true);
+  };
+
+  const handleRemoveConfirm = async () => {
+    if (!jobToDelete) return;
+
+    try {
+      await deleteMatch(jobToDelete.id);
+      toast.success('Job removed from saved list');
+      loadData();
+      setJobToDelete(null);
+    } catch (error) {
+      console.error('Error removing job:', error);
+      toast.error('Failed to remove job');
     }
   };
 
@@ -225,7 +234,7 @@ export default function SavedJobs() {
                       )}
                       
                       <button
-                        onClick={() => handleRemove(match.id)}
+                        onClick={() => handleRemoveClick(match)}
                         className="px-4 py-2 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/10 text-sm font-medium transition-colors flex items-center gap-2"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -316,6 +325,21 @@ export default function SavedJobs() {
             </div>
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmDialog
+          isOpen={showDeleteDialog}
+          onClose={() => {
+            setShowDeleteDialog(false);
+            setJobToDelete(null);
+          }}
+          onConfirm={handleRemoveConfirm}
+          title="Remove Saved Job"
+          message={`Are you sure you want to remove "${jobToDelete?.job?.title || 'this job'}" from your saved jobs? You can save it again later if needed.`}
+          confirmText="Remove Job"
+          cancelText="Cancel"
+          type="warning"
+        />
       </div>
     </div>
   );

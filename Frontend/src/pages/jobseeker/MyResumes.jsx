@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getUserResumes, deleteResume, getResumeFileBlob } from '../../api/resumes';
 import ResumeUpload from '../../components/resume/ResumeUpload';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { FileText, Trash2, Eye, X, Upload, Download } from 'lucide-react';
@@ -12,6 +13,8 @@ export default function MyResumes() {
   const [selectedResume, setSelectedResume] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [resumeToDelete, setResumeToDelete] = useState(null);
 
   useEffect(() => {
     fetchResumes();
@@ -30,15 +33,19 @@ export default function MyResumes() {
     }
   };
 
-  const handleDelete = async (resumeId) => {
-    if (!window.confirm('Are you sure you want to delete this resume?')) {
-      return;
-    }
+  const handleDeleteClick = (resume) => {
+    setResumeToDelete(resume);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!resumeToDelete) return;
 
     try {
-      await deleteResume(resumeId);
+      await deleteResume(resumeToDelete.id);
       toast.success('Resume deleted successfully');
       fetchResumes();
+      setResumeToDelete(null);
     } catch (error) {
       console.error('Error deleting resume:', error);
       toast.error('Failed to delete resume');
@@ -180,7 +187,7 @@ export default function MyResumes() {
                     Preview
                   </button>
                   <button
-                    onClick={() => handleDelete(resume.id)}
+                    onClick={() => handleDeleteClick(resume)}
                     className="px-4 py-2 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -190,6 +197,21 @@ export default function MyResumes() {
             ))}
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmDialog
+          isOpen={showDeleteDialog}
+          onClose={() => {
+            setShowDeleteDialog(false);
+            setResumeToDelete(null);
+          }}
+          onConfirm={handleDeleteConfirm}
+          title="Delete Resume"
+          message={`Are you sure you want to delete "${resumeToDelete?.filename}"? This action cannot be undone and will also remove any job applications associated with this resume.`}
+          confirmText="Delete Resume"
+          cancelText="Cancel"
+          type="danger"
+        />
 
         {/* Resume Preview Modal */}
         {selectedResume && (

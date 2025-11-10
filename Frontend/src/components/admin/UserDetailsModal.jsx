@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { formatDate } from '../../utils/formatters';
 import { getUserStats } from '../../api/admin';
+import ConfirmDialog from '../common/ConfirmDialog';
 import { X, User, Calendar, Activity } from 'lucide-react';
 
 export default function UserDetailsModal({ user, onClose, onDelete }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   useEffect(() => {
     loadUserStats();
@@ -25,15 +27,17 @@ export default function UserDetailsModal({ user, onClose, onDelete }) {
     }
   };
 
-  const handleDelete = async () => {
-    if (window.confirm(`Are you sure you want to delete ${user.fullName}? This action cannot be undone.`)) {
-      setDeleting(true);
-      try {
-        await onDelete(user.id);
-        onClose();
-      } catch (error) {
-        setDeleting(false);
-      }
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setDeleting(true);
+    try {
+      await onDelete(user.id);
+      onClose();
+    } catch (error) {
+      setDeleting(false);
     }
   };
 
@@ -190,7 +194,7 @@ export default function UserDetailsModal({ user, onClose, onDelete }) {
             </button>
             {user.role !== 'ADMIN' && (
               <button
-                onClick={handleDelete}
+                onClick={handleDeleteClick}
                 disabled={deleting}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
@@ -200,6 +204,18 @@ export default function UserDetailsModal({ user, onClose, onDelete }) {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete User"
+        message={`Are you sure you want to delete ${user.fullName}? This will permanently remove their account, all resumes, applications, and associated data. This action cannot be undone.`}
+        confirmText="Delete User"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 }

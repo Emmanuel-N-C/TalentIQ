@@ -1,7 +1,6 @@
 import { useAuth } from '../../context/AuthContext';
 import { useEffect, useState } from 'react';
-import { TrendingUp, TrendingDown, Briefcase, FileText, CheckCircle, Star, BarChart3, ArrowRight, Clock, Building2, MapPin } from 'lucide-react';
-import { AreaChart, Area, ResponsiveContainer } from 'recharts';
+import { Briefcase, FileText, CheckCircle, Star, BarChart3, ArrowRight, Clock, Building2, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getMyApplications } from '../../api/applications';
 import { getUserResumes } from '../../api/resumes';
@@ -58,22 +57,10 @@ export default function JobSeekerDashboard() {
     }
   };
 
-  const generateChartData = (trend = 'up') => {
-    const baseValues = trend === 'up' 
-      ? [2, 3, 5, 4, 7, 6, 8] 
-      : [6, 7, 5, 6, 4, 5, 3];
-    return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => ({
-      name: day,
-      value: baseValues[i]
-    }));
-  };
-
   const statCards = [
     {
       title: 'Total Applications',
       value: stats.applications,
-      change: stats.applications > 0 ? '+12%' : '0%',
-      trend: 'up',
       icon: Briefcase,
       bgColor: 'bg-blue-500/10',
       iconColor: 'text-blue-400',
@@ -82,8 +69,6 @@ export default function JobSeekerDashboard() {
     {
       title: 'Saved Jobs',
       value: stats.saved,
-      change: `+${stats.saved}`,
-      trend: 'up',
       icon: Star,
       bgColor: 'bg-purple-500/10',
       iconColor: 'text-purple-400',
@@ -92,8 +77,6 @@ export default function JobSeekerDashboard() {
     {
       title: 'Active Resumes',
       value: stats.resumes,
-      change: '0',
-      trend: 'neutral',
       icon: FileText,
       bgColor: 'bg-green-500/10',
       iconColor: 'text-green-400',
@@ -102,8 +85,6 @@ export default function JobSeekerDashboard() {
     {
       title: 'Interviews',
       value: stats.interviews,
-      change: `+${stats.interviews}`,
-      trend: 'up',
       icon: CheckCircle,
       bgColor: 'bg-orange-500/10',
       iconColor: 'text-orange-400',
@@ -138,7 +119,7 @@ export default function JobSeekerDashboard() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-            Welcome Back, {user?.name || 'Jason'}
+            Welcome Back, {user?.name || 'User'}
           </h1>
           <p className="text-slate-400 mt-2 flex items-center gap-2">
             <Clock className="w-4 h-4" />
@@ -157,14 +138,6 @@ export default function JobSeekerDashboard() {
                 <div className={`${stat.bgColor} p-3 rounded-lg`}>
                   <stat.icon className={`w-6 h-6 ${stat.iconColor}`} />
                 </div>
-                <div className={`flex items-center gap-1 text-sm ${
-                  stat.trend === 'up' ? 'text-green-400' : 
-                  stat.trend === 'down' ? 'text-red-400' : 'text-slate-400'
-                }`}>
-                  {stat.trend === 'up' && <TrendingUp className="w-4 h-4" />}
-                  {stat.trend === 'down' && <TrendingDown className="w-4 h-4" />}
-                  <span className="font-semibold">{stat.change}</span>
-                </div>
               </div>
               <div>
                 <p className="text-slate-400 text-sm mb-1">{stat.title}</p>
@@ -174,100 +147,64 @@ export default function JobSeekerDashboard() {
           ))}
         </div>
 
-        {/* Live Updates Section */}
+        {/* Featured Jobs Section */}
         {featuredJobs.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <h2 className="text-2xl font-bold">Live Job Updates</h2>
+              <h2 className="text-2xl font-bold">Featured Jobs</h2>
               <span className="text-sm text-slate-400 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                Last update: 2 min ago
+                Updated recently
               </span>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {featuredJobs.map((job, index) => {
-                const chartData = generateChartData(index === 0 ? 'up' : 'down');
-                const trend = index === 0 ? 'up' : 'down';
-                
-                return (
-                  <div
-                    key={job.id}
-                    className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:border-slate-600 transition-all group"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 bg-gradient-to-br ${
-                          trend === 'up' ? 'from-orange-500 to-orange-600' : 'from-blue-500 to-blue-600'
-                        } rounded-full flex items-center justify-center shadow-lg`}>
-                          <Briefcase className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-lg group-hover:text-blue-400 transition-colors">{job.title}</h3>
-                          <p className="text-slate-400 text-sm flex items-center gap-1">
-                            <Building2 className="w-3 h-3" />
-                            {job.company}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <p className="text-slate-400 text-xs mb-1">Match Score</p>
-                        <div className="flex items-center gap-2">
-                          <p className="text-2xl font-bold">{85 + index * 5}%</p>
-                          <div className={`flex items-center gap-1 text-xs ${
-                            trend === 'up' ? 'text-green-400' : 'text-red-400'
-                          }`}>
-                            {trend === 'up' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                            <span>{trend === 'up' ? '+5.2%' : '-2.1%'}</span>
-                          </div>
-                        </div>
+              {featuredJobs.map((job) => (
+                <div
+                  key={job.id}
+                  className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:border-slate-600 transition-all group"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                        <Briefcase className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <p className="text-slate-400 text-xs mb-1">Experience</p>
-                        <p className="text-sm font-semibold">{job.experienceLevel}</p>
+                        <h3 className="font-bold text-lg group-hover:text-blue-400 transition-colors">{job.title}</h3>
+                        <p className="text-slate-400 text-sm flex items-center gap-1">
+                          <Building2 className="w-3 h-3" />
+                          {job.company}
+                        </p>
                       </div>
-                    </div>
-
-                    {/* Mini Chart */}
-                    <div className="h-24 mb-4">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={chartData}>
-                          <defs>
-                            <linearGradient id={`color${index}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor={trend === 'up' ? "#10b981" : "#ef4444"} stopOpacity={0.3}/>
-                              <stop offset="95%" stopColor={trend === 'up' ? "#10b981" : "#ef4444"} stopOpacity={0}/>
-                            </linearGradient>
-                          </defs>
-                          <Area 
-                            type="monotone" 
-                            dataKey="value" 
-                            stroke={trend === 'up' ? "#10b981" : "#ef4444"} 
-                            fill={`url(#color${index})`}
-                            strokeWidth={2}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {job.skillsRequired?.split(',')[0] || 'Skills Required'}
-                      </span>
-                      <Link 
-                        to="/jobseeker/browse"
-                        className="ml-auto text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors flex items-center gap-1"
-                      >
-                        View Details <ArrowRight className="w-4 h-4" />
-                      </Link>
                     </div>
                   </div>
-                );
-              })}
+
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <p className="text-slate-400 text-xs mb-1">Experience Level</p>
+                      <p className="text-sm font-semibold capitalize">{job.experienceLevel}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400 text-xs mb-1">Posted</p>
+                      <p className="text-sm font-semibold">{new Date(job.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {job.skillsRequired?.split(',')[0] || 'Skills Required'}
+                    </span>
+                    <Link 
+                      to="/jobseeker/browse"
+                      className="ml-auto text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors flex items-center gap-1"
+                    >
+                      View Details <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
