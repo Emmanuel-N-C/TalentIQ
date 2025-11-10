@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAI } from '../../hooks/useAI';
 import toast from 'react-hot-toast';
-import { Mic, Send, Sparkles, TrendingUp, AlertCircle, Lightbulb, MessageSquare, Target, CheckCircle, XCircle } from 'lucide-react';
+import { Mic, Send, Sparkles, TrendingUp, AlertCircle, Lightbulb, MessageSquare, Target, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 
 export default function InterviewPrep() {
   const [jobDescription, setJobDescription] = useState('');
@@ -23,7 +23,7 @@ export default function InterviewPrep() {
       setQuestions(generatedQuestions);
       setCurrentQuestion(0);
       setFeedback(null);
-      toast.success('Questions generated! 🎯');
+      toast.success('Questions generated successfully!');
     } catch (error) {
       toast.error('Failed to generate questions');
     }
@@ -41,7 +41,7 @@ export default function InterviewPrep() {
         answer
       );
       setFeedback(result);
-      toast.success('Feedback received! 📊');
+      toast.success('Feedback received!');
     } catch (error) {
       toast.error('Failed to get feedback');
     }
@@ -198,7 +198,7 @@ export default function InterviewPrep() {
                     <ul className="space-y-2">
                       {feedback.strengths.map((s, i) => (
                         <li key={i} className="flex items-start">
-                          <span className="text-green-400 mr-2 mt-1">✓</span>
+                          <CheckCircle className="w-4 h-4 text-green-400 mr-2 mt-1 flex-shrink-0" />
                           <span className="text-slate-300">{s}</span>
                         </li>
                       ))}
@@ -234,7 +234,7 @@ export default function InterviewPrep() {
                     <ul className="space-y-2">
                       {feedback.suggestions.map((s, i) => (
                         <li key={i} className="flex items-start">
-                          <span className="text-blue-400 mr-2 mt-1">💡</span>
+                          <Lightbulb className="w-4 h-4 text-blue-400 mr-2 mt-1 flex-shrink-0" />
                           <span className="text-slate-300">{s}</span>
                         </li>
                       ))}
@@ -281,9 +281,10 @@ export default function InterviewPrep() {
                           setFeedback(null);
                           setJobDescription('');
                         }}
-                        className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-3 rounded-lg hover:from-purple-600 hover:to-blue-600 font-medium transition-all"
+                        className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-3 rounded-lg hover:from-purple-600 hover:to-blue-600 font-medium transition-all flex items-center justify-center gap-2"
                       >
-                        🔄 Start New Practice Session
+                        <RefreshCw className="w-5 h-5" />
+                        Start New Practice Session
                       </button>
                     </div>
                   )}

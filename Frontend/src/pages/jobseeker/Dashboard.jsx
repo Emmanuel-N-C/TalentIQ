@@ -1,7 +1,7 @@
 import { useAuth } from '../../context/AuthContext';
 import { useEffect, useState } from 'react';
-import { TrendingUp, TrendingDown, Briefcase, FileText, CheckCircle, Star, BarChart3, ArrowRight } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { TrendingUp, TrendingDown, Briefcase, FileText, CheckCircle, Star, BarChart3, ArrowRight, Clock, Building2, MapPin } from 'lucide-react';
+import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
 import { getMyApplications } from '../../api/applications';
 import { getUserResumes } from '../../api/resumes';
@@ -29,7 +29,6 @@ export default function JobSeekerDashboard() {
     try {
       setLoading(true);
       
-      // Fetch all data in parallel
       const [applicationsData, resumesData, matchesData, jobsData] = await Promise.all([
         getMyApplications().catch(() => []),
         getUserResumes().catch(() => []),
@@ -37,7 +36,6 @@ export default function JobSeekerDashboard() {
         getAllJobs().catch(() => [])
       ]);
 
-      // Calculate stats
       const interviewCount = applicationsData.filter(
         app => app.status === 'INTERVIEWED' || app.status === 'SHORTLISTED'
       ).length;
@@ -49,10 +47,7 @@ export default function JobSeekerDashboard() {
         interviews: interviewCount
       });
 
-      // Get recent applications (last 4)
       setRecentApplications(applicationsData.slice(0, 4));
-
-      // Get featured jobs (first 2 available jobs)
       setFeaturedJobs(jobsData.slice(0, 2));
 
     } catch (error) {
@@ -63,7 +58,6 @@ export default function JobSeekerDashboard() {
     }
   };
 
-  // Mock chart data - can be replaced with real activity data later
   const generateChartData = (trend = 'up') => {
     const baseValues = trend === 'up' 
       ? [2, 3, 5, 4, 7, 6, 8] 
@@ -146,7 +140,8 @@ export default function JobSeekerDashboard() {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
             Welcome Back, {user?.name || 'Jason'}
           </h1>
-          <p className="text-slate-400 mt-2">
+          <p className="text-slate-400 mt-2 flex items-center gap-2">
+            <Clock className="w-4 h-4" />
             Last login: {new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
           </p>
         </div>
@@ -179,13 +174,16 @@ export default function JobSeekerDashboard() {
           ))}
         </div>
 
-        {/* Featured Jobs Section */}
+        {/* Live Updates Section */}
         {featuredJobs.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <h2 className="text-2xl font-bold">Live Job Updates</h2>
-              <span className="text-sm text-slate-400">Last update: 2 min ago</span>
+              <span className="text-sm text-slate-400 flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                Last update: 2 min ago
+              </span>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -202,12 +200,15 @@ export default function JobSeekerDashboard() {
                       <div className="flex items-center gap-3">
                         <div className={`w-12 h-12 bg-gradient-to-br ${
                           trend === 'up' ? 'from-orange-500 to-orange-600' : 'from-blue-500 to-blue-600'
-                        } rounded-full flex items-center justify-center text-2xl shadow-lg`}>
-                          {trend === 'up' ? '💼' : '🚀'}
+                        } rounded-full flex items-center justify-center shadow-lg`}>
+                          <Briefcase className="w-6 h-6 text-white" />
                         </div>
                         <div>
                           <h3 className="font-bold text-lg group-hover:text-blue-400 transition-colors">{job.title}</h3>
-                          <p className="text-slate-400 text-sm">{job.company}</p>
+                          <p className="text-slate-400 text-sm flex items-center gap-1">
+                            <Building2 className="w-3 h-3" />
+                            {job.company}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -253,7 +254,8 @@ export default function JobSeekerDashboard() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
+                      <span className="text-xs text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
                         {job.skillsRequired?.split(',')[0] || 'Skills Required'}
                       </span>
                       <Link 
@@ -287,6 +289,7 @@ export default function JobSeekerDashboard() {
 
           {recentApplications.length === 0 ? (
             <div className="text-center py-8">
+              <Briefcase className="w-12 h-12 text-slate-600 mx-auto mb-3" />
               <p className="text-slate-400 mb-4">No applications yet</p>
               <Link 
                 to="/jobseeker/browse"

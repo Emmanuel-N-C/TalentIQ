@@ -1,17 +1,10 @@
 import { useAuth } from '../../context/AuthContext';
-import { Search, Bell, ChevronDown, TrendingUp, TrendingDown } from 'lucide-react';
+import { Search, Bell, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-
-  // Mock live stats - Replace with real data from your API
-  const liveStats = [
-    { label: 'APPLICATIONS', value: '24', change: '+12%', positive: true },
-    { label: 'INTERVIEWS', value: '5', change: '+2', positive: true },
-    { label: 'RESPONSES', value: '18', change: '-3%', positive: false },
-  ];
 
   return (
     <nav className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-6 py-4 sticky top-0 z-50 shadow-xl">
@@ -21,22 +14,6 @@ export default function Navbar() {
           <span className="text-slate-400">Overview</span>
           <span className="text-slate-600">/</span>
           <span className="text-white font-medium">Dashboard</span>
-        </div>
-
-        {/* Center - Live Stats */}
-        <div className="hidden lg:flex items-center gap-4">
-          {liveStats.map((stat, index) => (
-            <div key={index} className="flex items-center gap-3 px-4 py-2 bg-slate-800/60 rounded-lg border border-slate-700/50 hover:border-slate-600 transition-all">
-              <div>
-                <p className="text-xs text-slate-400 font-medium">{stat.label}</p>
-                <p className="text-lg font-bold text-white">{stat.value}</p>
-              </div>
-              <div className={`flex items-center gap-1 text-xs font-semibold ${stat.positive ? 'text-green-400' : 'text-red-400'}`}>
-                {stat.positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                {stat.change}
-              </div>
-            </div>
-          ))}
         </div>
 
         {/* Right - Search and Profile */}

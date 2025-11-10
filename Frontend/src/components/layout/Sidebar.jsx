@@ -8,7 +8,6 @@ import {
   MessageSquare,
   BarChart3,
   User,
-  Target,
   Sparkles
 } from 'lucide-react';
 
@@ -83,18 +82,6 @@ export default function Sidebar() {
           </div>
         ))}
       </nav>
-
-      {/* Bottom Badge */}
-      <div className="mt-12 p-4 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-lg border border-purple-500/30">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-4 h-4 text-purple-400" />
-          <p className="text-xs font-semibold text-purple-300">Premium Features</p>
-        </div>
-        <p className="text-xs text-slate-400">Unlock AI-powered insights</p>
-        <button className="mt-3 w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs font-medium py-2 rounded-lg hover:shadow-lg transition-all">
-          Upgrade Now
-        </button>
-      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { getUserResumes, getResumeText, getResumeFileBlob } from '../../api/resu
 import { useAI } from '../../hooks/useAI';
 import ResumeTextViewer from './ResumeTextViewer';
 import toast from 'react-hot-toast';
-import { Sparkles, FileText, Eye, TrendingUp, CheckCircle, AlertCircle, Lightbulb, Plus, Minus, Layout } from 'lucide-react';
+import { Sparkles, FileText, Eye, TrendingUp, CheckCircle, AlertCircle, Lightbulb, Plus, Minus, Layout, RefreshCw, Download, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function ResumeOptimizer() {
@@ -102,7 +102,7 @@ export default function ResumeOptimizer() {
 
       const result = await optimizeResume(resumeText);
       setOptimization(result);
-      toast.success('Resume analyzed successfully! ✅');
+      toast.success('Resume analyzed successfully!');
     } catch (error) {
       console.error('Error optimizing resume:', error);
       toast.error('Failed to optimize resume');
@@ -203,23 +203,25 @@ export default function ResumeOptimizer() {
                   <span className="text-sm font-medium text-slate-400">Preview Mode:</span>
                   <button
                     onClick={() => handlePreviewModeChange('text')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                       previewMode === 'text'
                         ? 'bg-purple-500 text-white'
                         : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                     }`}
                   >
-                    📝 Extracted Text
+                    <FileText className="w-4 h-4" />
+                    Extracted Text
                   </button>
                   <button
                     onClick={() => handlePreviewModeChange('file')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                       previewMode === 'file'
                         ? 'bg-purple-500 text-white'
                         : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                     }`}
                   >
-                    📄 Original File
+                    <Eye className="w-4 h-4" />
+                    Original File
                   </button>
                 </div>
               )}
@@ -263,8 +265,9 @@ export default function ResumeOptimizer() {
                       <a
                         href={previewUrl}
                         download={selectedResume.filename}
-                        className="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors"
+                        className="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors flex items-center gap-2"
                       >
+                        <Download className="w-5 h-5" />
                         Download to View
                       </a>
                     </div>
@@ -308,12 +311,23 @@ export default function ResumeOptimizer() {
                       style={{ width: `${optimization.qualityScore}%` }}
                     />
                   </div>
-                  <p className="text-sm text-slate-400 mt-2">
-                    {optimization.qualityScore >= 80
-                      ? '🎉 Excellent resume quality!'
-                      : optimization.qualityScore >= 60
-                      ? '👍 Good resume, room for improvement'
-                      : '⚠️ Needs significant improvements'}
+                  <p className="text-sm text-slate-400 mt-2 flex items-center gap-2">
+                    {optimization.qualityScore >= 80 ? (
+                      <>
+                        <Award className="w-4 h-4 text-green-400" />
+                        Excellent resume quality!
+                      </>
+                    ) : optimization.qualityScore >= 60 ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 text-yellow-400" />
+                        Good resume, room for improvement
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="w-4 h-4 text-red-400" />
+                        Needs significant improvements
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
@@ -349,7 +363,7 @@ export default function ResumeOptimizer() {
                 <ul className="space-y-2">
                   {optimization.strengths.map((strength, idx) => (
                     <li key={idx} className="flex items-start">
-                      <span className="text-green-400 mr-2">✓</span>
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-2 mt-1 flex-shrink-0" />
                       <span className="text-slate-300">{strength}</span>
                     </li>
                   ))}
@@ -385,7 +399,7 @@ export default function ResumeOptimizer() {
                 <ul className="space-y-2">
                   {optimization.recommendations.map((rec, idx) => (
                     <li key={idx} className="flex items-start">
-                      <span className="text-blue-400 mr-2">💡</span>
+                      <Lightbulb className="w-4 h-4 text-blue-400 mr-2 mt-1 flex-shrink-0" />
                       <span className="text-slate-300">{rec}</span>
                     </li>
                   ))}
@@ -403,7 +417,7 @@ export default function ResumeOptimizer() {
                 <ul className="space-y-2">
                   {optimization.sectionsToAdd.map((section, idx) => (
                     <li key={idx} className="flex items-start">
-                      <span className="text-purple-400 mr-2">+</span>
+                      <Plus className="w-4 h-4 text-purple-400 mr-2 mt-1 flex-shrink-0" />
                       <span className="text-slate-300">{section}</span>
                     </li>
                   ))}
@@ -421,7 +435,7 @@ export default function ResumeOptimizer() {
                 <ul className="space-y-2">
                   {optimization.sectionsToRemove.map((section, idx) => (
                     <li key={idx} className="flex items-start">
-                      <span className="text-red-400 mr-2">−</span>
+                      <Minus className="w-4 h-4 text-red-400 mr-2 mt-1 flex-shrink-0" />
                       <span className="text-slate-300">{section}</span>
                     </li>
                   ))}
@@ -450,7 +464,10 @@ export default function ResumeOptimizer() {
             {/* Summary */}
             {optimization.summary && (
               <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-                <h3 className="text-xl font-bold mb-3">📝 Summary</h3>
+                <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
+                  <FileText className="w-6 h-6 text-slate-400" />
+                  Summary
+                </h3>
                 <p className="text-slate-300 leading-relaxed">{optimization.summary}</p>
               </div>
             )}
@@ -468,9 +485,10 @@ export default function ResumeOptimizer() {
                     setPreviewUrl(null);
                   }
                 }}
-                className="flex-1 bg-slate-700 text-white px-6 py-3 rounded-lg hover:bg-slate-600 font-medium transition-colors"
+                className="flex-1 bg-slate-700 text-white px-6 py-3 rounded-lg hover:bg-slate-600 font-medium transition-colors flex items-center justify-center gap-2"
               >
-                🔄 Analyze Another Resume
+                <RefreshCw className="w-5 h-5" />
+                Analyze Another Resume
               </button>
             </div>
           </div>

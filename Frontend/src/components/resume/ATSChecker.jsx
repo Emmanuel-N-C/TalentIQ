@@ -3,7 +3,7 @@ import { getUserResumes, getResumeText, getResumeFileBlob } from '../../api/resu
 import { useAI } from '../../hooks/useAI';
 import ResumeTextViewer from './ResumeTextViewer';
 import toast from 'react-hot-toast';
-import { Target, FileText, Eye, X, Sparkles, TrendingUp, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Target, FileText, Eye, X, Sparkles, TrendingUp, CheckCircle, XCircle, AlertTriangle, RefreshCw, Award, Download } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function ATSChecker() {
@@ -107,7 +107,7 @@ export default function ATSChecker() {
 
       const result = await checkATS(resumeText, jobDescription);
       setAtsResult(result);
-      toast.success('ATS check complete! ✅');
+      toast.success('ATS check complete!');
     } catch (error) {
       console.error('Error checking ATS:', error);
       toast.error('Failed to check ATS compatibility');
@@ -201,23 +201,25 @@ export default function ATSChecker() {
                       <span className="text-sm font-medium text-slate-400">Preview Mode:</span>
                       <button
                         onClick={() => handlePreviewModeChange('text')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                           previewMode === 'text'
                             ? 'bg-blue-500 text-white'
                             : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                         }`}
                       >
-                        📝 Extracted Text
+                        <FileText className="w-4 h-4" />
+                        Extracted Text
                       </button>
                       <button
                         onClick={() => handlePreviewModeChange('file')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                           previewMode === 'file'
                             ? 'bg-blue-500 text-white'
                             : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                         }`}
                       >
-                        📄 Original File
+                        <Eye className="w-4 h-4" />
+                        Original File
                       </button>
                     </div>
                   )}
@@ -261,8 +263,9 @@ export default function ATSChecker() {
                           <a
                             href={previewUrl}
                             download={selectedResume.filename}
-                            className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
+                            className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
                           >
+                            <Download className="w-5 h-5" />
                             Download to View
                           </a>
                         </div>
@@ -336,14 +339,28 @@ export default function ATSChecker() {
                       style={{ width: `${atsResult.atsScore}%` }}
                     />
                   </div>
-                  <p className="text-sm text-slate-400 mt-2">
-                    {atsResult.atsScore >= 80
-                      ? '🎉 Excellent! High chance of passing ATS'
-                      : atsResult.atsScore >= 65
-                      ? '👍 Good score, minor improvements recommended'
-                      : atsResult.atsScore >= 50
-                      ? '⚠️ Acceptable, but needs keyword optimization'
-                      : '❌ Low score, significant improvements needed'}
+                  <p className="text-sm text-slate-400 mt-2 flex items-center gap-2">
+                    {atsResult.atsScore >= 80 ? (
+                      <>
+                        <Award className="w-4 h-4 text-green-400" />
+                        Excellent! High chance of passing ATS
+                      </>
+                    ) : atsResult.atsScore >= 65 ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 text-blue-400" />
+                        Good score, minor improvements recommended
+                      </>
+                    ) : atsResult.atsScore >= 50 ? (
+                      <>
+                        <AlertTriangle className="w-4 h-4 text-yellow-400" />
+                        Acceptable, but needs keyword optimization
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-4 h-4 text-red-400" />
+                        Low score, significant improvements needed
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
@@ -438,7 +455,9 @@ export default function ATSChecker() {
                       }`}
                     >
                       {keyword}
-                      {atsResult.criticalMissing && atsResult.criticalMissing.includes(keyword) && ' ⚠️'}
+                      {atsResult.criticalMissing && atsResult.criticalMissing.includes(keyword) && (
+                        <AlertTriangle className="w-3 h-3 inline ml-1" />
+                      )}
                     </span>
                   ))}
                 </div>
@@ -479,7 +498,7 @@ export default function ATSChecker() {
                 <ul className="space-y-3">
                   {atsResult.recommendations.map((rec, idx) => (
                     <li key={idx} className="flex items-start">
-                      <span className="text-blue-400 mr-2 mt-1">💡</span>
+                      <Sparkles className="w-4 h-4 text-blue-400 mr-2 mt-1 flex-shrink-0" />
                       <span className="text-slate-300">{rec}</span>
                     </li>
                   ))}
@@ -490,7 +509,10 @@ export default function ATSChecker() {
             {/* Summary */}
             {atsResult.summary && (
               <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-                <h3 className="text-xl font-bold mb-3">📝 Summary</h3>
+                <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
+                  <FileText className="w-6 h-6 text-slate-400" />
+                  Summary
+                </h3>
                 <p className="text-slate-300 leading-relaxed">{atsResult.summary}</p>
               </div>
             )}
@@ -502,9 +524,10 @@ export default function ATSChecker() {
                   setAtsResult(null);
                   setJobDescription('');
                 }}
-                className="flex-1 bg-slate-700 text-white px-6 py-3 rounded-lg hover:bg-slate-600 font-medium transition-colors"
+                className="flex-1 bg-slate-700 text-white px-6 py-3 rounded-lg hover:bg-slate-600 font-medium transition-colors flex items-center justify-center gap-2"
               >
-                🔄 Check Another Job
+                <RefreshCw className="w-5 h-5" />
+                Check Another Job
               </button>
               <button
                 onClick={() => {
@@ -518,9 +541,10 @@ export default function ATSChecker() {
                     setPreviewUrl(null);
                   }
                 }}
-                className="flex-1 bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-medium transition-colors"
+                className="flex-1 bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-medium transition-colors flex items-center justify-center gap-2"
               >
-                ✓ Done
+                <CheckCircle className="w-5 h-5" />
+                Done
               </button>
             </div>
           </div>
