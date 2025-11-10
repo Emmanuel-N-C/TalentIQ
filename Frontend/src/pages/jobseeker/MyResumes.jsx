@@ -3,6 +3,7 @@ import { getUserResumes, deleteResume, getResumeFileBlob } from '../../api/resum
 import ResumeUpload from '../../components/resume/ResumeUpload';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import { FileText, Trash2, Eye, X, Upload, Download } from 'lucide-react';
 
 export default function MyResumes() {
   const [resumes, setResumes] = useState([]);
@@ -48,7 +49,6 @@ export default function MyResumes() {
     setSelectedResume(resume);
     setLoadingPreview(true);
     
-    // Fetch file as blob and create object URL
     try {
       const blobUrl = await getResumeFileBlob(resume.id);
       setPreviewUrl(blobUrl);
@@ -62,7 +62,6 @@ export default function MyResumes() {
   };
 
   const handleClosePreview = () => {
-    // Clean up blob URL to prevent memory leaks
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
@@ -78,84 +77,96 @@ export default function MyResumes() {
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
-  const getToken = () => {
-    return localStorage.getItem('token');
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">My Resumes</h1>
-        <p className="mt-2 text-gray-600">Manage your uploaded resumes</p>
-      </div>
-
-      {/* Upload Button */}
-      {!showUpload && (
-        <button
-          onClick={() => setShowUpload(true)}
-          className="mb-6 bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          + Upload New Resume
-        </button>
-      )}
-
-      {/* Upload Component */}
-      {showUpload && (
-        <>
-          <ResumeUpload
-            onUploadSuccess={() => {
-              setShowUpload(false);
-              fetchResumes();
-            }}
-          />
-          <button
-            onClick={() => setShowUpload(false)}
-            className="mt-4 text-gray-600 hover:text-gray-800"
-          >
-            Cancel
-          </button>
-        </>
-      )}
-
-      {/* Resumes List */}
-      {resumes.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <div className="text-6xl mb-4">📄</div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No resumes yet</h3>
-          <p className="text-gray-600">Upload your first resume to get started</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2">
+            My Resumes
+          </h1>
+          <p className="text-slate-400">Manage your uploaded resumes</p>
         </div>
-      ) : (
-        <>
+
+        {/* Upload Button */}
+        {!showUpload && (
+          <button
+            onClick={() => setShowUpload(true)}
+            className="mb-6 bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2 font-medium"
+          >
+            <Upload className="w-5 h-5" />
+            Upload New Resume
+          </button>
+        )}
+
+        {/* Upload Component */}
+        {showUpload && (
+          <div className="mb-8 bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+            <ResumeUpload
+              onUploadSuccess={() => {
+                setShowUpload(false);
+                fetchResumes();
+              }}
+            />
+            <button
+              onClick={() => setShowUpload(false)}
+              className="mt-4 text-slate-400 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {/* Resumes Grid */}
+        {resumes.length === 0 ? (
+          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-12 text-center">
+            <FileText className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No resumes yet</h3>
+            <p className="text-slate-400 mb-6">Upload your first resume to get started</p>
+            {!showUpload && (
+              <button
+                onClick={() => setShowUpload(true)}
+                className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors inline-flex items-center gap-2"
+              >
+                <Upload className="w-5 h-5" />
+                Upload Resume
+              </button>
+            )}
+          </div>
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {resumes.map((resume) => (
               <div
                 key={resume.id}
-                className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+                className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:border-slate-600 transition-all group"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2 break-words">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center mb-3">
+                      <FileText className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-white mb-2 break-words group-hover:text-blue-400 transition-colors">
                       {resume.filename}
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-slate-400 mb-1">
                       {formatFileSize(resume.fileSize)}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-slate-500">
                       {format(new Date(resume.uploadedAt), 'MMM dd, yyyy')}
                     </p>
                   </div>
                 </div>
 
                 {resume.extractedTextPreview && (
-                  <div className="mb-4 p-3 bg-gray-50 rounded text-sm text-gray-600">
+                  <div className="mb-4 p-3 bg-slate-900/50 rounded-lg text-sm text-slate-400 line-clamp-3">
                     {resume.extractedTextPreview}
                   </div>
                 )}
@@ -163,72 +174,74 @@ export default function MyResumes() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handlePreview(resume)}
-                    className="flex-1 bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors"
+                    className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
                   >
+                    <Eye className="w-4 h-4" />
                     Preview
                   </button>
                   <button
                     onClick={() => handleDelete(resume.id)}
-                    className="px-4 py-2 border border-red-600 text-red-600 rounded hover:bg-red-50 transition-colors"
+                    className="px-4 py-2 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/10 transition-colors"
                   >
-                    Delete
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             ))}
           </div>
-        </>
-      )}
+        )}
 
-      {/* Resume Preview Modal - Shows actual PDF/DOCX */}
-      {selectedResume && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-6xl w-full h-[90vh] flex flex-col">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h2 className="text-xl font-bold">{selectedResume.filename}</h2>
-              <button
-                onClick={handleClosePreview}
-                className="text-gray-600 hover:text-gray-800 text-2xl font-bold"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              {loadingPreview ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-                </div>
-              ) : selectedResume.filename.toLowerCase().endsWith('.pdf') ? (
-                <iframe
-                  src={previewUrl ? `${previewUrl}#toolbar=0&navpanes=0&view=FitH` : ''}
-                  className="w-full h-full"
-                  title="Resume Preview"
-                  style={{ border: 'none' }}
-                />
-              ) : selectedResume.filename.toLowerCase().match(/\.(docx?|doc)$/) ? (
-                <div className="flex flex-col items-center justify-center h-full bg-gray-50">
-                  <div className="text-6xl mb-4">📄</div>
-                  <p className="text-gray-700 mb-4">Word documents cannot be previewed directly in browser</p>
-                  <a
-                    href={previewUrl}
-                    download={selectedResume.filename}
-                    className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700"
-                  >
-                    Download to View
-                  </a>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-full bg-gray-50">
-                  <div className="text-center">
-                    <div className="text-6xl mb-4">📄</div>
-                    <p className="text-gray-700">Preview not available for this file type</p>
+        {/* Resume Preview Modal */}
+        {selectedResume && (
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl max-w-6xl w-full h-[90vh] flex flex-col">
+              <div className="p-4 border-b border-slate-700 flex justify-between items-center">
+                <h2 className="text-xl font-bold text-white">{selectedResume.filename}</h2>
+                <button
+                  onClick={handleClosePreview}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-hidden bg-slate-900">
+                {loadingPreview ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                   </div>
-                </div>
-              )}
+                ) : selectedResume.filename.toLowerCase().endsWith('.pdf') ? (
+                  <iframe
+                    src={previewUrl ? `${previewUrl}#toolbar=0&navpanes=0&view=FitH` : ''}
+                    className="w-full h-full"
+                    title="Resume Preview"
+                    style={{ border: 'none' }}
+                  />
+                ) : selectedResume.filename.toLowerCase().match(/\.(docx?|doc)$/) ? (
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <FileText className="w-16 h-16 text-slate-600 mb-4" />
+                    <p className="text-slate-300 mb-4">Word documents cannot be previewed directly in browser</p>
+                    <a
+                      href={previewUrl}
+                      download={selectedResume.filename}
+                      className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors inline-flex items-center gap-2"
+                    >
+                      <Download className="w-5 h-5" />
+                      Download to View
+                    </a>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <FileText className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                      <p className="text-slate-400">Preview not available for this file type</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

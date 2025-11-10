@@ -3,8 +3,9 @@ import { getMyMatches, deleteMatch } from '../../api/matches';
 import { getAllJobs } from '../../api/jobs';
 import { applyToJob, getMyApplications } from '../../api/applications';
 import { getUserResumes } from '../../api/resumes';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Bookmark, Trash2, Eye, Send, X, Briefcase } from 'lucide-react';
 
 export default function SavedJobs() {
   const [savedJobs, setSavedJobs] = useState([]);
@@ -22,7 +23,6 @@ export default function SavedJobs() {
     try {
       setLoading(true);
       
-      // Load both saved jobs and applications
       const [matchesData, applicationsData] = await Promise.all([
         getMyMatches(),
         getMyApplications()
@@ -30,7 +30,6 @@ export default function SavedJobs() {
       
       setSavedJobs(matchesData);
       
-      // Track which jobs user already applied to
       const appliedIds = new Set(
         applicationsData
           .filter(app => app && app.jobId)
@@ -74,7 +73,6 @@ export default function SavedJobs() {
   };
 
   const handleApply = async (jobId) => {
-    // Check if already applied
     if (appliedJobIds.has(jobId)) {
       toast.error('You have already applied to this job');
       return;
@@ -94,20 +92,15 @@ export default function SavedJobs() {
         resumeId: resumesData[0].id
       });
       
-      // Add to applied jobs set
       setAppliedJobIds(prev => new Set([...prev, jobId]));
-      
       toast.success('Application submitted successfully! ✅');
       setSelectedJob(null);
     } catch (error) {
       console.error('Error applying:', error);
-      
-      // Better error message handling
       const errorMessage = error.response?.data?.message || error.response?.data || error.message;
       
       if (errorMessage && errorMessage.includes('already applied')) {
         toast.error('You have already applied to this job');
-        // Update the state to reflect this
         setAppliedJobIds(prev => new Set([...prev, jobId]));
       } else {
         toast.error(errorMessage || 'Failed to apply to job');
@@ -119,193 +112,211 @@ export default function SavedJobs() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">💾 Saved Jobs</h1>
-        <p className="text-gray-600">
-          Jobs you've saved for later review
-        </p>
-      </div>
-
-      {savedJobs.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          <div className="text-6xl mb-4">📋</div>
-          <h3 className="text-xl font-semibold mb-2">No Saved Jobs Yet</h3>
-          <p className="text-gray-600 mb-6">
-            Browse jobs and save the ones you're interested in
-          </p>
-          <button
-            onClick={() => navigate('/jobseeker/browse')}
-            className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 font-medium"
-          >
-            📋 Browse Jobs
-          </button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2 flex items-center gap-3">
+            <Bookmark className="w-10 h-10 text-blue-400" />
+            Saved Jobs
+          </h1>
+          <p className="text-slate-400">Jobs you've saved for later review</p>
         </div>
-      ) : (
-        <div className="space-y-4">
-          {savedJobs.map((match) => {
-            let analysisData = {};
-            try {
-              analysisData = typeof match.analysisResult === 'string' 
-                ? JSON.parse(match.analysisResult) 
-                : match.analysisResult;
-            } catch (error) {
-              console.error('Error parsing analysis result:', error);
-            }
 
-            const isApplied = appliedJobIds.has(match.jobId);
+        {savedJobs.length === 0 ? (
+          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-12 text-center">
+            <Bookmark className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">No Saved Jobs Yet</h3>
+            <p className="text-slate-400 mb-6">
+              Browse jobs and save the ones you're interested in
+            </p>
+            <Link
+              to="/jobseeker/browse"
+              className="inline-flex items-center gap-2 bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-medium transition-colors"
+            >
+              <Briefcase className="w-5 h-5" />
+              Browse Jobs
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {savedJobs.map((match) => {
+              let analysisData = {};
+              try {
+                analysisData = typeof match.analysisResult === 'string' 
+                  ? JSON.parse(match.analysisResult) 
+                  : match.analysisResult;
+              } catch (error) {
+                console.error('Error parsing analysis result:', error);
+              }
 
-            return (
-              <div
-                key={match.id}
-                className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-bold text-gray-900">
-                        {analysisData.jobTitle || match.jobTitle || 'Job Title'}
-                      </h3>
+              const isApplied = appliedJobIds.has(match.jobId);
+
+              return (
+                <div
+                  key={match.id}
+                  className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:border-slate-600 transition-all"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                          <Bookmark className="w-6 h-6 text-white fill-current" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold text-white">
+                            {analysisData.jobTitle || match.jobTitle || 'Job Title'}
+                          </h3>
+                          <p className="text-slate-400">
+                            {analysisData.company || match.company || 'Company Name'}
+                          </p>
+                        </div>
+                      </div>
+                      
                       {isApplied && (
-                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                        <span className="inline-block px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-medium mt-2">
                           ✓ Applied
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-600">
-                      {analysisData.company || match.company || 'Company Name'}
-                    </p>
                   </div>
-                </div>
 
-                {/* Saved Date */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                  <div className="text-sm text-gray-500">
-                    Saved on {new Date(match.createdAt).toLocaleDateString()}
-                  </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleViewDetails(match.jobId)}
-                      className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm font-medium"
-                    >
-                      View Details
-                    </button>
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-700">
+                    <div className="text-sm text-slate-400">
+                      Saved on {new Date(match.createdAt).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric', 
+                        year: 'numeric' 
+                      })}
+                    </div>
                     
-                    {!isApplied ? (
+                    <div className="flex gap-3">
                       <button
-                        onClick={() => handleApply(match.jobId)}
-                        disabled={applying}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => handleViewDetails(match.jobId)}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm font-medium transition-colors flex items-center gap-2"
                       >
-                        {applying ? '⏳' : '✉️'} Apply
+                        <Eye className="w-4 h-4" />
+                        View
                       </button>
-                    ) : (
+                      
+                      {!isApplied ? (
+                        <button
+                          onClick={() => handleApply(match.jobId)}
+                          disabled={applying}
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                        >
+                          <Send className="w-4 h-4" />
+                          Apply
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          className="px-4 py-2 bg-slate-600 text-slate-400 rounded-lg cursor-not-allowed text-sm font-medium"
+                        >
+                          ✓ Applied
+                        </button>
+                      )}
+                      
                       <button
-                        disabled
-                        className="px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed text-sm font-medium"
+                        onClick={() => handleRemove(match.id)}
+                        className="px-4 py-2 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/10 text-sm font-medium transition-colors flex items-center gap-2"
                       >
-                        ✓ Applied
+                        <Trash2 className="w-4 h-4" />
+                        Remove
                       </button>
-                    )}
-                    
-                    <button
-                      onClick={() => handleRemove(match.id)}
-                      className="px-4 py-2 border-2 border-red-300 text-red-600 rounded-lg hover:bg-red-50 text-sm font-medium"
-                    >
-                      Remove
-                    </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
 
-      {/* Job Details Modal */}
-      {selectedJob && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
-              <h2 className="text-2xl font-bold">{selectedJob.title}</h2>
-              <button
-                onClick={() => setSelectedJob(null)}
-                className="text-gray-600 hover:text-gray-800 text-2xl"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-6 space-y-6">
-              <div>
-                <h3 className="font-semibold text-lg mb-2">Company</h3>
-                <p className="text-gray-700">{selectedJob.company}</p>
-              </div>
-              
-              <div>
-                <h3 className="font-semibold text-lg mb-2">Experience Level</h3>
-                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                  {selectedJob.experienceLevel}
-                </span>
-              </div>
-              
-              <div>
-                <h3 className="font-semibold text-lg mb-2">Description</h3>
-                <p className="text-gray-700 whitespace-pre-wrap">{selectedJob.description}</p>
-              </div>
-              
-              {selectedJob.skillsRequired && (
-                <div>
-                  <h3 className="font-semibold text-lg mb-2">Skills Required</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedJob.skillsRequired.split(',').map((skill, idx) => (
-                      <span
-                        key={idx}
-                        className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm"
-                      >
-                        {skill.trim()}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              <div className="flex gap-4 pt-4 border-t">
-                {!appliedJobIds.has(selectedJob.id) ? (
-                  <button
-                    onClick={() => handleApply(selectedJob.id)}
-                    disabled={applying}
-                    className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {applying ? '⏳ Applying...' : '✉️ Apply Now'}
-                  </button>
-                ) : (
-                  <button
-                    disabled
-                    className="flex-1 bg-gray-300 text-gray-600 px-6 py-3 rounded-lg cursor-not-allowed font-medium"
-                  >
-                    ✓ Already Applied
-                  </button>
-                )}
+        {/* Job Details Modal */}
+        {selectedJob && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
+                <h2 className="text-2xl font-bold text-white">{selectedJob.title}</h2>
                 <button
                   onClick={() => setSelectedJob(null)}
-                  className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+                  className="text-slate-400 hover:text-white transition-colors"
                 >
-                  Close
+                  <X className="w-6 h-6" />
                 </button>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                <div>
+                  <h3 className="font-semibold text-lg mb-2 text-blue-400">Company</h3>
+                  <p className="text-slate-300 text-lg">{selectedJob.company}</p>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-lg mb-2 text-blue-400">Experience Level</h3>
+                  <span className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg text-sm font-medium">
+                    {selectedJob.experienceLevel}
+                  </span>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-lg mb-2 text-blue-400">Description</h3>
+                  <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">{selectedJob.description}</p>
+                </div>
+                
+                {selectedJob.skillsRequired && (
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3 text-blue-400">Skills Required</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedJob.skillsRequired.split(',').map((skill, idx) => (
+                        <span
+                          key={idx}
+                          className="px-4 py-2 bg-slate-700/50 text-slate-300 rounded-lg text-sm"
+                        >
+                          {skill.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-4 pt-4 border-t border-slate-700">
+                  {!appliedJobIds.has(selectedJob.id) ? (
+                    <button
+                      onClick={() => handleApply(selectedJob.id)}
+                      disabled={applying}
+                      className="flex-1 bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Send className="w-5 h-5" />
+                      {applying ? 'Applying...' : 'Apply Now'}
+                    </button>
+                  ) : (
+                    <button
+                      disabled
+                      className="flex-1 bg-slate-600 text-slate-400 px-6 py-3 rounded-lg cursor-not-allowed font-medium"
+                    >
+                      ✓ Already Applied
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setSelectedJob(null)}
+                    className="px-6 py-3 border-2 border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 font-medium transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

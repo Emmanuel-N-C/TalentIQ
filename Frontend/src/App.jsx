@@ -1,6 +1,6 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ResumeAnalyzer from './components/ai/ResumeAnalyzer';
 import ResumeOptimizer from './components/resume/ResumeOptimizer';
@@ -35,16 +35,56 @@ import JobManagement from './pages/admin/JobManagement';
 // Layout
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import Navbar from './components/layout/Navbar';
+import Sidebar from './components/layout/Sidebar';
+
+// Layout wrapper component for authenticated users
+function AuthenticatedLayout({ children }) {
+  const { user } = useAuth();
+  const location = useLocation();
+  
+  // Check if user is logged in and on a protected route
+  const isProtectedRoute = location.pathname.startsWith('/jobseeker') || 
+                          location.pathname.startsWith('/recruiter') || 
+                          location.pathname.startsWith('/admin');
+  
+  const showNewLayout = user && isProtectedRoute;
+
+  if (showNewLayout) {
+    return (
+      <div className="flex min-h-screen bg-slate-900">
+        {/* Sidebar - only for authenticated users */}
+        <Sidebar />
+        
+        <div className="flex-1 flex flex-col">
+          {/* New Navbar */}
+          <Navbar />
+          
+          {/* Main Content */}
+          <main className="flex-1 overflow-auto">
+            {children}
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Public pages - old layout
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      {children}
+    </div>
+  );
+}
 
 function App() {
   return (
     <AuthProvider>
       <ThemeProvider>
         <Router>
-          <div className="min-h-screen bg-gray-50">
-            <Navbar />
-            <Toaster position="top-right" />
-            
+          <Toaster position="top-right" />
+          
+          <AuthenticatedLayout>
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Landing />} />
@@ -87,7 +127,7 @@ function App() {
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-          </div>
+          </AuthenticatedLayout>
         </Router>
       </ThemeProvider>
     </AuthProvider>
