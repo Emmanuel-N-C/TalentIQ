@@ -18,6 +18,7 @@ import InterviewPrep from './pages/jobseeker/InterviewPrep';
 import MyResumes from './pages/jobseeker/MyResumes';
 import SavedJobs from './pages/jobseeker/SavedJobs';
 import MyApplications from './pages/jobseeker/MyApplications';
+import JobSeekerProfile from './pages/jobseeker/Profile';
 
 // Recruiter pages
 import RecruiterDashboard from './pages/recruiter/Dashboard';
@@ -28,6 +29,7 @@ import JobApplications from './pages/recruiter/JobApplications';
 import JobStats from './pages/recruiter/JobStats';
 import AllApplications from './pages/recruiter/AllApplications';
 import ShortlistedCandidates from './pages/recruiter/ShortlistedCandidates';
+import RecruiterSettings from './pages/recruiter/Settings';
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -118,6 +120,7 @@ function App() {
                 <Route path="ats-checker" element={<ATSChecker />} />
                 <Route path="saved-jobs" element={<SavedJobs />} />
                 <Route path="applications" element={<MyApplications />} />
+                <Route path="profile" element={<JobSeekerProfile />} />
               </Route>
               
               {/* Recruiter Routes */}
@@ -130,6 +133,7 @@ function App() {
                 <Route path="jobs/:jobId/stats" element={<JobStats />} />
                 <Route path="applications" element={<AllApplications />} />
                 <Route path="shortlisted" element={<ShortlistedCandidates />} />
+                <Route path="settings" element={<RecruiterSettings />} />
               </Route>
               
               {/* Admin Routes */}

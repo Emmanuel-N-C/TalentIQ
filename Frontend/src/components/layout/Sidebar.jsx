@@ -8,7 +8,8 @@ import {
   MessageSquare,
   BarChart3,
   User,
-  Sparkles
+  Sparkles,
+  Settings
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -31,6 +32,8 @@ export default function Sidebar() {
     others: [
       { name: 'ATS Checker', icon: BarChart3, href: `/${userRole}/ats-checker` },
       { name: 'Resume Optimizer', icon: Sparkles, href: `/${userRole}/resume-optimizer` },
+    ],
+    settings: [
       { name: 'Profile', icon: User, href: `/${userRole}/profile` },
     ]
   };

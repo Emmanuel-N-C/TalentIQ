@@ -16,8 +16,14 @@ export default function ProtectedRoute({ role }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (role && user.role !== role) {
-    return <Navigate to="/" replace />;
+  // Normalize role comparison - handle all formats
+  if (role && user.role) {
+    const userRole = user.role.toLowerCase().replace(/_/g, '');
+    const requiredRole = role.toLowerCase().replace(/_/g, '');
+    
+    if (userRole !== requiredRole) {
+      return <Navigate to="/" replace />;
+    }
   }
 
   return <Outlet />;

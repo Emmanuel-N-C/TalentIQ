@@ -30,10 +30,29 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = (updatedData) => {
+    // Merge with existing user data, don't replace entirely
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const newUser = {
+      ...currentUser,
+      // Only update specific fields
+      name: updatedData.fullName || updatedData.name || currentUser.name,
+      email: updatedData.email || currentUser.email,
+      // Keep the original role format from login
+      role: currentUser.role,
+      // Add profile picture if provided
+      ...(updatedData.profilePictureUrl && { profilePictureUrl: updatedData.profilePictureUrl })
+    };
+    
+    localStorage.setItem('user', JSON.stringify(newUser));
+    setUser(newUser);
+  };
+
   const value = {
     user,
     login,
     logout,
+    updateUser,
     loading,
     isAuthenticated: !!user,
   };

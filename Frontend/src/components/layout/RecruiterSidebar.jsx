@@ -26,7 +26,6 @@ export default function RecruiterSidebar() {
       { name: 'Shortlisted', icon: UserCheck, href: `/${userRole}/shortlisted` },
     ],
     account: [
-      { name: 'Company Profile', icon: Building2, href: `/${userRole}/company` },
       { name: 'Settings', icon: Settings, href: `/${userRole}/settings` },
     ]
   };
