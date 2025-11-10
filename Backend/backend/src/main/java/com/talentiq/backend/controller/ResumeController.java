@@ -1,6 +1,7 @@
 package com.talentiq.backend.controller;
 
 import com.talentiq.backend.dto.ResumeResponse;
+import com.talentiq.backend.model.Resume;
 import com.talentiq.backend.model.User;
 import com.talentiq.backend.service.ResumeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,10 +48,13 @@ public class ResumeController {
     public ResponseEntity<Map<String, String>> getExtractedText(
             @PathVariable Long id,
             @AuthenticationPrincipal User user) {
-        String extractedText = resumeService.getExtractedText(id, user);
+        // Get the resume and extract text from it
+        Resume resume = resumeService.getResumeById(id, user);
+        String extractedText = resume.getExtractedText();
+
         Map<String, String> response = new HashMap<>();
         response.put("resumeId", id.toString());
-        response.put("extractedText", extractedText);
+        response.put("extractedText", extractedText != null ? extractedText : "");
         return ResponseEntity.ok(response);
     }
 
@@ -60,8 +64,10 @@ public class ResumeController {
     public ResponseEntity<Resource> downloadResumeFile(
             @PathVariable Long id,
             @AuthenticationPrincipal User user) {
+        // Get the resume and file
+        Resume resume = resumeService.getResumeById(id, user);
         Resource file = resumeService.getResumeFile(id, user);
-        String filename = resumeService.getResumeFilename(id, user);
+        String filename = resume.getFilename();
 
         // Determine content type based on file extension
         String contentType = "application/octet-stream";
