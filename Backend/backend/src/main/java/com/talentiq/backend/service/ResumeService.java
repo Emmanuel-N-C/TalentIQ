@@ -4,6 +4,7 @@ import com.talentiq.backend.dto.ResumeResponse;
 import com.talentiq.backend.model.Resume;
 import com.talentiq.backend.model.User;
 import com.talentiq.backend.repository.ResumeRepository;
+import com.talentiq.backend.repository.ApplicationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -27,6 +28,9 @@ public class ResumeService {
 
     @Autowired
     private ResumeParserService resumeParserService;
+
+    @Autowired
+    private ApplicationRepository applicationRepository;
 
     /**
      * Upload a resume with automatic text extraction
@@ -139,6 +143,75 @@ public class ResumeService {
         // Verify ownership
         if (!resume.getUser().getId().equals(user.getId())) {
             throw new RuntimeException("You can only access your own resumes");
+        }
+
+        return resume.getFilename();
+    }
+
+    /**
+     * Get resume file for recruiter (with application verification)
+     * FLEXIBLE VERSION: Works with old and new applications
+     */
+    public Resource getResumeFileForRecruiter(Long resumeId, User recruiter) {
+        System.out.println("🔍 RESUME ACCESS REQUEST:");
+        System.out.println("   Resume ID: " + resumeId);
+        System.out.println("   Recruiter ID: " + recruiter.getId());
+        System.out.println("   Recruiter Email: " + recruiter.getEmail());
+        System.out.println("   Recruiter Role: " + recruiter.getRole());
+        
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow(() -> new RuntimeException("Resume not found with id: " + resumeId));
+
+        System.out.println("   Resume Owner ID: " + resume.getUser().getId());
+        System.out.println("   Resume Owner Email: " + resume.getUser().getEmail());
+        
+        // Check 1: Direct check - does an application exist with this specific resume?
+        boolean hasAccessThroughApplication = applicationRepository.existsByResumeIdAndJobRecruiterId(resumeId, recruiter.getId());
+        System.out.println("   Direct Access (resume_id match): " + hasAccessThroughApplication);
+
+        // Check 2: Indirect check - has this user (resume owner) applied to any of recruiter's jobs?
+        // This works for old applications that don't have resume_id properly set
+        boolean hasAccessThroughJobApplication = applicationRepository.existsByUserIdAndJobRecruiterId(resume.getUser().getId(), recruiter.getId());
+        System.out.println("   Indirect Access (user applied to recruiter's jobs): " + hasAccessThroughJobApplication);
+
+        if (!hasAccessThroughApplication && !hasAccessThroughJobApplication) {
+            System.err.println("❌ ACCESS DENIED");
+            System.err.println("   Reason: No application found linking this resume to recruiter's jobs");
+            throw new RuntimeException("You do not have permission to access this resume");
+        }
+
+        System.out.println("✅ ACCESS GRANTED");
+
+        try {
+            Path filePath = Paths.get(resume.getFilePath());
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists() && resource.isReadable()) {
+                return resource;
+            } else {
+                throw new RuntimeException("Resume file not found or not readable");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error loading resume file: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get resume filename for recruiter
+     * FLEXIBLE VERSION: Works with old and new applications
+     */
+    public String getResumeFilenameForRecruiter(Long resumeId, User recruiter) {
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow(() -> new RuntimeException("Resume not found with id: " + resumeId));
+
+        // Same flexible check as above
+        boolean hasAccessThroughApplication = applicationRepository.existsByResumeIdAndJobRecruiterId(resumeId, recruiter.getId());
+        boolean hasAccessThroughJobApplication = applicationRepository.existsByUserIdAndJobRecruiterId(resume.getUser().getId(), recruiter.getId());
+
+        System.out.println("🔍 Filename check - Direct access: " + hasAccessThroughApplication + ", Indirect access: " + hasAccessThroughJobApplication);
+
+        if (!hasAccessThroughApplication && !hasAccessThroughJobApplication) {
+            throw new RuntimeException("You do not have permission to access this resume");
         }
 
         return resume.getFilename();

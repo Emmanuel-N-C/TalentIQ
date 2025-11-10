@@ -25,7 +25,7 @@ public class ApplicationController {
 
     // Job seeker applies to a job
     @PostMapping
-    @PreAuthorize("hasRole('JOB_SEEKER')")  // CHANGED: Added underscore
+    @PreAuthorize("hasAuthority('ROLE_JOB_SEEKER')")
     public ResponseEntity<ApplicationResponse> createApplication(
             @Valid @RequestBody ApplicationRequest request,
             @AuthenticationPrincipal User user) {
@@ -34,7 +34,7 @@ public class ApplicationController {
 
     // Job seeker views their applications
     @GetMapping("/my-applications")
-    @PreAuthorize("hasRole('JOB_SEEKER')")  // CHANGED: Added underscore
+    @PreAuthorize("hasAuthority('ROLE_JOB_SEEKER')")
     public ResponseEntity<List<ApplicationResponse>> getMyApplications(
             @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(applicationService.getUserApplications(user));
@@ -42,7 +42,7 @@ public class ApplicationController {
 
     // Recruiter views applications for a specific job
     @GetMapping("/job/{jobId}")
-    @PreAuthorize("hasRole('RECRUITER')")
+    @PreAuthorize("hasAuthority('ROLE_RECRUITER')")
     public ResponseEntity<List<ApplicationResponse>> getApplicationsForJob(
             @PathVariable Long jobId,
             @AuthenticationPrincipal User user) {
@@ -51,7 +51,7 @@ public class ApplicationController {
 
     // Recruiter views all applications across all their jobs
     @GetMapping("/recruiter/all")
-    @PreAuthorize("hasRole('RECRUITER')")
+    @PreAuthorize("hasAuthority('ROLE_RECRUITER')")
     public ResponseEntity<List<ApplicationResponse>> getAllRecruiterApplications(
             @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(applicationService.getAllRecruiterApplications(user));
@@ -59,7 +59,7 @@ public class ApplicationController {
 
     // Recruiter updates application status
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasRole('RECRUITER')")
+    @PreAuthorize("hasAuthority('ROLE_RECRUITER')")
     public ResponseEntity<ApplicationResponse> updateApplicationStatus(
             @PathVariable Long id,
             @RequestParam Application.ApplicationStatus status,
@@ -70,7 +70,7 @@ public class ApplicationController {
 
     // Recruiter views statistics for a job
     @GetMapping("/job/{jobId}/stats")
-    @PreAuthorize("hasRole('RECRUITER')")
+    @PreAuthorize("hasAuthority('ROLE_RECRUITER')")
     public ResponseEntity<JobStatsResponse> getJobStats(
             @PathVariable Long jobId,
             @AuthenticationPrincipal User user) {

@@ -23,7 +23,7 @@ public class MatchController {
 
     // Save a match (save a job)
     @PostMapping
-    @PreAuthorize("hasRole('JOB_SEEKER')")
+    @PreAuthorize("hasAuthority('ROLE_JOB_SEEKER')")
     public ResponseEntity<MatchResponse> saveMatch(
             @Valid @RequestBody MatchRequest request,
             @AuthenticationPrincipal User user) {
@@ -32,7 +32,7 @@ public class MatchController {
 
     // Alternative endpoint for backward compatibility
     @PostMapping("/save")
-    @PreAuthorize("hasRole('JOB_SEEKER')")
+    @PreAuthorize("hasAuthority('ROLE_JOB_SEEKER')")
     public ResponseEntity<MatchResponse> saveMatchAlt(
             @Valid @RequestBody MatchRequest request,
             @AuthenticationPrincipal User user) {
@@ -41,14 +41,14 @@ public class MatchController {
 
     // Get all saved jobs for the current user
     @GetMapping("/user")
-    @PreAuthorize("hasRole('JOB_SEEKER')")
+    @PreAuthorize("hasAuthority('ROLE_JOB_SEEKER')")
     public ResponseEntity<List<MatchResponse>> getUserMatches(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(matchService.getUserMatches(user));
     }
 
     // Delete a saved job
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('JOB_SEEKER')")
+    @PreAuthorize("hasAuthority('ROLE_JOB_SEEKER')")
     public ResponseEntity<Void> deleteMatch(
             @PathVariable Long id,
             @AuthenticationPrincipal User user) {

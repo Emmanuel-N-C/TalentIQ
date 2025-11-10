@@ -27,7 +27,7 @@ public class ResumeController {
 
     // Upload resume with automatic text extraction
     @PostMapping("/upload")
-    @PreAuthorize("hasRole('JOB_SEEKER')")
+    @PreAuthorize("hasAuthority('ROLE_JOB_SEEKER')")
     public ResponseEntity<ResumeResponse> uploadResume(
             @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal User user) {
@@ -36,14 +36,14 @@ public class ResumeController {
 
     // Get user's resumes
     @GetMapping
-    @PreAuthorize("hasRole('JOB_SEEKER')")
+    @PreAuthorize("hasAuthority('ROLE_JOB_SEEKER')")
     public ResponseEntity<List<ResumeResponse>> getUserResumes(@AuthenticationPrincipal User user) {
         return ResponseEntity.ok(resumeService.getUserResumes(user));
     }
 
     // Get extracted text from a specific resume
     @GetMapping("/{id}/text")
-    @PreAuthorize("hasRole('JOB_SEEKER')")
+    @PreAuthorize("hasAuthority('ROLE_JOB_SEEKER')")
     public ResponseEntity<Map<String, String>> getExtractedText(
             @PathVariable Long id,
             @AuthenticationPrincipal User user) {
@@ -54,9 +54,9 @@ public class ResumeController {
         return ResponseEntity.ok(response);
     }
 
-    // Download/Preview resume file
+    // Download/Preview resume file (Job Seeker only - their own resumes)
     @GetMapping("/{id}/file")
-    @PreAuthorize("hasRole('JOB_SEEKER')")
+    @PreAuthorize("hasAuthority('ROLE_JOB_SEEKER')")
     public ResponseEntity<Resource> downloadResumeFile(
             @PathVariable Long id,
             @AuthenticationPrincipal User user) {
@@ -79,9 +79,41 @@ public class ResumeController {
                 .body(file);
     }
 
+    // NEW: Recruiter endpoint to view resume from application
+    @GetMapping("/{id}/file/recruiter")
+    @PreAuthorize("hasAuthority('ROLE_RECRUITER')")
+    public ResponseEntity<Resource> downloadResumeFileForRecruiter(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User recruiter) {
+        System.out.println("🔍 ResumeController - Recruiter accessing resume:");
+        System.out.println("   Resume ID: " + id);
+        System.out.println("   Recruiter Email: " + recruiter.getEmail());
+        System.out.println("   Recruiter ID: " + recruiter.getId());
+        System.out.println("   Recruiter Role: " + recruiter.getRole());
+        System.out.println("   Recruiter Authorities: " + recruiter.getAuthorities());
+
+        Resource file = resumeService.getResumeFileForRecruiter(id, recruiter);
+        String filename = resumeService.getResumeFilenameForRecruiter(id, recruiter);
+
+        // Determine content type based on file extension
+        String contentType = "application/octet-stream";
+        if (filename.toLowerCase().endsWith(".pdf")) {
+            contentType = "application/pdf";
+        } else if (filename.toLowerCase().endsWith(".docx")) {
+            contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        } else if (filename.toLowerCase().endsWith(".doc")) {
+            contentType = "application/msword";
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                .body(file);
+    }
+
     // Delete resume
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('JOB_SEEKER')")
+    @PreAuthorize("hasAuthority('ROLE_JOB_SEEKER')")
     public ResponseEntity<Void> deleteResume(@PathVariable Long id,
                                              @AuthenticationPrincipal User user) {
         resumeService.deleteResume(id, user);

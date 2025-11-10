@@ -53,9 +53,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/test/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")  // ADD THIS LINE
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/jobs/**").hasAnyRole("RECRUITER", "JOB_SEEKER", "ADMIN")
-                        .requestMatchers("/api/resumes/**").hasAnyRole("JOB_SEEKER", "ADMIN")
+                        .requestMatchers("/api/resumes/**").hasAnyRole("JOB_SEEKER", "RECRUITER", "ADMIN")  // FIXED: Added RECRUITER
                         .requestMatchers("/api/match/**").hasAnyRole("JOB_SEEKER", "RECRUITER", "ADMIN")
                         .anyRequest().authenticated()
                 );
