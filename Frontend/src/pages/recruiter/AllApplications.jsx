@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getAllRecruiterApplications, updateApplicationStatus } from '../../api/applications';
+import { getResumeFileBlobForRecruiter } from '../../api/resumes';  // ✅ FIXED: Changed from getResumeFileBlob
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
-import { FileText, Eye, CheckCircle, XCircle, Clock, Users, Filter, Mail, Briefcase } from 'lucide-react';
+import { FileText, Eye, CheckCircle, XCircle, Clock, Users, Mail, Briefcase, ArrowLeft, X, Download } from 'lucide-react';
 
 export default function AllApplications() {
   const { user } = useAuth();
@@ -14,6 +15,9 @@ export default function AllApplications() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'ALL');
   const [updatingId, setUpdatingId] = useState(null);
+  const [selectedResume, setSelectedResume] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
 
   useEffect(() => {
     fetchApplications();
@@ -33,7 +37,7 @@ export default function AllApplications() {
     try {
       setLoading(true);
       const data = await getAllRecruiterApplications();
-      console.log('Applications data:', data); // Debug log
+      console.log('Applications data:', data);
       setApplications(data);
       setFilteredApplications(data);
     } catch (error) {
@@ -77,6 +81,35 @@ export default function AllApplications() {
       searchParams.set('status', status);
     }
     setSearchParams(searchParams);
+  };
+
+  const handleViewResume = async (application) => {
+    if (!application.resumeId) {
+      toast.error('Resume not available');
+      return;
+    }
+
+    setSelectedResume({ ...application });
+    setLoadingPreview(true);
+    
+    try {
+      const blobUrl = await getResumeFileBlobForRecruiter(application.resumeId);  // ✅ FIXED
+      setPreviewUrl(blobUrl);
+    } catch (error) {
+      console.error('Error loading resume:', error);
+      toast.error('Failed to load resume');
+      setSelectedResume(null);
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const handleClosePreview = () => {
+    setSelectedResume(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
   };
 
   const formatDate = (dateValue) => {
@@ -131,8 +164,15 @@ export default function AllApplications() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       <div className="max-w-7xl mx-auto p-6">
-        {/* Header */}
+        {/* Header with Back Button */}
         <div className="mb-8">
+          <button
+            onClick={() => navigate('/recruiter/dashboard')}
+            className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </button>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2 flex items-center gap-3">
             <FileText className="w-10 h-10 text-blue-400" />
             All Applications
@@ -236,6 +276,15 @@ export default function AllApplications() {
                     </div>
 
                     <div className="flex flex-col gap-2">
+                      {application.resumeId && (
+                        <button
+                          onClick={() => handleViewResume(application)}
+                          className="px-3 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm font-medium flex items-center gap-1"
+                        >
+                          <FileText className="w-4 h-4" />
+                          View Resume
+                        </button>
+                      )}
                       {application.status !== 'ACCEPTED' && application.status !== 'REJECTED' && (
                         <div className="flex gap-2">
                           <button
@@ -265,6 +314,60 @@ export default function AllApplications() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Resume Preview Modal */}
+        {selectedResume && (
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl max-w-6xl w-full h-[90vh] flex flex-col">
+              <div className="p-4 border-b border-slate-700 flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-bold text-white">{selectedResume.resumeFilename || 'Resume'}</h2>
+                  <p className="text-slate-400 text-sm">{selectedResume.applicantName || selectedResume.jobseekerName || 'Anonymous'}</p>
+                </div>
+                <button
+                  onClick={handleClosePreview}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-hidden bg-slate-900">
+                {loadingPreview ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : selectedResume.resumeFilename?.toLowerCase().endsWith('.pdf') ? (
+                  <iframe
+                    src={previewUrl ? `${previewUrl}#toolbar=0&navpanes=0&view=FitH` : ''}
+                    className="w-full h-full"
+                    title="Resume Preview"
+                    style={{ border: 'none' }}
+                  />
+                ) : selectedResume.resumeFilename?.toLowerCase().match(/\.(docx?|doc)$/) ? (
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <FileText className="w-16 h-16 text-slate-600 mb-4" />
+                    <p className="text-slate-300 mb-4">Word documents cannot be previewed directly in browser</p>
+                    <a
+                      href={previewUrl}
+                      download={selectedResume.resumeFilename}
+                      className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors inline-flex items-center gap-2"
+                    >
+                      <Download className="w-5 h-5" />
+                      Download to View
+                    </a>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <FileText className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                      <p className="text-slate-400">Preview not available for this file type</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

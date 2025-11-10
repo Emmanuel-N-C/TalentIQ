@@ -41,9 +41,17 @@ export const downloadResume = async (resumeId) => {
   return response;
 };
 
-// Get resume file as blob for preview (with authentication)
+// Get resume file as blob for preview (Job Seeker - with authentication)
 export const getResumeFileBlob = async (resumeId) => {
   const response = await apiClient.get(`/resumes/${resumeId}/file`, {
+    responseType: 'blob'
+  });
+  return URL.createObjectURL(response.data);
+};
+
+// NEW: Get resume file as blob for preview (Recruiter - with authentication)
+export const getResumeFileBlobForRecruiter = async (resumeId) => {
+  const response = await apiClient.get(`/resumes/${resumeId}/file/recruiter`, {
     responseType: 'blob'
   });
   return URL.createObjectURL(response.data);

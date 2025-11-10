@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getJobApplications, updateApplicationStatus } from '../../api/applications';
 import { getJobById } from '../../api/jobs';
+import { getResumeFileBlobForRecruiter } from '../../api/resumes';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { FileText, Eye, X, CheckCircle, XCircle, Clock, Users, Filter, ArrowLeft, Download } from 'lucide-react';
@@ -16,6 +17,9 @@ export default function JobApplications() {
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [updatingId, setUpdatingId] = useState(null);
+  const [selectedResume, setSelectedResume] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -57,7 +61,6 @@ export default function JobApplications() {
       await updateApplicationStatus(applicationId, newStatus);
       toast.success(`Application ${newStatus.toLowerCase()}`);
       
-      // Update local state
       setApplications(applications.map(app =>
         app.id === applicationId ? { ...app, status: newStatus } : app
       ));
@@ -66,6 +69,35 @@ export default function JobApplications() {
       toast.error('Failed to update application status');
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleViewResume = async (application) => {
+    if (!application.resumeId) {
+      toast.error('Resume not available');
+      return;
+    }
+
+    setSelectedResume({ ...application });
+    setLoadingPreview(true);
+    
+    try {
+      const blobUrl = await getResumeFileBlobForRecruiter(application.resumeId);
+      setPreviewUrl(blobUrl);
+    } catch (error) {
+      console.error('Error loading resume:', error);
+      toast.error('Failed to load resume');
+      setSelectedResume(null);
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const handleClosePreview = () => {
+    setSelectedResume(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
     }
   };
 
@@ -271,6 +303,16 @@ export default function JobApplications() {
 
                     {/* Action Buttons */}
                     <div className="ml-6 flex flex-col gap-2">
+                      {application.resumeId && (
+                        <button
+                          onClick={() => handleViewResume(application)}
+                          className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition font-medium whitespace-nowrap flex items-center gap-2"
+                        >
+                          <FileText className="w-4 h-4" />
+                          View Resume
+                        </button>
+                      )}
+                      
                       <button
                         onClick={() => setSelectedApplication(application)}
                         className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition font-medium whitespace-nowrap flex items-center gap-2"
@@ -364,10 +406,21 @@ export default function JobApplications() {
                 
                 <div>
                   <h3 className="font-semibold text-blue-400 mb-1">Resume</h3>
-                  <p className="text-slate-300 flex items-center gap-2">
-                    <FileText className="w-4 h-4" />
-                    {selectedApplication.resumeFilename}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-slate-300 flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      {selectedApplication.resumeFilename}
+                    </p>
+                    {selectedApplication.resumeId && (
+                      <button
+                        onClick={() => handleViewResume(selectedApplication)}
+                        className="px-3 py-1 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm font-medium flex items-center gap-1"
+                      >
+                        <Eye className="w-4 h-4" />
+                        View Resume
+                      </button>
+                    )}
+                  </div>
                 </div>
                 
                 <div>
@@ -381,6 +434,60 @@ export default function JobApplications() {
                     <p className="text-slate-300 bg-slate-900/50 p-4 rounded-lg whitespace-pre-wrap">
                       {selectedApplication.coverLetter}
                     </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Resume Preview Modal */}
+        {selectedResume && (
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl max-w-6xl w-full h-[90vh] flex flex-col">
+              <div className="p-4 border-b border-slate-700 flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-bold text-white">{selectedResume.resumeFilename || 'Resume'}</h2>
+                  <p className="text-slate-400 text-sm">{selectedResume.applicantName || 'Anonymous'}</p>
+                </div>
+                <button
+                  onClick={handleClosePreview}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-hidden bg-slate-900">
+                {loadingPreview ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : selectedResume.resumeFilename?.toLowerCase().endsWith('.pdf') ? (
+                  <iframe
+                    src={previewUrl ? `${previewUrl}#toolbar=0&navpanes=0&view=FitH` : ''}
+                    className="w-full h-full"
+                    title="Resume Preview"
+                    style={{ border: 'none' }}
+                  />
+                ) : selectedResume.resumeFilename?.toLowerCase().match(/\.(docx?|doc)$/) ? (
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <FileText className="w-16 h-16 text-slate-600 mb-4" />
+                    <p className="text-slate-300 mb-4">Word documents cannot be previewed directly in browser</p>
+                    <a
+                      href={previewUrl}
+                      download={selectedResume.resumeFilename}
+                      className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors inline-flex items-center gap-2"
+                    >
+                      <Download className="w-5 h-5" />
+                      Download to View
+                    </a>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-center">
+                      <FileText className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                      <p className="text-slate-400">Preview not available for this file type</p>
+                    </div>
                   </div>
                 )}
               </div>

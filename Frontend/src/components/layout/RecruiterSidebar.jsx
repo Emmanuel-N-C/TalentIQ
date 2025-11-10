@@ -23,7 +23,7 @@ export default function RecruiterSidebar() {
       { name: 'All Applications', icon: ClipboardList, href: `/${userRole}/applications` },
     ],
     insights: [
-      { name: 'Shortlisted Candidates', icon: UserCheck, href: `/${userRole}/shortlisted` },
+      { name: 'Shortlisted', icon: UserCheck, href: `/${userRole}/shortlisted` },
     ],
     account: [
       { name: 'Company Profile', icon: Building2, href: `/${userRole}/company` },

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { getAllJobs } from '../../api/jobs';
 import { saveMatch } from '../../api/matches';
-import { getUserResumes } from '../../api/resumes';
+import { getUserResumes, uploadResume } from '../../api/resumes';
 import { applyToJob, getMyApplications } from '../../api/applications';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, MapPin, Clock, Bookmark, Send, X, Search, Filter } from 'lucide-react';
+import { Briefcase, MapPin, Clock, Bookmark, Send, X, Search, Filter, FileText, Upload, Plus } from 'lucide-react';
 
 export default function BrowseJobs() {
   const [jobs, setJobs] = useState([]);
@@ -18,6 +18,13 @@ export default function BrowseJobs() {
   const [applying, setApplying] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [experienceFilter, setExperienceFilter] = useState('ALL');
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [jobToApply, setJobToApply] = useState(null);
+  const [userResumes, setUserResumes] = useState([]);
+  const [selectedResumeId, setSelectedResumeId] = useState(null);
+  const [coverLetter, setCoverLetter] = useState('');
+  const [uploadingResume, setUploadingResume] = useState(false);
+  const [showUploadForm, setShowUploadForm] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,7 +65,11 @@ export default function BrowseJobs() {
       ]);
       setJobs(jobsData);
       setFilteredJobs(jobsData);
+      setUserResumes(resumesData);
       setHasResume(resumesData.length > 0);
+      if (resumesData.length > 0) {
+        setSelectedResumeId(resumesData[0].id);
+      }
       
       const appliedIds = new Set(
         applicationsData
@@ -109,8 +120,8 @@ export default function BrowseJobs() {
     setSelectedJob(job);
   };
 
-  const handleApply = async (jobId) => {
-    if (appliedJobIds.has(jobId)) {
+  const openApplicationModal = async (job) => {
+    if (appliedJobIds.has(job.id)) {
       toast.error('You have already applied to this job');
       return;
     }
@@ -121,24 +132,76 @@ export default function BrowseJobs() {
       return;
     }
 
+    // Refresh resumes list
+    try {
+      const resumesData = await getUserResumes();
+      setUserResumes(resumesData);
+      if (resumesData.length > 0 && !selectedResumeId) {
+        setSelectedResumeId(resumesData[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading resumes:', error);
+    }
+
+    setJobToApply(job);
+    setCoverLetter('');
+    setShowApplicationModal(true);
+    setShowUploadForm(false);
+  };
+
+  const handleResumeUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      setUploadingResume(true);
+      const uploadedResume = await uploadResume(file, (progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        console.log('Upload progress:', percentCompleted);
+      });
+
+      toast.success('Resume uploaded successfully!');
+      
+      // Refresh resumes list
+      const resumesData = await getUserResumes();
+      setUserResumes(resumesData);
+      setSelectedResumeId(uploadedResume.id);
+      setHasResume(true);
+      setShowUploadForm(false);
+    } catch (error) {
+      console.error('Error uploading resume:', error);
+      toast.error('Failed to upload resume');
+    } finally {
+      setUploadingResume(false);
+    }
+  };
+
+  const handleSubmitApplication = async () => {
+    if (!selectedResumeId) {
+      toast.error('Please select a resume');
+      return;
+    }
+
     try {
       setApplying(true);
-      const resumesData = await getUserResumes();
       await applyToJob({
-        jobId: jobId,
-        resumeId: resumesData[0].id
+        jobId: jobToApply.id,
+        resumeId: selectedResumeId,
+        coverLetter: coverLetter
       });
       
-      setAppliedJobIds(prev => new Set([...prev, jobId]));
+      setAppliedJobIds(prev => new Set([...prev, jobToApply.id]));
       toast.success('Application submitted successfully! ✅');
+      setShowApplicationModal(false);
       setSelectedJob(null);
+      setCoverLetter('');
     } catch (error) {
       console.error('Error applying:', error);
       const errorMessage = error.response?.data?.message || error.response?.data || error.message;
       
       if (errorMessage && errorMessage.includes('already applied')) {
         toast.error('You have already applied to this job');
-        setAppliedJobIds(prev => new Set([...prev, jobId]));
+        setAppliedJobIds(prev => new Set([...prev, jobToApply.id]));
       } else {
         toast.error(errorMessage || 'Failed to apply to job');
       }
@@ -312,7 +375,7 @@ export default function BrowseJobs() {
                   
                   {!appliedJobIds.has(job.id) ? (
                     <button
-                      onClick={() => handleApply(job.id)}
+                      onClick={() => openApplicationModal(job)}
                       disabled={applying}
                       className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                     >
@@ -383,12 +446,15 @@ export default function BrowseJobs() {
                 <div className="flex gap-4 pt-4 border-t border-slate-700">
                   {!appliedJobIds.has(selectedJob.id) ? (
                     <button
-                      onClick={() => handleApply(selectedJob.id)}
+                      onClick={() => {
+                        setSelectedJob(null);
+                        openApplicationModal(selectedJob);
+                      }}
                       disabled={applying}
                       className="flex-1 bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                     >
                       <Send className="w-5 h-5" />
-                      {applying ? 'Applying...' : 'Apply Now'}
+                      Apply Now
                     </button>
                   ) : (
                     <button
@@ -403,6 +469,134 @@ export default function BrowseJobs() {
                     className="px-6 py-3 border-2 border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 font-medium transition-colors"
                   >
                     Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Application Modal */}
+        {showApplicationModal && jobToApply && (
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Apply to {jobToApply.title}</h2>
+                  <p className="text-slate-400 text-sm">{jobToApply.company}</p>
+                </div>
+                <button
+                  onClick={() => setShowApplicationModal(false)}
+                  className="text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                {/* Resume Selection */}
+                <div>
+                  <h3 className="font-semibold text-lg mb-3 text-blue-400 flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Select Resume
+                  </h3>
+                  
+                  {userResumes.length > 0 && !showUploadForm ? (
+                    <div className="space-y-3">
+                      {userResumes.map((resume) => (
+                        <div
+                          key={resume.id}
+                          onClick={() => setSelectedResumeId(resume.id)}
+                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                            selectedResumeId === resume.id
+                              ? 'border-blue-500 bg-blue-500/10'
+                              : 'border-slate-700 hover:border-slate-600 bg-slate-900/50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <FileText className="w-5 h-5 text-blue-400" />
+                            <div className="flex-1">
+                              <p className="font-medium text-white">{resume.filename}</p>
+                              <p className="text-sm text-slate-400">
+                                Uploaded {new Date(resume.uploadedAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            {selectedResumeId === resume.id && (
+                              <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                                <span className="text-white text-xs">✓</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <button
+                        onClick={() => setShowUploadForm(true)}
+                        className="w-full p-4 border-2 border-dashed border-slate-600 hover:border-blue-500 rounded-lg text-slate-400 hover:text-blue-400 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Plus className="w-5 h-5" />
+                        Upload New Resume
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block">
+                        <div className="border-2 border-dashed border-slate-600 hover:border-blue-500 rounded-lg p-8 text-center cursor-pointer transition-all">
+                          <Upload className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                          <p className="text-slate-300 font-medium mb-1">
+                            {uploadingResume ? 'Uploading...' : 'Click to upload resume'}
+                          </p>
+                          <p className="text-sm text-slate-400">PDF, DOCX, or DOC (Max 5MB)</p>
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx"
+                            onChange={handleResumeUpload}
+                            disabled={uploadingResume}
+                            className="hidden"
+                          />
+                        </div>
+                      </label>
+                      {userResumes.length > 0 && (
+                        <button
+                          onClick={() => setShowUploadForm(false)}
+                          className="mt-3 text-blue-400 hover:text-blue-300 text-sm"
+                        >
+                          ← Use existing resume
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Cover Letter */}
+                <div>
+                  <h3 className="font-semibold text-lg mb-3 text-blue-400">Cover Letter (Optional)</h3>
+                  <textarea
+                    value={coverLetter}
+                    onChange={(e) => setCoverLetter(e.target.value)}
+                    placeholder="Write a brief cover letter explaining why you're a great fit for this role..."
+                    rows={6}
+                    className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none"
+                  />
+                  <p className="text-xs text-slate-400 mt-2">{coverLetter.length} characters</p>
+                </div>
+
+                {/* Submit Button */}
+                <div className="flex gap-4 pt-4 border-t border-slate-700">
+                  <button
+                    onClick={handleSubmitApplication}
+                    disabled={applying || !selectedResumeId || uploadingResume}
+                    className="flex-1 bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Send className="w-5 h-5" />
+                    {applying ? 'Submitting...' : 'Submit Application'}
+                  </button>
+                  <button
+                    onClick={() => setShowApplicationModal(false)}
+                    disabled={applying}
+                    className="px-6 py-3 border-2 border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 font-medium transition-colors disabled:opacity-50"
+                  >
+                    Cancel
                   </button>
                 </div>
               </div>
