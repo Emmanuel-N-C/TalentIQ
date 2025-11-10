@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getJobById } from '../../api/jobs';
 import { getJobStats } from '../../api/applications';
+import { getJobById } from '../../api/jobs';
 import toast from 'react-hot-toast';
+import { BarChart3, TrendingUp, Users, Clock, CheckCircle, XCircle, ArrowLeft, Eye, FileText } from 'lucide-react';
 
 export default function JobStats() {
   const { jobId } = useParams();
   const navigate = useNavigate();
-  const [job, setJob] = useState(null);
   const [stats, setStats] = useState(null);
+  const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,8 +27,7 @@ export default function JobStats() {
       setStats(statsData);
     } catch (error) {
       console.error('Error fetching stats:', error);
-      toast.error('Failed to load statistics');
-      navigate('/recruiter/jobs');
+      toast.error('Failed to load job statistics');
     } finally {
       setLoading(false);
     }
@@ -35,259 +35,143 @@ export default function JobStats() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
+  const statCards = [
+    {
+      title: 'Total Applications',
+      value: stats?.totalApplications || 0,
+      icon: FileText,
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-500/10',
+      borderColor: 'border-blue-500/30'
+    },
+    {
+      title: 'Pending Review',
+      value: stats?.pendingApplications || 0,
+      icon: Clock,
+      color: 'text-yellow-400',
+      bgColor: 'bg-yellow-500/10',
+      borderColor: 'border-yellow-500/30'
+    },
+    {
+      title: 'Shortlisted',
+      value: stats?.shortlistedApplications || 0,
+      icon: CheckCircle,
+      color: 'text-purple-400',
+      bgColor: 'bg-purple-500/10',
+      borderColor: 'border-purple-500/30'
+    },
+    {
+      title: 'Rejected',
+      value: stats?.rejectedApplications || 0,
+      icon: XCircle,
+      color: 'text-red-400',
+      bgColor: 'bg-red-500/10',
+      borderColor: 'border-red-500/30'
+    }
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <button
-        onClick={() => navigate('/recruiter/jobs')}
-        className="text-primary-600 hover:text-primary-700 mb-4"
-      >
-        ← Back to My Jobs
-      </button>
-
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">{job?.title}</h1>
-        <p className="text-gray-600 mt-1">{job?.company}</p>
-      </div>
-
-      {/* Total Applications */}
-      <div className="bg-gradient-to-r from-primary-500 to-primary-600 text-white p-8 rounded-lg shadow-lg mb-6">
-        <h2 className="text-2xl font-bold mb-2 opacity-90">Total Applications</h2>
-        <div className="text-7xl font-bold">
-          {stats?.totalApplications || 0}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <button
+            onClick={() => navigate('/recruiter/jobs')}
+            className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to My Jobs
+          </button>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2 flex items-center gap-3">
+            <BarChart3 className="w-10 h-10 text-purple-400" />
+            Job Statistics
+          </h1>
+          <p className="text-slate-400">{job?.title} at {job?.company}</p>
         </div>
-        <p className="text-primary-100 mt-2 text-lg">Total candidates applied to this position</p>
-      </div>
 
-      {/* Application Status Breakdown */}
-      <div className="bg-white p-8 rounded-lg shadow-md mb-6">
-        <h2 className="text-2xl font-bold mb-6">Applications by Status</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Pending */}
-          <div className="bg-yellow-50 p-6 rounded-lg border-2 border-yellow-200 hover:shadow-lg transition">
-            <div className="text-5xl font-bold text-yellow-700">
-              {stats?.pendingApplications || 0}
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {statCards.map((stat, index) => (
+            <div
+              key={index}
+              className={`bg-slate-800/50 backdrop-blur-sm border ${stat.borderColor} rounded-xl p-6`}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`${stat.bgColor} p-3 rounded-lg`}>
+                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                </div>
+              </div>
+              <div>
+                <p className="text-slate-400 text-sm mb-1">{stat.title}</p>
+                <p className="text-3xl font-bold">{stat.value}</p>
+              </div>
             </div>
-            <div className="text-yellow-800 font-medium mt-2 text-lg">⏳ Pending Review</div>
-            <div className="text-sm text-yellow-600 mt-1">
-              {stats?.totalApplications > 0 
-                ? `${Math.round((stats?.pendingApplications / stats?.totalApplications) * 100)}%`
-                : '0%'}
-            </div>
-          </div>
+          ))}
+        </div>
 
-          {/* Reviewing */}
-          <div className="bg-blue-50 p-6 rounded-lg border-2 border-blue-200 hover:shadow-lg transition">
-            <div className="text-5xl font-bold text-blue-700">
-              {stats?.reviewingApplications || 0}
+        {/* Additional Info */}
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <TrendingUp className="w-6 h-6 text-green-400" />
+            Application Breakdown
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="bg-slate-900/50 rounded-lg p-4">
+              <p className="text-slate-400 text-sm mb-1">Acceptance Rate</p>
+              <p className="text-2xl font-bold text-green-400">
+                {stats?.totalApplications > 0
+                  ? Math.round(((stats?.acceptedApplications || 0) / stats?.totalApplications) * 100)
+                  : 0}%
+              </p>
             </div>
-            <div className="text-blue-800 font-medium mt-2 text-lg">👀 Under Review</div>
-            <div className="text-sm text-blue-600 mt-1">
-              {stats?.totalApplications > 0 
-                ? `${Math.round((stats?.reviewingApplications / stats?.totalApplications) * 100)}%`
-                : '0%'}
+            <div className="bg-slate-900/50 rounded-lg p-4">
+              <p className="text-slate-400 text-sm mb-1">Rejection Rate</p>
+              <p className="text-2xl font-bold text-red-400">
+                {stats?.totalApplications > 0
+                  ? Math.round(((stats?.rejectedApplications || 0) / stats?.totalApplications) * 100)
+                  : 0}%
+              </p>
             </div>
-          </div>
-
-          {/* Shortlisted */}
-          <div className="bg-purple-50 p-6 rounded-lg border-2 border-purple-200 hover:shadow-lg transition">
-            <div className="text-5xl font-bold text-purple-700">
-              {stats?.shortlistedApplications || 0}
+            <div className="bg-slate-900/50 rounded-lg p-4">
+              <p className="text-slate-400 text-sm mb-1">Interviewed</p>
+              <p className="text-2xl font-bold text-indigo-400">{stats?.interviewedApplications || 0}</p>
             </div>
-            <div className="text-purple-800 font-medium mt-2 text-lg">⭐ Shortlisted</div>
-            <div className="text-sm text-purple-600 mt-1">
-              {stats?.totalApplications > 0 
-                ? `${Math.round((stats?.shortlistedApplications / stats?.totalApplications) * 100)}%`
-                : '0%'}
-            </div>
-          </div>
-
-          {/* Interviewed */}
-          <div className="bg-indigo-50 p-6 rounded-lg border-2 border-indigo-200 hover:shadow-lg transition">
-            <div className="text-5xl font-bold text-indigo-700">
-              {stats?.interviewedApplications || 0}
-            </div>
-            <div className="text-indigo-800 font-medium mt-2 text-lg">🎤 Interviewed</div>
-            <div className="text-sm text-indigo-600 mt-1">
-              {stats?.totalApplications > 0 
-                ? `${Math.round((stats?.interviewedApplications / stats?.totalApplications) * 100)}%`
-                : '0%'}
-            </div>
-          </div>
-
-          {/* Accepted */}
-          <div className="bg-green-50 p-6 rounded-lg border-2 border-green-200 hover:shadow-lg transition">
-            <div className="text-5xl font-bold text-green-700">
-              {stats?.acceptedApplications || 0}
-            </div>
-            <div className="text-green-800 font-medium mt-2 text-lg">✅ Accepted</div>
-            <div className="text-sm text-green-600 mt-1">
-              {stats?.totalApplications > 0 
-                ? `${Math.round((stats?.acceptedApplications / stats?.totalApplications) * 100)}%`
-                : '0%'}
-            </div>
-          </div>
-
-          {/* Rejected */}
-          <div className="bg-red-50 p-6 rounded-lg border-2 border-red-200 hover:shadow-lg transition">
-            <div className="text-5xl font-bold text-red-700">
-              {stats?.rejectedApplications || 0}
-            </div>
-            <div className="text-red-800 font-medium mt-2 text-lg">❌ Rejected</div>
-            <div className="text-sm text-red-600 mt-1">
-              {stats?.totalApplications > 0 
-                ? `${Math.round((stats?.rejectedApplications / stats?.totalApplications) * 100)}%`
-                : '0%'}
-            </div>
-          </div>
-
-          {/* Views (placeholder) */}
-          <div className="bg-gray-50 p-6 rounded-lg border-2 border-gray-200">
-            <div className="text-5xl font-bold text-gray-700">
-              {stats?.totalViews || 0}
-            </div>
-            <div className="text-gray-800 font-medium mt-2 text-lg">👁️ Total Views</div>
-            <div className="text-sm text-gray-600 mt-1">Coming soon</div>
           </div>
         </div>
-      </div>
 
-      {/* Progress Bar Visualization */}
-      {stats?.totalApplications > 0 && (
-        <div className="bg-white p-8 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold mb-6">Application Pipeline</h2>
+        {/* Job Details */}
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <FileText className="w-6 h-6 text-blue-400" />
+            Job Details
+          </h2>
           <div className="space-y-4">
-            {/* Pending */}
-            {stats.pendingApplications > 0 && (
-              <div>
-                <div className="flex justify-between mb-2">
-                  <span className="font-medium text-yellow-700">⏳ Pending</span>
-                  <span className="text-gray-600 font-semibold">{stats.pendingApplications}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-6">
-                  <div
-                    className="bg-yellow-500 h-6 rounded-full transition-all flex items-center justify-end pr-2 text-white text-sm font-bold"
-                    style={{ width: `${(stats.pendingApplications / stats.totalApplications) * 100}%` }}
-                  >
-                    {Math.round((stats.pendingApplications / stats.totalApplications) * 100)}%
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Reviewing */}
-            {stats.reviewingApplications > 0 && (
-              <div>
-                <div className="flex justify-between mb-2">
-                  <span className="font-medium text-blue-700">👀 Reviewing</span>
-                  <span className="text-gray-600 font-semibold">{stats.reviewingApplications}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-6">
-                  <div
-                    className="bg-blue-500 h-6 rounded-full transition-all flex items-center justify-end pr-2 text-white text-sm font-bold"
-                    style={{ width: `${(stats.reviewingApplications / stats.totalApplications) * 100}%` }}
-                  >
-                    {Math.round((stats.reviewingApplications / stats.totalApplications) * 100)}%
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Shortlisted */}
-            {stats.shortlistedApplications > 0 && (
-              <div>
-                <div className="flex justify-between mb-2">
-                  <span className="font-medium text-purple-700">⭐ Shortlisted</span>
-                  <span className="text-gray-600 font-semibold">{stats.shortlistedApplications}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-6">
-                  <div
-                    className="bg-purple-500 h-6 rounded-full transition-all flex items-center justify-end pr-2 text-white text-sm font-bold"
-                    style={{ width: `${(stats.shortlistedApplications / stats.totalApplications) * 100}%` }}
-                  >
-                    {Math.round((stats.shortlistedApplications / stats.totalApplications) * 100)}%
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Interviewed */}
-            {stats.interviewedApplications > 0 && (
-              <div>
-                <div className="flex justify-between mb-2">
-                  <span className="font-medium text-indigo-700">🎤 Interviewed</span>
-                  <span className="text-gray-600 font-semibold">{stats.interviewedApplications}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-6">
-                  <div
-                    className="bg-indigo-500 h-6 rounded-full transition-all flex items-center justify-end pr-2 text-white text-sm font-bold"
-                    style={{ width: `${(stats.interviewedApplications / stats.totalApplications) * 100}%` }}
-                  >
-                    {Math.round((stats.interviewedApplications / stats.totalApplications) * 100)}%
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Accepted */}
-            {stats.acceptedApplications > 0 && (
-              <div>
-                <div className="flex justify-between mb-2">
-                  <span className="font-medium text-green-700">✅ Accepted</span>
-                  <span className="text-gray-600 font-semibold">{stats.acceptedApplications}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-6">
-                  <div
-                    className="bg-green-500 h-6 rounded-full transition-all flex items-center justify-end pr-2 text-white text-sm font-bold"
-                    style={{ width: `${(stats.acceptedApplications / stats.totalApplications) * 100}%` }}
-                  >
-                    {Math.round((stats.acceptedApplications / stats.totalApplications) * 100)}%
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Rejected */}
-            {stats.rejectedApplications > 0 && (
-              <div>
-                <div className="flex justify-between mb-2">
-                  <span className="font-medium text-red-700">❌ Rejected</span>
-                  <span className="text-gray-600 font-semibold">{stats.rejectedApplications}</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-6">
-                  <div
-                    className="bg-red-500 h-6 rounded-full transition-all flex items-center justify-end pr-2 text-white text-sm font-bold"
-                    style={{ width: `${(stats.rejectedApplications / stats.totalApplications) * 100}%` }}
-                  >
-                    {Math.round((stats.rejectedApplications / stats.totalApplications) * 100)}%
-                  </div>
-                </div>
-              </div>
-            )}
+            <div>
+              <p className="text-slate-400 text-sm mb-1">Position</p>
+              <p className="text-lg font-semibold">{job?.title}</p>
+            </div>
+            <div>
+              <p className="text-slate-400 text-sm mb-1">Company</p>
+              <p className="text-lg font-semibold">{job?.company}</p>
+            </div>
+            <div>
+              <p className="text-slate-400 text-sm mb-1">Experience Level</p>
+              <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg text-sm font-medium border border-blue-500/30">
+                {job?.experienceLevel}
+              </span>
+            </div>
+            <div>
+              <p className="text-slate-400 text-sm mb-1">Posted On</p>
+              <p className="text-slate-300">{new Date(job?.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+            </div>
           </div>
         </div>
-      )}
-
-      {/* Action Button */}
-      <div className="mt-6 flex gap-4">
-        <button
-          onClick={() => navigate(`/recruiter/jobs/${jobId}/applications`)}
-          className="bg-primary-600 text-white px-8 py-4 rounded-lg hover:bg-primary-700 font-semibold text-lg shadow-md hover:shadow-lg transition"
-        >
-          View All Applications →
-        </button>
-        <button
-          onClick={() => navigate('/recruiter/jobs')}
-          className="bg-gray-200 text-gray-700 px-8 py-4 rounded-lg hover:bg-gray-300 font-semibold text-lg"
-        >
-          Back to My Jobs
-        </button>
       </div>
     </div>
   );

@@ -26,6 +26,8 @@ import CreateJob from './pages/recruiter/CreateJob';
 import EditJob from './pages/recruiter/EditJob';
 import JobApplications from './pages/recruiter/JobApplications';
 import JobStats from './pages/recruiter/JobStats';
+import AllApplications from './pages/recruiter/AllApplications';
+import ShortlistedCandidates from './pages/recruiter/ShortlistedCandidates';
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -36,6 +38,7 @@ import JobManagement from './pages/admin/JobManagement';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import Navbar from './components/layout/Navbar';
 import Sidebar from './components/layout/Sidebar';
+import RecruiterSidebar from './components/layout/RecruiterSidebar';
 
 // Layout wrapper component for authenticated users
 function AuthenticatedLayout({ children }) {
@@ -52,8 +55,8 @@ function AuthenticatedLayout({ children }) {
   if (showNewLayout) {
     return (
       <div className="flex min-h-screen bg-slate-900">
-        {/* Sidebar - only for authenticated users */}
-        <Sidebar />
+        {/* Sidebar - conditionally render based on user role */}
+        {user?.role === 'recruiter' ? <RecruiterSidebar /> : <Sidebar />}
         
         <div className="flex-1 flex flex-col">
           {/* New Navbar */}
@@ -115,6 +118,8 @@ function App() {
                 <Route path="jobs/edit/:id" element={<EditJob />} />
                 <Route path="jobs/:jobId/applications" element={<JobApplications />} />
                 <Route path="jobs/:jobId/stats" element={<JobStats />} />
+                <Route path="applications" element={<AllApplications />} />
+                <Route path="shortlisted" element={<ShortlistedCandidates />} />
               </Route>
               
               {/* Admin Routes */}
