@@ -44,6 +44,9 @@ public class AuthService {
     private OtpService otpService;
 
     @Autowired
+    private EmailValidationService emailValidationService;
+
+    @Autowired
     private OAuthService oAuthService;
 
     private static final int MAX_FAILED_ATTEMPTS = 5;
@@ -53,6 +56,16 @@ public class AuthService {
      */
     @Transactional
     public Map<String, String> register(RegisterRequest request) {
+        // Validate email format
+        if (!emailValidationService.isValidEmailFormat(request.getEmail())) {
+            throw new RuntimeException("Invalid email format");
+        }
+
+        // Validate email domain MX records
+        if (!emailValidationService.hasValidMXRecords(request.getEmail())) {
+            throw new RuntimeException("Invalid or unreachable email domain");
+        }
+
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
