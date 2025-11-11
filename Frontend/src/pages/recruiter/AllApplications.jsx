@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getAllRecruiterApplications, updateApplicationStatus } from '../../api/applications';
-import { getResumeFileBlobForRecruiter } from '../../api/resumes';  // ✅ FIXED: Changed from getResumeFileBlob
+import { getResumeFileBlobForRecruiter } from '../../api/resumes';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
-import { FileText, Eye, CheckCircle, XCircle, Clock, Users, Mail, Briefcase, ArrowLeft, X, Download } from 'lucide-react';
+import { FileText, Eye, CheckCircle, XCircle, Clock, Users, Mail, Briefcase, ArrowLeft, X, Download, MapPin, Phone } from 'lucide-react';
 
 export default function AllApplications() {
   const { user } = useAuth();
@@ -93,7 +93,7 @@ export default function AllApplications() {
     setLoadingPreview(true);
     
     try {
-      const blobUrl = await getResumeFileBlobForRecruiter(application.resumeId);  // ✅ FIXED
+      const blobUrl = await getResumeFileBlobForRecruiter(application.resumeId);
       setPreviewUrl(blobUrl);
     } catch (error) {
       console.error('Error loading resume:', error);
@@ -151,6 +151,33 @@ export default function AllApplications() {
   const getStatusCount = (status) => {
     if (status === 'ALL') return applications.length;
     return applications.filter(app => app.status === status).length;
+  };
+
+  // Helper component for profile picture with fallback
+  const ProfilePicture = ({ application, size = 'md' }) => {
+    const [imageError, setImageError] = useState(false);
+    const sizeClasses = {
+      sm: 'w-10 h-10 text-base',
+      md: 'w-12 h-12 text-lg',
+      lg: 'w-20 h-20 text-2xl',
+    };
+
+    if (!application.userProfilePicturePath || imageError) {
+      return (
+        <div className={`${sizeClasses[size]} bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center font-bold`}>
+          {application.userName?.charAt(0) || application.userEmail?.charAt(0) || 'A'}
+        </div>
+      );
+    }
+
+    return (
+      <img
+        src={`http://localhost:8080/api/user/profile-picture/${application.userId}`}
+        alt={application.userName || 'Applicant'}
+        className={`${sizeClasses[size]} rounded-full object-cover border-2 border-blue-500`}
+        onError={() => setImageError(true)}
+      />
+    );
   };
 
   if (loading) {
@@ -240,17 +267,21 @@ export default function AllApplications() {
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-lg font-bold">
-                          {application.applicantName?.charAt(0) || application.applicantEmail?.charAt(0) || 'A'}
-                        </div>
+                        <ProfilePicture application={application} size="md" />
                         <div>
                           <h3 className="text-xl font-bold text-white">
-                            {application.applicantName || application.jobseekerName || 'Anonymous'}
+                            {application.userName || 'Anonymous'}
                           </h3>
                           <div className="flex items-center gap-2 text-slate-400 text-sm">
                             <Mail className="w-3 h-3" />
-                            {application.applicantEmail || application.jobseekerEmail || 'N/A'}
+                            {application.userEmail || 'N/A'}
                           </div>
+                          {application.userLocation && (
+                            <p className="text-slate-500 text-xs flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3 h-3" />
+                              {application.userLocation}
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -262,7 +293,7 @@ export default function AllApplications() {
                         <div className="flex items-center gap-2 text-slate-400">
                           <Clock className="w-4 h-4" />
                           <span className="text-sm">
-                            Applied {formatDate(application.appliedDate || application.createdAt || application.submittedAt)}
+                            Applied {formatDate(application.appliedAt)}
                           </span>
                         </div>
                       </div>
@@ -324,7 +355,7 @@ export default function AllApplications() {
               <div className="p-4 border-b border-slate-700 flex justify-between items-center">
                 <div>
                   <h2 className="text-xl font-bold text-white">{selectedResume.resumeFilename || 'Resume'}</h2>
-                  <p className="text-slate-400 text-sm">{selectedResume.applicantName || selectedResume.jobseekerName || 'Anonymous'}</p>
+                  <p className="text-slate-400 text-sm">{selectedResume.userName || 'Anonymous'}</p>
                 </div>
                 <button
                   onClick={handleClosePreview}

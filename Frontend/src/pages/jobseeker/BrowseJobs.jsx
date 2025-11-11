@@ -3,9 +3,10 @@ import { getAllJobs } from '../../api/jobs';
 import { saveMatch } from '../../api/matches';
 import { getUserResumes, uploadResume } from '../../api/resumes';
 import { applyToJob, getMyApplications } from '../../api/applications';
+import { useAI } from '../../hooks/useAI';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, MapPin, Clock, Bookmark, Send, X, Search, Filter, FileText, Upload, Plus } from 'lucide-react';
+import { Briefcase, MapPin, Clock, Bookmark, Send, X, Search, Filter, FileText, Upload, Plus, Sparkles, Wand2, Loader2, Check } from 'lucide-react';
 
 export default function BrowseJobs() {
   const [jobs, setJobs] = useState([]);
@@ -25,7 +26,14 @@ export default function BrowseJobs() {
   const [coverLetter, setCoverLetter] = useState('');
   const [uploadingResume, setUploadingResume] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
+  
+  // AI Cover Letter States
+  const [showAICoverLetterModal, setShowAICoverLetterModal] = useState(false);
+  const [generatedCoverLetter, setGeneratedCoverLetter] = useState(null);
+  const [generatingCoverLetter, setGeneratingCoverLetter] = useState(false);
+  
   const navigate = useNavigate();
+  const { generateCoverLetter: generateAICoverLetter, loading: aiLoading } = useAI();
 
   useEffect(() => {
     loadData();
@@ -145,6 +153,7 @@ export default function BrowseJobs() {
 
     setJobToApply(job);
     setCoverLetter('');
+    setGeneratedCoverLetter(null);
     setShowApplicationModal(true);
     setShowUploadForm(false);
   };
@@ -195,6 +204,7 @@ export default function BrowseJobs() {
       setShowApplicationModal(false);
       setSelectedJob(null);
       setCoverLetter('');
+      setGeneratedCoverLetter(null);
     } catch (error) {
       console.error('Error applying:', error);
       const errorMessage = error.response?.data?.message || error.response?.data || error.message;
@@ -207,6 +217,55 @@ export default function BrowseJobs() {
       }
     } finally {
       setApplying(false);
+    }
+  };
+
+  // ✨ NEW: Handle AI Cover Letter Generation
+  const handleGenerateCoverLetter = async () => {
+    if (!selectedResumeId) {
+      toast.error('Please select a resume first');
+      return;
+    }
+
+    try {
+      setGeneratingCoverLetter(true);
+      setShowAICoverLetterModal(true);
+      
+      // Get the selected resume
+      const selectedResume = userResumes.find(r => r.id === selectedResumeId);
+      if (!selectedResume) {
+        throw new Error('Selected resume not found');
+      }
+
+      // Get resume text (you might need to fetch the actual content)
+      // For now, using filename as placeholder - you may need to add an API call to get resume content
+      const resumeText = selectedResume.parsedText || `Resume: ${selectedResume.filename}`;
+      
+      const result = await generateAICoverLetter(
+        jobToApply.title,
+        jobToApply.company,
+        jobToApply.description,
+        resumeText,
+        'Applicant' // You can get this from user profile if available
+      );
+      
+      setGeneratedCoverLetter(result);
+      toast.success('Cover letter generated! ✨');
+    } catch (error) {
+      console.error('Error generating cover letter:', error);
+      toast.error(error.message || 'Failed to generate cover letter');
+      setShowAICoverLetterModal(false);
+    } finally {
+      setGeneratingCoverLetter(false);
+    }
+  };
+
+  // ✨ NEW: Use Generated Cover Letter
+  const handleUseCoverLetter = () => {
+    if (generatedCoverLetter) {
+      setCoverLetter(generatedCoverLetter.coverLetter);
+      setShowAICoverLetterModal(false);
+      toast.success('Cover letter added! You can edit it before submitting.');
     }
   };
 
@@ -568,9 +627,19 @@ export default function BrowseJobs() {
                   )}
                 </div>
 
-                {/* Cover Letter */}
+                {/* Cover Letter with AI Help */}
                 <div>
-                  <h3 className="font-semibold text-lg mb-3 text-blue-400">Cover Letter (Optional)</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-lg text-blue-400">Cover Letter (Optional)</h3>
+                    <button
+                      onClick={handleGenerateCoverLetter}
+                      disabled={!selectedResumeId || generatingCoverLetter}
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      AI Help
+                    </button>
+                  </div>
                   <textarea
                     value={coverLetter}
                     onChange={(e) => setCoverLetter(e.target.value)}
@@ -599,6 +668,94 @@ export default function BrowseJobs() {
                     Cancel
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* AI Cover Letter Generation Modal */}
+        {showAICoverLetterModal && (
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                    <Wand2 className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">AI Cover Letter Generator</h2>
+                    <p className="text-slate-400 text-sm">Powered by AI ✨</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAICoverLetterModal(false)}
+                  disabled={generatingCoverLetter}
+                  className="text-slate-400 hover:text-white transition-colors disabled:opacity-50"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="p-6">
+                {generatingCoverLetter ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <Loader2 className="w-12 h-12 text-purple-500 animate-spin mb-4" />
+                    <p className="text-slate-300 text-lg font-medium mb-2">Crafting your cover letter...</p>
+                    <p className="text-slate-400 text-sm">This may take a few seconds</p>
+                  </div>
+                ) : generatedCoverLetter ? (
+                  <div className="space-y-6">
+                    {/* Generated Cover Letter */}
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-semibold text-lg text-blue-400">Your Cover Letter</h3>
+                        <span className="text-xs text-slate-400">{generatedCoverLetter.wordCount} words</span>
+                      </div>
+                      <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-6 text-slate-300 whitespace-pre-wrap leading-relaxed">
+                        {generatedCoverLetter.coverLetter}
+                      </div>
+                    </div>
+
+                    {/* Highlights */}
+                    {generatedCoverLetter.highlights && generatedCoverLetter.highlights.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold text-lg text-blue-400 mb-3">Key Highlights</h3>
+                        <ul className="space-y-2">
+                          {generatedCoverLetter.highlights.map((highlight, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-slate-300">
+                              <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                              <span>{highlight}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-4 pt-4 border-t border-slate-700">
+                      <button
+                        onClick={handleUseCoverLetter}
+                        className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg hover:from-purple-600 hover:to-pink-600 font-medium transition-all flex items-center justify-center gap-2 shadow-lg"
+                      >
+                        <Check className="w-5 h-5" />
+                        Use This Cover Letter
+                      </button>
+                      <button
+                        onClick={handleGenerateCoverLetter}
+                        className="px-6 py-3 border-2 border-purple-500 text-purple-400 rounded-lg hover:bg-purple-500/10 font-medium transition-colors flex items-center gap-2"
+                      >
+                        <Wand2 className="w-5 h-5" />
+                        Regenerate
+                      </button>
+                      <button
+                        onClick={() => setShowAICoverLetterModal(false)}
+                        className="px-6 py-3 border-2 border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 font-medium transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>

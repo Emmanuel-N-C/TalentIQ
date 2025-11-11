@@ -5,7 +5,7 @@ import { getJobById } from '../../api/jobs';
 import { getResumeFileBlobForRecruiter } from '../../api/resumes';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
-import { FileText, Eye, X, CheckCircle, XCircle, Clock, Users, Filter, ArrowLeft, Download } from 'lucide-react';
+import { FileText, Eye, X, CheckCircle, XCircle, Clock, Users, Filter, ArrowLeft, Download, MapPin, Phone, Mail } from 'lucide-react';
 
 export default function JobApplications() {
   const { jobId } = useParams();
@@ -129,6 +129,33 @@ export default function JobApplications() {
   const getStatusCount = (status) => {
     if (status === 'ALL') return applications.length;
     return applications.filter(app => app.status === status).length;
+  };
+
+  // Helper component for profile picture with fallback
+  const ProfilePicture = ({ application, size = 'md' }) => {
+    const [imageError, setImageError] = useState(false);
+    const sizeClasses = {
+      sm: 'w-10 h-10 text-base',
+      md: 'w-12 h-12 text-lg',
+      lg: 'w-20 h-20 text-2xl',
+    };
+
+    if (!application.userProfilePicturePath || imageError) {
+      return (
+        <div className={`${sizeClasses[size]} bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center font-bold`}>
+          {application.userName?.charAt(0) || application.userEmail?.charAt(0) || 'A'}
+        </div>
+      );
+    }
+
+    return (
+      <img
+        src={`http://localhost:8080/api/user/profile-picture/${application.userId}`}
+        alt={application.userName || 'Applicant'}
+        className={`${sizeClasses[size]} rounded-full object-cover border-2 border-blue-500`}
+        onError={() => setImageError(true)}
+      />
+    );
   };
 
   if (loading) {
@@ -272,12 +299,21 @@ export default function JobApplications() {
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-lg font-bold">
-                          {application.applicantName?.charAt(0) || 'A'}
-                        </div>
+                        <ProfilePicture application={application} size="md" />
                         <div>
-                          <h3 className="text-xl font-bold text-white">{application.applicantName || 'Anonymous'}</h3>
-                          <p className="text-slate-400 text-sm">{application.applicantEmail}</p>
+                          <h3 className="text-xl font-bold text-white">
+                            {application.userName || 'Anonymous'}
+                          </h3>
+                          <p className="text-slate-400 text-sm flex items-center gap-1">
+                            <Mail className="w-3 h-3" />
+                            {application.userEmail}
+                          </p>
+                          {application.userLocation && (
+                            <p className="text-slate-500 text-xs flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3 h-3" />
+                              {application.userLocation}
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -386,15 +422,41 @@ export default function JobApplications() {
               </div>
               
               <div className="p-6 space-y-4">
-                <div>
-                  <h3 className="font-semibold text-blue-400 mb-1">Applicant Name</h3>
-                  <p className="text-white text-lg">{selectedApplication.applicantName || 'Anonymous'}</p>
+                {/* Profile Section with Picture */}
+                <div className="flex items-center gap-4 pb-4 border-b border-slate-700">
+                  <ProfilePicture application={selectedApplication} size="lg" />
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold text-white mb-1">
+                      {selectedApplication.userName || 'Anonymous'}
+                    </h3>
+                    <p className="text-slate-400 flex items-center gap-1 mb-1">
+                      <Mail className="w-4 h-4" />
+                      {selectedApplication.userEmail}
+                    </p>
+                    {selectedApplication.userPhone && (
+                      <p className="text-slate-400 text-sm flex items-center gap-1">
+                        <Phone className="w-4 h-4" />
+                        {selectedApplication.userPhone}
+                      </p>
+                    )}
+                    {selectedApplication.userLocation && (
+                      <p className="text-slate-400 text-sm flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        {selectedApplication.userLocation}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                
-                <div>
-                  <h3 className="font-semibold text-blue-400 mb-1">Email</h3>
-                  <p className="text-slate-300">{selectedApplication.applicantEmail}</p>
-                </div>
+
+                {/* Bio Section */}
+                {selectedApplication.userBio && (
+                  <div>
+                    <h3 className="font-semibold text-blue-400 mb-2">About</h3>
+                    <p className="text-slate-300 bg-slate-900/50 p-3 rounded-lg text-sm whitespace-pre-wrap">
+                      {selectedApplication.userBio}
+                    </p>
+                  </div>
+                )}
                 
                 <div>
                   <h3 className="font-semibold text-blue-400 mb-1">Status</h3>
@@ -448,7 +510,7 @@ export default function JobApplications() {
               <div className="p-4 border-b border-slate-700 flex justify-between items-center">
                 <div>
                   <h2 className="text-xl font-bold text-white">{selectedResume.resumeFilename || 'Resume'}</h2>
-                  <p className="text-slate-400 text-sm">{selectedResume.applicantName || 'Anonymous'}</p>
+                  <p className="text-slate-400 text-sm">{selectedResume.userName || 'Anonymous'}</p>
                 </div>
                 <button
                   onClick={handleClosePreview}

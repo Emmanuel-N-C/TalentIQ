@@ -22,7 +22,7 @@ export function useAI() {
       // Remove markdown code blocks if present
       const cleaned = text
         .trim()
-        .replace(/```json\n?/g, '')
+        .replace(/\n?/g, '')
         .replace(/```\n?/g, '')
         .trim();
       
@@ -249,7 +249,7 @@ Analyze now:`,
     }
   };
 
-  // Analyze resume for ATS scoring (NEW FUNCTION)
+  // Analyze resume for ATS scoring
   const analyzeResume = async (resumeText) => {
     setLoading(true);
     setError(null);
@@ -325,9 +325,7 @@ Analyze now:`,
     }
   };
 
-  // ... existing code ...
-
-  // NEW: Optimize resume (generic CV improvement, no job required)
+  // Optimize resume (generic CV improvement, no job required)
   const optimizeResume = async (resumeText) => {
     setLoading(true);
     setError(null);
@@ -407,7 +405,7 @@ Analyze now:`,
     }
   };
 
-  // NEW: ATS Checker (job-specific analysis)
+  // ATS Checker (job-specific analysis)
   const checkATS = async (resumeText, jobDescription) => {
     setLoading(true);
     setError(null);
@@ -476,7 +474,7 @@ Analyze now:`,
     }
   };
 
-    // Generate AI job description
+  // Generate AI job description
   const generateJobDescription = async (title, company, experienceLevel = 'Mid-Level') => {
     setLoading(true);
     setError(null);
@@ -522,6 +520,81 @@ Generate now:`,
     }
   };
 
+  // ✨ NEW: Generate Cover Letter
+  const generateCoverLetter = async (jobTitle, companyName, jobDescription, resumeText, userName = 'Candidate') => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      checkGroqConfig();
+      console.log(`🤖 Generating cover letter using model: ${groqConfig.modelName}`);
+      
+      const { text } = await generateText({
+        model: defaultProviders.analysis,
+        prompt: `You are a professional career coach and cover letter expert. Write a compelling, personalized cover letter for this job application.
+
+Job Title: ${jobTitle}
+Company: ${companyName}
+Applicant Name: ${userName}
+
+JOB DESCRIPTION:
+${jobDescription}
+
+APPLICANT'S RESUME/BACKGROUND:
+${resumeText}
+
+Write a cover letter that:
+1. Is 250-350 words (not too short, not too long)
+2. Shows genuine enthusiasm for the role and company
+3. Highlights 2-3 specific relevant experiences from the resume
+4. Connects the applicant's skills to the job requirements
+5. Demonstrates knowledge of what the company/role needs
+6. Sounds professional but authentic, not overly formal or robotic
+7. Includes specific examples, not generic statements
+8. Has a strong opening and confident closing
+
+IMPORTANT RULES:
+- DO use first person ("I", "my") 
+- DO be specific about skills and experiences
+- DO connect resume experiences to job requirements
+- DON'T use placeholder text like [Your Name] or [Company]
+- DON'T be overly flattering or use clichés
+- DON'T make up experiences not in the resume
+- DON'T sound like it was written by AI (avoid "I am writing to express my interest")
+
+Structure:
+- Opening: Hook that shows you understand the role
+- Body (2-3 paragraphs): Relevant experiences and skills
+- Closing: Confident call to action
+
+IMPORTANT: Return ONLY valid JSON with NO markdown formatting:
+
+{
+  "coverLetter": "The complete cover letter text as a single string. Use \\n\\n for paragraph breaks. Do NOT include 'Dear Hiring Manager' or signature - just the body paragraphs.",
+  "highlights": [
+    "Key point 1 mentioned in the letter",
+    "Key point 2 mentioned in the letter",
+    "Key point 3 mentioned in the letter"
+  ],
+  "tone": "professional",
+  "wordCount": 320
+}
+
+Generate now:`,
+      });
+      
+      console.log('✅ Received cover letter from Groq');
+      const result = parseAIResponse(text);
+      
+      console.log(`📝 Generated cover letter: ${result.wordCount} words`);
+      return result;
+    } catch (err) {
+      throw handleAIError(err, 'generateCoverLetter');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     generateInterviewQuestions,
     evaluateAnswer,
@@ -529,7 +602,8 @@ Generate now:`,
     analyzeResume,
     optimizeResume,
     checkATS,
-    generateJobDescription, 
+    generateJobDescription,
+    generateCoverLetter, // ✅ NEW
     loading,
     error,
   };
