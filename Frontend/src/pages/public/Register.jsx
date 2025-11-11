@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { authAPI } from '../../api/auth';
-import { Sparkles, Mail, Lock, User, Briefcase, Eye, EyeOff } from 'lucide-react';
+import { Sparkles, Mail, Lock, User, Briefcase, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import validator from 'validator';
 
 export default function Register() {
   const [step, setStep] = useState(1); // 1: Register, 2: OTP Verification
@@ -16,20 +17,103 @@ export default function Register() {
   const [otp, setOtp] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [touched, setTouched] = useState({
+    email: false,
+    password: false,
+    fullName: false
+  });
+  const [errors, setErrors] = useState({
+    email: '',
+    password: '',
+    fullName: ''
+  });
+  
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // Validate email
+  const validateEmail = (email) => {
+    if (!email) return 'Email is required';
+    if (!validator.isEmail(email)) return 'Please enter a valid email address';
+    return '';
+  };
+
+  // Validate password
+  const validatePassword = (password) => {
+    if (!password) return 'Password is required';
+    if (password.length < 8) return 'Password must be at least 8 characters';
+    if (!/(?=.*[0-9])/.test(password)) return 'Password must contain at least one number';
+    if (!/(?=.*[a-z])/.test(password)) return 'Password must contain at least one lowercase letter';
+    if (!/(?=.*[A-Z])/.test(password)) return 'Password must contain at least one uppercase letter';
+    if (!/(?=.*[@#$%^&+=!])/.test(password)) return 'Password must contain at least one special character (@#$%^&+=!)';
+    return '';
+  };
+
+  // Validate full name
+  const validateFullName = (fullName) => {
+    if (!fullName || fullName.trim().length === 0) return 'Full name is required';
+    if (fullName.trim().length < 2) return 'Full name must be at least 2 characters';
+    return '';
+  };
+
+  // Real-time validation
+  useEffect(() => {
+    if (touched.email) {
+      setErrors(prev => ({ ...prev, email: validateEmail(formData.email) }));
+    }
+  }, [formData.email, touched.email]);
+
+  useEffect(() => {
+    if (touched.password) {
+      setErrors(prev => ({ ...prev, password: validatePassword(formData.password) }));
+    }
+  }, [formData.password, touched.password]);
+
+  useEffect(() => {
+    if (touched.fullName) {
+      setErrors(prev => ({ ...prev, fullName: validateFullName(formData.fullName) }));
+    }
+  }, [formData.fullName, touched.fullName]);
+
+  const handleBlur = (field) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
+  const isFormValid = () => {
+    return (
+      !errors.email &&
+      !errors.password &&
+      !errors.fullName &&
+      formData.email &&
+      formData.password &&
+      formData.fullName
+    );
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
-    setLoading(true);
-
-    // Password validation
-    const passwordRegex = /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\S+$).{8,}$/;
-    if (!passwordRegex.test(formData.password)) {
-      toast.error('Password must be at least 8 characters with uppercase, lowercase, number, and special character');
-      setLoading(false);
+    
+    // Mark all fields as touched
+    setTouched({ email: true, password: true, fullName: true });
+    
+    // Validate all fields
+    const emailError = validateEmail(formData.email);
+    const passwordError = validatePassword(formData.password);
+    const fullNameError = validateFullName(formData.fullName);
+    
+    setErrors({
+      email: emailError,
+      password: passwordError,
+      fullName: fullNameError
+    });
+    
+    // Stop if any errors
+    if (emailError || passwordError || fullNameError) {
+      toast.error('Please fix all errors before submitting');
       return;
     }
+
+    setLoading(true);
 
     try {
       const response = await authAPI.register(formData);
@@ -37,7 +121,8 @@ export default function Register() {
       setStep(2); // Move to OTP verification
     } catch (error) {
       console.error('Registration error:', error);
-      toast.error(error.response?.data?.message || 'Registration failed');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Registration failed';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -50,7 +135,6 @@ export default function Register() {
     try {
       const response = await authAPI.verifyOtp(formData.email, otp);
       
-      // Transform response similar to login
       const { token, id, email, fullName, role } = response;
       const normalizedRole = role.toLowerCase().replace('_', '');
       
@@ -66,7 +150,7 @@ export default function Register() {
       navigate(`/${user.role}/dashboard`);
     } catch (error) {
       console.error('OTP verification error:', error);
-      toast.error(error.response?.data?.message || 'Invalid OTP');
+      toast.error(error.response?.data?.error || error.response?.data?.message || 'Invalid OTP');
     } finally {
       setLoading(false);
     }
@@ -117,7 +201,7 @@ export default function Register() {
 
           <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 shadow-2xl">
             {step === 1 ? (
-              <form onSubmit={handleRegister} className="space-y-6">
+              <form onSubmit={handleRegister} className="space-y-5">
                 {/* Full Name */}
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">Full Name</label>
@@ -125,13 +209,23 @@ export default function Register() {
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
                       type="text"
-                      required
                       value={formData.fullName}
                       onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      className="w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                      onBlur={() => handleBlur('fullName')}
+                      className={`w-full pl-11 pr-4 py-3 bg-slate-900/50 border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ${
+                        errors.fullName && touched.fullName
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                          : 'border-slate-600 focus:border-purple-500 focus:ring-purple-500/20'
+                      }`}
                       placeholder="John Doe"
                     />
                   </div>
+                  {errors.fullName && touched.fullName && (
+                    <div className="flex items-center gap-1 mt-1.5 animate-fade-in">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-400" />
+                      <p className="text-xs text-red-400">{errors.fullName}</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Email */}
@@ -141,13 +235,23 @@ export default function Register() {
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
                       type="email"
-                      required
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                      onBlur={() => handleBlur('email')}
+                      className={`w-full pl-11 pr-4 py-3 bg-slate-900/50 border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ${
+                        errors.email && touched.email
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                          : 'border-slate-600 focus:border-purple-500 focus:ring-purple-500/20'
+                      }`}
                       placeholder="you@gmail.com"
                     />
                   </div>
+                  {errors.email && touched.email && (
+                    <div className="flex items-center gap-1 mt-1.5 animate-fade-in">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-400" />
+                      <p className="text-xs text-red-400">{errors.email}</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Password */}
@@ -157,11 +261,15 @@ export default function Register() {
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input
                       type={showPassword ? 'text' : 'password'}
-                      required
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="w-full pl-11 pr-12 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
-                      placeholder="********"
+                      onBlur={() => handleBlur('password')}
+                      className={`w-full pl-11 pr-12 py-3 bg-slate-900/50 border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ${
+                        errors.password && touched.password
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                          : 'border-slate-600 focus:border-purple-500 focus:ring-purple-500/20'
+                      }`}
+                      placeholder="••••••••"
                     />
                     <button
                       type="button"
@@ -171,9 +279,16 @@ export default function Register() {
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Must contain uppercase, lowercase, number & special character
-                  </p>
+                  {errors.password && touched.password ? (
+                    <div className="flex items-center gap-1 mt-1.5 animate-fade-in">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-400" />
+                      <p className="text-xs text-red-400">{errors.password}</p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500 mt-1.5">
+                      Must contain uppercase, lowercase, number & special character
+                    </p>
+                  )}
                 </div>
 
                 {/* Role */}
@@ -194,10 +309,17 @@ export default function Register() {
 
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 transition-all shadow-lg"
+                  disabled={loading || !isFormValid()}
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
                 >
-                  {loading ? 'Creating Account...' : 'Create Account'}
+                  {loading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <span>Creating Account...</span>
+                    </div>
+                  ) : (
+                    'Create Account'
+                  )}
                 </button>
               </form>
             ) : (
@@ -253,6 +375,22 @@ export default function Register() {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(-4px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.2s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
