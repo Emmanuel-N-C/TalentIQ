@@ -43,3 +43,6 @@ uploads/resumes/
 # Ignore IntelliJ IDEA project settings
 .idea/
 Backend/.idea/
+
+# Ignore backend env
+.env

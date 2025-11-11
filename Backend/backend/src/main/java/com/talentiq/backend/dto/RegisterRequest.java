@@ -4,6 +4,8 @@ import com.talentiq.backend.model.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public class RegisterRequest {
 
@@ -12,6 +14,11 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank(message = "Password is required")
+    @Size(min = 8, message = "Password must be at least 8 characters")
+    @Pattern(
+            regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=])(?=\\S+$).{8,}$",
+            message = "Password must contain at least one digit, one lowercase, one uppercase, and one special character"
+    )
     private String password;
 
     @NotBlank(message = "Full name is required")
@@ -19,16 +26,6 @@ public class RegisterRequest {
 
     @NotNull(message = "Role is required")
     private Role role;
-
-    public RegisterRequest() {
-    }
-
-    public RegisterRequest(String email, String password, String fullName, Role role) {
-        this.email = email;
-        this.password = password;
-        this.fullName = fullName;
-        this.role = role;
-    }
 
     // Getters and Setters
     public String getEmail() {

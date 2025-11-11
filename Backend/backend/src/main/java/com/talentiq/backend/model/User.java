@@ -20,7 +20,7 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column // Made nullable for OAuth users
     private String password;
 
     @Column(nullable = false)
@@ -45,6 +45,41 @@ public class User implements UserDetails {
     @Column
     private String companyName;
 
+    // ===== NEW FIELDS FOR ENHANCED AUTH =====
+
+    @Column(nullable = false)
+    private Boolean emailVerified = false;
+
+    @Column
+    private String emailVerificationToken;
+
+    @Column
+    private LocalDateTime emailVerificationExpiry;
+
+    @Column
+    private String passwordResetToken;
+
+    @Column
+    private LocalDateTime passwordResetExpiry;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AuthProvider authProvider = AuthProvider.LOCAL;
+
+    @Column
+    private String providerId; // OAuth provider user ID
+
+    @Column(nullable = false)
+    private Boolean accountLocked = false;
+
+    @Column
+    private Integer failedLoginAttempts = 0;
+
+    @Column
+    private LocalDateTime lastLoginAt;
+
+    // ===== END NEW FIELDS =====
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -65,7 +100,8 @@ public class User implements UserDetails {
         updatedAt = LocalDateTime.now();
     }
 
-    // Getters and Setters
+    // ===== GETTERS AND SETTERS =====
+
     public Long getId() {
         return id;
     }
@@ -163,6 +199,87 @@ public class User implements UserDetails {
         this.companyName = companyName;
     }
 
+    // New getters and setters
+    public Boolean getEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(Boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }
+
+    public String getEmailVerificationToken() {
+        return emailVerificationToken;
+    }
+
+    public void setEmailVerificationToken(String emailVerificationToken) {
+        this.emailVerificationToken = emailVerificationToken;
+    }
+
+    public LocalDateTime getEmailVerificationExpiry() {
+        return emailVerificationExpiry;
+    }
+
+    public void setEmailVerificationExpiry(LocalDateTime emailVerificationExpiry) {
+        this.emailVerificationExpiry = emailVerificationExpiry;
+    }
+
+    public String getPasswordResetToken() {
+        return passwordResetToken;
+    }
+
+    public void setPasswordResetToken(String passwordResetToken) {
+        this.passwordResetToken = passwordResetToken;
+    }
+
+    public LocalDateTime getPasswordResetExpiry() {
+        return passwordResetExpiry;
+    }
+
+    public void setPasswordResetExpiry(LocalDateTime passwordResetExpiry) {
+        this.passwordResetExpiry = passwordResetExpiry;
+    }
+
+    public AuthProvider getAuthProvider() {
+        return authProvider;
+    }
+
+    public void setAuthProvider(AuthProvider authProvider) {
+        this.authProvider = authProvider;
+    }
+
+    public String getProviderId() {
+        return providerId;
+    }
+
+    public void setProviderId(String providerId) {
+        this.providerId = providerId;
+    }
+
+    public Boolean getAccountLocked() {
+        return accountLocked;
+    }
+
+    public void setAccountLocked(Boolean accountLocked) {
+        this.accountLocked = accountLocked;
+    }
+
+    public Integer getFailedLoginAttempts() {
+        return failedLoginAttempts;
+    }
+
+    public void setFailedLoginAttempts(Integer failedLoginAttempts) {
+        this.failedLoginAttempts = failedLoginAttempts;
+    }
+
+    public LocalDateTime getLastLoginAt() {
+        return lastLoginAt;
+    }
+
+    public void setLastLoginAt(LocalDateTime lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
+    }
+
     // UserDetails interface methods
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -181,7 +298,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return !accountLocked;
     }
 
     @Override
@@ -191,6 +308,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return emailVerified;
     }
 }
