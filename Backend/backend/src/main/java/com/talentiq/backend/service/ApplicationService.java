@@ -171,14 +171,19 @@ public class ApplicationService {
     }
 
     private ApplicationResponse convertToResponse(Application application) {
+        User applicant = application.getUser();
         return new ApplicationResponse(
                 application.getId(),
                 application.getJob().getId(),
                 application.getJob().getTitle(),
                 application.getJob().getCompany(),
-                application.getUser().getId(),
-                application.getUser().getFullName(),
-                application.getUser().getEmail(),
+                applicant.getId(),
+                applicant.getFullName(),
+                applicant.getEmail(),
+                applicant.getProfilePicturePath(),
+                applicant.getPhone(),
+                applicant.getLocation(),
+                applicant.getBio(),
                 application.getResume().getId(),
                 application.getResume().getFilename(),
                 application.getCoverLetter(),

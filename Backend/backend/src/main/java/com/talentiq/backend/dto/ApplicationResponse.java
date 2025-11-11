@@ -12,6 +12,10 @@ public class ApplicationResponse {
     private Long userId;
     private String userName;
     private String userEmail;
+    private String userProfilePicturePath;
+    private String userPhone;
+    private String userLocation;
+    private String userBio;
     private Long resumeId;
     private String resumeFilename;
     private String coverLetter;
@@ -25,6 +29,8 @@ public class ApplicationResponse {
 
     public ApplicationResponse(Long id, Long jobId, String jobTitle, String jobCompany,
                                Long userId, String userName, String userEmail,
+                               String userProfilePicturePath, String userPhone,
+                               String userLocation, String userBio,
                                Long resumeId, String resumeFilename, String coverLetter,
                                Application.ApplicationStatus status, LocalDateTime appliedAt,
                                LocalDateTime reviewedAt, String recruiterNotes) {
@@ -35,6 +41,10 @@ public class ApplicationResponse {
         this.userId = userId;
         this.userName = userName;
         this.userEmail = userEmail;
+        this.userProfilePicturePath = userProfilePicturePath;
+        this.userPhone = userPhone;
+        this.userLocation = userLocation;
+        this.userBio = userBio;
         this.resumeId = resumeId;
         this.resumeFilename = resumeFilename;
         this.coverLetter = coverLetter;
@@ -155,5 +165,36 @@ public class ApplicationResponse {
 
     public void setRecruiterNotes(String recruiterNotes) {
         this.recruiterNotes = recruiterNotes;
+    }
+    public String getUserProfilePicturePath() {
+        return userProfilePicturePath;
+    }
+
+    public void setUserProfilePicturePath(String userProfilePicturePath) {
+        this.userProfilePicturePath = userProfilePicturePath;
+    }
+
+    public String getUserPhone() {
+        return userPhone;
+    }
+
+    public void setUserPhone(String userPhone) {
+        this.userPhone = userPhone;
+    }
+
+    public String getUserLocation() {
+        return userLocation;
+    }
+
+    public void setUserLocation(String userLocation) {
+        this.userLocation = userLocation;
+    }
+
+    public String getUserBio() {
+        return userBio;
+    }
+
+    public void setUserBio(String userBio) {
+        this.userBio = userBio;
     }
 }
