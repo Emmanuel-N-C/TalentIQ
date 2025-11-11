@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User as UserIcon, Calendar, Shield } from 'lucide-react';
+import { User as UserIcon, Calendar, Shield, AlertCircle } from 'lucide-react';
 import { getCurrentUserProfile } from '../../api/user';
 import { useAuth } from '../../context/AuthContext';
 import ProfilePictureUpload from '../../components/profile/ProfilePictureUpload';
@@ -31,12 +31,12 @@ export default function Profile() {
   };
 
   const handleProfileUpdate = (updatedProfile) => {
-  setProfile(updatedProfile);
-  // Simply pass the updated profile data - let updateUser handle merging
-  updateUser(updatedProfile);
-  // Force navbar refresh by triggering a small state change
-  window.dispatchEvent(new Event('profileUpdated'));
-};
+    setProfile(updatedProfile);
+    // Simply pass the updated profile data - let updateUser handle merging
+    updateUser(updatedProfile);
+    // Force navbar refresh by triggering a small state change
+    window.dispatchEvent(new Event('profileUpdated'));
+  };
 
   if (loading) {
     return (
@@ -45,6 +45,11 @@ export default function Profile() {
       </div>
     );
   }
+
+  // Check if user needs to complete their profile (OAuth users with default name)
+  const needsProfileCompletion = profile?.authProvider && 
+    profile.authProvider !== 'LOCAL' && 
+    (!profile.fullName || profile.fullName === 'User');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
@@ -57,6 +62,21 @@ export default function Profile() {
           </h1>
           <p className="text-slate-400">Manage your personal information and settings</p>
         </div>
+
+        {/* Profile Completion Alert for OAuth Users */}
+        {needsProfileCompletion && (
+          <div className="mb-6 bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-yellow-300 font-medium mb-1">
+                Complete Your Profile
+              </p>
+              <p className="text-slate-300 text-sm">
+                Please update your full name below to complete your profile setup.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Account Info Card */}
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 mb-6">
@@ -108,7 +128,7 @@ export default function Profile() {
               Security & Privacy
             </h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <PasswordChangeForm />
+              <PasswordChangeForm user={profile} />
               <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700">
                 <h4 className="text-white font-semibold mb-3">Security Tips</h4>
                 <ul className="space-y-2 text-sm text-slate-400">

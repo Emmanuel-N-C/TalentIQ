@@ -6,6 +6,8 @@ import apiClient from '../../api/client';
 import { authAPI } from '../../api/auth';
 import { Sparkles, Mail, Lock, ArrowRight, LogIn, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
+import { FcGoogle } from 'react-icons/fc';
+import { FaGithub } from 'react-icons/fa';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -13,9 +15,6 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState(false);
-  const [showRoleDialog, setShowRoleDialog] = useState(false);
-  const [oauthCredential, setOauthCredential] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('JOB_SEEKER');
   
   // Email verification state
   const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
@@ -55,7 +54,7 @@ export default function Login() {
         setShowVerificationPrompt(true);
         toast.error('Please verify your email to continue');
       } else {
-        toast.error(error.response?.data?.error || 'Login failed. Please check your credentials.');
+        toast.error(error.response?.data?.error || error.response?.data?.message || 'Login failed. Please check your credentials.');
       }
     } finally {
       setLoading(false);
@@ -67,8 +66,6 @@ export default function Login() {
     try {
       const response = await authAPI.resendOtp(unverifiedEmail);
       toast.success(response.message || 'OTP sent to your email');
-      
-      // Navigate to verify OTP page
       navigate('/verify-otp', { state: { email: unverifiedEmail } });
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to resend OTP');
@@ -77,33 +74,45 @@ export default function Login() {
     }
   };
 
-  const handleOAuthSuccess = async (credentialResponse) => {
-    setOauthCredential(credentialResponse.credential);
-    setShowRoleDialog(true);
-  };
-
-  const completeOAuthLogin = async () => {
+  const handleGoogleSuccess = async (credentialResponse) => {
     setIsOAuthLoading(true);
     try {
-      const response = await authAPI.oauthLogin(
-        oauthCredential,
-        'GOOGLE',
-        selectedRole
+      // Check if user exists
+      const checkResponse = await authAPI.checkOAuthUser(
+        credentialResponse.credential,
+        'GOOGLE'
       );
-      
-      const { token, id, email, fullName, role } = response;
-      const normalizedRole = role.toLowerCase().replace('_', '');
-      const user = { id, email, name: fullName, role: normalizedRole };
-      
-      login(user, token);
-      toast.success('Login successful!');
-      navigate(`/${user.role}/dashboard`);
+
+      if (checkResponse.exists) {
+        // User exists - proceed with login
+        const loginResponse = await authAPI.oauthLoginExisting(
+          credentialResponse.credential,
+          'GOOGLE'
+        );
+
+        const { token, id, email, fullName, role } = loginResponse;
+        const normalizedRole = role.toLowerCase().replace('_', '');
+        const user = { id, email, name: fullName, role: normalizedRole };
+        
+        login(user, token);
+        toast.success('Login successful!');
+        navigate(`/${user.role}/dashboard`);
+      } else {
+        // New user - redirect to register
+        toast.error('No account found. Please sign up first.');
+        setTimeout(() => navigate('/register'), 1500);
+      }
     } catch (error) {
-      toast.error(error.response?.data?.error || 'OAuth login failed');
+      console.error('Google OAuth error:', error);
+      toast.error(error.response?.data?.error || error.response?.data?.message || 'Google login failed');
     } finally {
       setIsOAuthLoading(false);
-      setShowRoleDialog(false);
     }
+  };
+
+  const handleGitHubLogin = () => {
+    toast.error('GitHub login coming soon!');
+    // TODO: Implement GitHub OAuth flow
   };
 
   return (
@@ -223,7 +232,7 @@ export default function Login() {
                 </div>
                 <Link 
                     to="/forgot-password" 
-                    className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                    className="text-sm text-purple-400 hover:text-purple-300 transition-colors inline-block mt-2"
                   >
                     Forgot password?
                   </Link>
@@ -261,15 +270,34 @@ export default function Login() {
 
             {/* OAuth Buttons */}
             <div className="space-y-3">
-              <GoogleLogin
-                onSuccess={handleOAuthSuccess}
-                onError={() => {
-                  toast.error('Google login failed');
-                }}
-                theme="filled_black"
-                size="large"
-                width="100%"
-              />
+              {/* Google Login */}
+              <div className="relative">
+                {isOAuthLoading ? (
+                  <div className="w-full flex items-center justify-center py-3 bg-slate-700 rounded-lg">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span className="ml-2 text-white">Connecting...</span>
+                  </div>
+                ) : (
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => toast.error('Google login failed')}
+                    theme="filled_black"
+                    size="large"
+                    width="100%"
+                    text="signin_with"
+                  />
+                )}
+              </div>
+
+              {/* GitHub Login */}
+              <button
+                onClick={handleGitHubLogin}
+                disabled={isOAuthLoading}
+                className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 border border-slate-600"
+              >
+                <FaGithub className="w-5 h-5" />
+                <span>Sign in with GitHub</span>
+              </button>
             </div>
 
             {/* Footer */}
@@ -298,83 +326,6 @@ export default function Login() {
           </div>
         </div>
       </div>
-
-      {/* Role Selection Dialog for OAuth */}
-      {showRoleDialog && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-slate-800 border border-slate-700 p-8 rounded-2xl max-w-md w-full mx-4 shadow-2xl">
-            <h3 className="text-2xl font-bold text-white mb-2">Select Your Role</h3>
-            <p className="text-slate-400 mb-6">Choose how you want to use TalentIQ</p>
-            
-            <div className="space-y-3 mb-6">
-              <button
-                onClick={() => setSelectedRole('JOB_SEEKER')}
-                className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
-                  selectedRole === 'JOB_SEEKER'
-                    ? 'border-purple-500 bg-purple-500/10'
-                    : 'border-slate-600 hover:border-slate-500'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    selectedRole === 'JOB_SEEKER' ? 'border-purple-500' : 'border-slate-500'
-                  }`}>
-                    {selectedRole === 'JOB_SEEKER' && (
-                      <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-white font-semibold">Job Seeker</div>
-                    <div className="text-slate-400 text-sm">Find jobs and manage applications</div>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setSelectedRole('RECRUITER')}
-                className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
-                  selectedRole === 'RECRUITER'
-                    ? 'border-purple-500 bg-purple-500/10'
-                    : 'border-slate-600 hover:border-slate-500'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    selectedRole === 'RECRUITER' ? 'border-purple-500' : 'border-slate-500'
-                  }`}>
-                    {selectedRole === 'RECRUITER' && (
-                      <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-white font-semibold">Recruiter</div>
-                    <div className="text-slate-400 text-sm">Post jobs and hire candidates</div>
-                  </div>
-                </div>
-              </button>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowRoleDialog(false);
-                  setOauthCredential(null);
-                }}
-                className="flex-1 px-4 py-3 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={completeOAuthLogin}
-                disabled={isOAuthLoading}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50"
-              >
-                {isOAuthLoading ? 'Completing...' : 'Continue'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

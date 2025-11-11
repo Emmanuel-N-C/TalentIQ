@@ -25,12 +25,30 @@ export const authAPI = {
     return response.data;
   },
 
-  // OAuth Login
-  oauthLogin: async (token, provider, role) => {
-    const response = await apiClient.post('/auth/oauth/login', {
+  // Check if OAuth user exists
+  checkOAuthUser: async (token, provider) => {
+    const response = await apiClient.post('/auth/oauth/check', {
+      token,
+      provider
+    });
+    return response.data;
+  },
+
+  // OAuth Registration (new users)
+  oauthRegister: async (token, provider, role) => {
+    const response = await apiClient.post('/auth/oauth/register', {
       token,
       provider,
       role
+    });
+    return response.data;
+  },
+
+  // OAuth Login (existing users)
+  oauthLoginExisting: async (token, provider) => {
+    const response = await apiClient.post('/auth/oauth/login', {
+      token,
+      provider
     });
     return response.data;
   },

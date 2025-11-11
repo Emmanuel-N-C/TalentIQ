@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Lock, Eye, EyeOff, Check, X } from 'lucide-react';
+import { Lock, Eye, EyeOff, Check, X, AlertCircle } from 'lucide-react';
 import { changePassword } from '../../api/user';
 import toast from 'react-hot-toast';
 
-export default function PasswordChangeForm() {
+export default function PasswordChangeForm({ user }) {
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -15,6 +15,9 @@ export default function PasswordChangeForm() {
     confirm: false
   });
   const [loading, setLoading] = useState(false);
+
+  // Check if user is OAuth user
+  const isOAuthUser = user?.authProvider && user.authProvider !== 'LOCAL';
 
   const passwordStrength = (password) => {
     if (!password) return { strength: 0, label: '', color: '' };
@@ -58,7 +61,7 @@ export default function PasswordChangeForm() {
       setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error) {
       console.error('Error changing password:', error);
-      toast.error(error.response?.data?.error || 'Failed to change password');
+      toast.error(error.response?.data?.message || error.response?.data?.error || 'Failed to change password');
     } finally {
       setLoading(false);
     }
@@ -72,6 +75,37 @@ export default function PasswordChangeForm() {
     setShowPasswords({ ...showPasswords, [field]: !showPasswords[field] });
   };
 
+  // If OAuth user, show message instead of form
+  if (isOAuthUser) {
+    return (
+      <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <Lock className="w-5 h-5 text-blue-400" />
+          Change Password
+        </h3>
+        
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-blue-300 font-medium mb-1">
+              OAuth Account
+            </p>
+            <p className="text-slate-300 text-sm">
+              You signed in with <span className="font-semibold">{user.authProvider}</span>. 
+              Password change is not available for OAuth accounts.
+            </p>
+            {(!user.fullName || user.fullName === 'User') && (
+              <p className="text-yellow-300 text-sm mt-2">
+                💡 Please update your full name to complete your profile.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular password change form for LOCAL users
   return (
     <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
       <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -117,7 +151,6 @@ export default function PasswordChangeForm() {
               onChange={handleChange}
               className="w-full px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
-              minLength={8}
             />
             <button
               type="button"
@@ -129,23 +162,24 @@ export default function PasswordChangeForm() {
           </div>
           {formData.newPassword && (
             <div className="mt-2">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full transition-all ${
-                      strength.strength <= 2 ? 'bg-red-500' :
-                      strength.strength <= 3 ? 'bg-yellow-500' :
-                      strength.strength <= 4 ? 'bg-blue-500' : 'bg-green-500'
-                    }`}
-                    style={{ width: `${(strength.strength / 5) * 100}%` }}
-                  />
-                </div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-slate-400">Password strength:</span>
                 <span className={`text-xs font-medium ${strength.color}`}>
                   {strength.label}
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
-                Use at least 8 characters with uppercase, lowercase, numbers, and symbols
+              <div className="h-1 bg-slate-700 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all ${
+                    strength.strength <= 2 ? 'bg-red-400' :
+                    strength.strength <= 3 ? 'bg-yellow-400' :
+                    strength.strength <= 4 ? 'bg-blue-400' : 'bg-green-400'
+                  }`}
+                  style={{ width: `${(strength.strength / 5) * 100}%` }}
+                />
+              </div>
+              <p className="text-xs text-slate-400 mt-2">
+                Use 8+ characters with uppercase, lowercase, numbers, and symbols
               </p>
             </div>
           )}
@@ -196,4 +230,3 @@ export default function PasswordChangeForm() {
     </div>
   );
 }
-
