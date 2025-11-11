@@ -52,11 +52,27 @@ public class AuthController {
     }
 
     /**
-     * OAuth Login (Google/GitHub)
+     * Check if OAuth user exists (for login/register flow)
+     */
+    @PostMapping("/oauth/check")
+    public ResponseEntity<OAuthCheckResponse> checkOAuthUser(@Valid @RequestBody OAuthCheckRequest request) {
+        return ResponseEntity.ok(authService.checkOAuthUser(request));
+    }
+
+    /**
+     * OAuth Registration (new users)
+     */
+    @PostMapping("/oauth/register")
+    public ResponseEntity<AuthResponse> oauthRegister(@Valid @RequestBody OAuthLoginRequest request) {
+        return ResponseEntity.ok(authService.oauthRegister(request));
+    }
+
+    /**
+     * OAuth Login (existing users)
      */
     @PostMapping("/oauth/login")
-    public ResponseEntity<AuthResponse> oauthLogin(@Valid @RequestBody OAuthLoginRequest request) {
-        return ResponseEntity.ok(authService.oauthLogin(request));
+    public ResponseEntity<AuthResponse> oauthLogin(@Valid @RequestBody OAuthCheckRequest request) {
+        return ResponseEntity.ok(authService.oauthLoginExisting(request));
     }
 
     /**

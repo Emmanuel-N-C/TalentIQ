@@ -2,7 +2,9 @@ package com.talentiq.backend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.talentiq.backend.model.AuthProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.HttpEntity;
@@ -16,31 +18,33 @@ public class OAuthService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @Autowired
+    private GoogleTokenVerifier googleTokenVerifier;
+
+    /**
+     * Verify Google ID token (from Google Identity Services)
+     * Uses local verification instead of calling /userinfo endpoint
+     */
     public OAuthUserInfo verifyGoogleToken(String token) {
         try {
-            String url = "https://www.googleapis.com/oauth2/v3/userinfo";
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(token);
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-
-            ResponseEntity<String> response = restTemplate.exchange(
-                    url, HttpMethod.GET, entity, String.class
-            );
-
-            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            // Use the GoogleTokenVerifier to verify ID token locally
+            GoogleIdToken.Payload payload = googleTokenVerifier.verifyToken(token);
 
             return new OAuthUserInfo(
-                    jsonNode.get("sub").asText(),
-                    jsonNode.get("email").asText(),
-                    jsonNode.get("name").asText(),
-                    jsonNode.has("picture") ? jsonNode.get("picture").asText() : null,
+                    payload.getSubject(),  // Google user ID (sub claim)
+                    payload.getEmail(),
+                    (String) payload.get("name"),
+                    (String) payload.get("picture"),
                     AuthProvider.GOOGLE
             );
         } catch (Exception e) {
-            throw new RuntimeException("Failed to verify Google token: " + e.getMessage());
+            throw new RuntimeException("Failed to verify Google token: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Verify GitHub access token by calling GitHub API
+     */
     public OAuthUserInfo verifyGitHubToken(String token) {
         try {
             String url = "https://api.github.com/user";
@@ -71,6 +75,9 @@ public class OAuthService {
         }
     }
 
+    /**
+     * Fetch GitHub email from emails endpoint (fallback when not in user endpoint)
+     */
     private String fetchGitHubEmail(String token) {
         try {
             String url = "https://api.github.com/user/emails";
@@ -104,6 +111,9 @@ public class OAuthService {
         }
     }
 
+    /**
+     * DTO class for OAuth user information
+     */
     public static class OAuthUserInfo {
         private String providerId;
         private String email;

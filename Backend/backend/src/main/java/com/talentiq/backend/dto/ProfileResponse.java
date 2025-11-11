@@ -8,6 +8,7 @@ public class ProfileResponse {
     private String email;
     private String fullName;
     private String role;
+    private String authProvider;  // NEW: Added to expose auth provider to frontend
     private String profilePicturePath;
     private String profilePictureUrl;
     private String phone;
@@ -21,9 +22,9 @@ public class ProfileResponse {
     }
 
     public ProfileResponse(Long id, String email, String fullName, String role,
-                          String profilePicturePath, String profilePictureUrl,
-                          String phone, String location, String bio, String companyName,
-                          LocalDateTime createdAt, LocalDateTime updatedAt) {
+                           String profilePicturePath, String profilePictureUrl,
+                           String phone, String location, String bio, String companyName,
+                           LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.email = email;
         this.fullName = fullName;
@@ -38,6 +39,7 @@ public class ProfileResponse {
         this.updatedAt = updatedAt;
     }
 
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -68,6 +70,14 @@ public class ProfileResponse {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getAuthProvider() {
+        return authProvider;
+    }
+
+    public void setAuthProvider(String authProvider) {
+        this.authProvider = authProvider;
     }
 
     public String getProfilePicturePath() {
@@ -134,4 +144,3 @@ public class ProfileResponse {
         this.updatedAt = updatedAt;
     }
 }
-

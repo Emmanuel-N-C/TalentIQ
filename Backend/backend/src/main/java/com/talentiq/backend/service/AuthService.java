@@ -17,10 +17,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.talentiq.backend.exception.EmailNotVerifiedException;
+import com.talentiq.backend.dto.OAuthCheckRequest;
+import com.talentiq.backend.dto.OAuthCheckResponse;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -117,14 +120,14 @@ public class AuthService {
         // Send welcome email
         emailService.sendWelcomeEmail(user.getEmail(), user.getFullName());
 
-        // Generate JWT token - FIXED: Pass user object, not email string
+        // Generate JWT token
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 user, null, user.getAuthorities()
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = tokenProvider.generateToken(authentication);
 
-        return new AuthResponse(jwt, user.getId(), user.getEmail(), user.getFullName(), user.getRole().name());
+        return new AuthResponse(jwt, user.getId(), user.getEmail(), user.getFullName(), user.getRole().name(), user.getAuthProvider().name());
     }
 
     /**
@@ -187,7 +190,7 @@ public class AuthService {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String jwt = tokenProvider.generateToken(authentication);
 
-            return new AuthResponse(jwt, user.getId(), user.getEmail(), user.getFullName(), user.getRole().name());
+            return new AuthResponse(jwt, user.getId(), user.getEmail(), user.getFullName(), user.getRole().name(), user.getAuthProvider().name());
         } catch (BadCredentialsException e) {
             // Increment failed attempts
             user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
@@ -223,17 +226,20 @@ public class AuthService {
         User user = userRepository.findByEmail(oauthUser.getEmail()).orElse(null);
 
         if (user == null) {
-            // Create new user
+            // Create new user with placeholder password
             user = new User();
             user.setEmail(oauthUser.getEmail());
-            user.setFullName(oauthUser.getName());
+            // Set random UUID as password for OAuth users (required by DB schema)
+            user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+            user.setFullName(oauthUser.getName() != null && !oauthUser.getName().isBlank()
+                    ? oauthUser.getName()
+                    : "User");  // Fallback if name is missing
             user.setRole(request.getRole());
             user.setAuthProvider(request.getProvider());
             user.setProviderId(oauthUser.getProviderId());
             user.setEmailVerified(true); // OAuth emails are pre-verified
             user.setAccountLocked(false);
             user.setFailedLoginAttempts(0);
-            // No password for OAuth users
 
             user = userRepository.save(user);
         } else {
@@ -246,14 +252,138 @@ public class AuthService {
             userRepository.save(user);
         }
 
-        // Generate JWT - FIXED: Pass user object, not email string
+        // Generate JWT
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 user, null, user.getAuthorities()
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = tokenProvider.generateToken(authentication);
 
-        return new AuthResponse(jwt, user.getId(), user.getEmail(), user.getFullName(), user.getRole().name());
+        return new AuthResponse(jwt, user.getId(), user.getEmail(), user.getFullName(), user.getRole().name(), user.getAuthProvider().name());
+    }
+
+    /**
+     * Check if OAuth user exists (for login/register flow)
+     */
+    public OAuthCheckResponse checkOAuthUser(OAuthCheckRequest request) {
+        // Verify token with provider
+        OAuthService.OAuthUserInfo oauthUser;
+
+        if (request.getProvider() == AuthProvider.GOOGLE) {
+            oauthUser = oAuthService.verifyGoogleToken(request.getToken());
+        } else if (request.getProvider() == AuthProvider.GITHUB) {
+            oauthUser = oAuthService.verifyGitHubToken(request.getToken());
+        } else {
+            throw new RuntimeException("Unsupported OAuth provider");
+        }
+
+        // Check if user exists
+        User user = userRepository.findByEmail(oauthUser.getEmail()).orElse(null);
+
+        if (user != null) {
+            // User exists
+            return new OAuthCheckResponse(
+                    true,
+                    user.getEmail(),
+                    user.getFullName(),
+                    "User account found"
+            );
+        } else {
+            // New user
+            return new OAuthCheckResponse(
+                    false,
+                    oauthUser.getEmail(),
+                    oauthUser.getName() != null && !oauthUser.getName().isBlank() ? oauthUser.getName() : "",
+                    "No account found. Please complete registration."
+            );
+        }
+    }
+
+    /**
+     * OAuth Registration (for new OAuth users)
+     */
+    @Transactional
+    public AuthResponse oauthRegister(OAuthLoginRequest request) {
+        // Verify token with provider
+        OAuthService.OAuthUserInfo oauthUser;
+
+        if (request.getProvider() == AuthProvider.GOOGLE) {
+            oauthUser = oAuthService.verifyGoogleToken(request.getToken());
+        } else if (request.getProvider() == AuthProvider.GITHUB) {
+            oauthUser = oAuthService.verifyGitHubToken(request.getToken());
+        } else {
+            throw new RuntimeException("Unsupported OAuth provider");
+        }
+
+        // Check if user already exists
+        if (userRepository.existsByEmail(oauthUser.getEmail())) {
+            throw new RuntimeException("User already exists. Please use login instead.");
+        }
+
+        // Create new user with placeholder password
+        User user = new User();
+        user.setEmail(oauthUser.getEmail());
+        // Set random UUID as password for OAuth users (required by DB schema)
+        user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+        user.setFullName(oauthUser.getName() != null && !oauthUser.getName().isBlank()
+                ? oauthUser.getName()
+                : "User");  // Fallback if name is missing
+        user.setRole(request.getRole());
+        user.setAuthProvider(request.getProvider());
+        user.setProviderId(oauthUser.getProviderId());
+        user.setEmailVerified(true); // OAuth emails are pre-verified
+        user.setAccountLocked(false);
+        user.setFailedLoginAttempts(0);
+
+        user = userRepository.save(user);
+
+        // Generate JWT
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                user, null, user.getAuthorities()
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = tokenProvider.generateToken(authentication);
+
+        return new AuthResponse(jwt, user.getId(), user.getEmail(), user.getFullName(), user.getRole().name(), user.getAuthProvider().name());
+    }
+
+    /**
+     * OAuth Login (for existing OAuth users only)
+     */
+    @Transactional
+    public AuthResponse oauthLoginExisting(OAuthCheckRequest request) {
+        // Verify token with provider
+        OAuthService.OAuthUserInfo oauthUser;
+
+        if (request.getProvider() == AuthProvider.GOOGLE) {
+            oauthUser = oAuthService.verifyGoogleToken(request.getToken());
+        } else if (request.getProvider() == AuthProvider.GITHUB) {
+            oauthUser = oAuthService.verifyGitHubToken(request.getToken());
+        } else {
+            throw new RuntimeException("Unsupported OAuth provider");
+        }
+
+        // Find user
+        User user = userRepository.findByEmail(oauthUser.getEmail())
+                .orElseThrow(() -> new RuntimeException("No account found with this email. Please sign up first."));
+
+        // Verify they're using same provider
+        if (user.getAuthProvider() != request.getProvider()) {
+            throw new RuntimeException("This email is registered with " + user.getAuthProvider().name() + ". Please use that method to log in.");
+        }
+
+        // Update last login
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        // Generate JWT
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                user, null, user.getAuthorities()
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = tokenProvider.generateToken(authentication);
+
+        return new AuthResponse(jwt, user.getId(), user.getEmail(), user.getFullName(), user.getRole().name(), user.getAuthProvider().name());
     }
 
     /**
@@ -319,9 +449,15 @@ public class AuthService {
 
     /**
      * Change Password (for logged-in users)
+     * FIXED: Block OAuth users from changing passwords
      */
     @Transactional
     public Map<String, String> changePassword(ChangePasswordRequest request, User user) {
+        // Block OAuth users from changing passwords
+        if (user.getAuthProvider() != AuthProvider.LOCAL) {
+            throw new IllegalStateException("Password cannot be changed for " + user.getAuthProvider().name() + " accounts");
+        }
+
         // Verify current password
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             throw new RuntimeException("Current password is incorrect");
@@ -336,4 +472,5 @@ public class AuthService {
 
         return response;
     }
+
 }

@@ -7,6 +7,7 @@ public class AuthResponse {
     private String email;
     private String fullName;
     private String role;
+    private String authProvider;  // NEW: Added to expose auth provider
 
     public AuthResponse() {
     }
@@ -17,6 +18,15 @@ public class AuthResponse {
         this.email = email;
         this.fullName = fullName;
         this.role = role;
+    }
+
+    public AuthResponse(String token, Long id, String email, String fullName, String role, String authProvider) {
+        this.token = token;
+        this.id = id;
+        this.email = email;
+        this.fullName = fullName;
+        this.role = role;
+        this.authProvider = authProvider;
     }
 
     // Getters and Setters
@@ -66,5 +76,13 @@ public class AuthResponse {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getAuthProvider() {
+        return authProvider;
+    }
+
+    public void setAuthProvider(String authProvider) {
+        this.authProvider = authProvider;
     }
 }
