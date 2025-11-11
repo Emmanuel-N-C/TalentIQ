@@ -1,15 +1,16 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 import ResumeAnalyzer from './components/ai/ResumeAnalyzer';
 import ResumeOptimizer from './components/resume/ResumeOptimizer';
 import ATSChecker from './components/resume/ATSChecker';
+import ForgotPassword from './pages/public/ForgotPassword';
+import ResetPassword from './pages/public/ResetPassword';
 
 // Public pages
 import Landing from './pages/public/Landing';
 import Login from './pages/public/Login';
 import Register from './pages/public/Register';
+import VerifyOtp from './pages/public/VerifyOtp';
 
 // Job Seeker pages
 import JobSeekerDashboard from './pages/jobseeker/Dashboard';
@@ -94,62 +95,57 @@ function AuthenticatedLayout({ children }) {
 
 function App() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <Router>
-          <Toaster position="top-right" />
-          
-          <AuthenticatedLayout>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              
-              {/* PUBLIC Interview Prep for Testing - NO AUTH REQUIRED */}
-              <Route path="/interview-prep" element={<InterviewPrep />} />
-              <Route path="/resume-analyzer" element={<ResumeAnalyzer />} />
-              
-              {/* Job Seeker Routes */}
-              <Route path="/jobseeker" element={<ProtectedRoute role="jobseeker" />}>
-                <Route path="dashboard" element={<JobSeekerDashboard />} />
-                <Route path="browse" element={<BrowseJobs />} />
-                <Route path="interview-prep" element={<InterviewPrep />} />
-                <Route path="resumes" element={<MyResumes />} />
-                <Route path="resume-optimizer" element={<ResumeOptimizer />} />
-                <Route path="ats-checker" element={<ATSChecker />} />
-                <Route path="saved-jobs" element={<SavedJobs />} />
-                <Route path="applications" element={<MyApplications />} />
-                <Route path="profile" element={<JobSeekerProfile />} />
-              </Route>
-              
-              {/* Recruiter Routes */}
-              <Route path="/recruiter" element={<ProtectedRoute role="recruiter" />}>
-                <Route path="dashboard" element={<RecruiterDashboard />} />
-                <Route path="jobs" element={<MyJobs />} />
-                <Route path="jobs/create" element={<CreateJob />} />
-                <Route path="jobs/edit/:id" element={<EditJob />} />
-                <Route path="jobs/:jobId/applications" element={<JobApplications />} />
-                <Route path="jobs/:jobId/stats" element={<JobStats />} />
-                <Route path="applications" element={<AllApplications />} />
-                <Route path="shortlisted" element={<ShortlistedCandidates />} />
-                <Route path="settings" element={<RecruiterSettings />} />
-              </Route>
-              
-              {/* Admin Routes */}
-              <Route path="/admin" element={<ProtectedRoute role="admin" />}>
-                <Route path="dashboard" element={<AdminDashboard />} />
-                <Route path="users" element={<UserManagement />} />
-                <Route path="jobs" element={<JobManagement />} />
-              </Route>
-              
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </AuthenticatedLayout>
-        </Router>
-      </ThemeProvider>
-    </AuthProvider>
+    <AuthenticatedLayout>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
+        
+        {/* PUBLIC Interview Prep for Testing - NO AUTH REQUIRED */}
+        <Route path="/interview-prep" element={<InterviewPrep />} />
+        <Route path="/resume-analyzer" element={<ResumeAnalyzer />} />
+        
+        {/* Job Seeker Routes */}
+        <Route path="/jobseeker" element={<ProtectedRoute role="jobseeker" />}>
+          <Route path="dashboard" element={<JobSeekerDashboard />} />
+          <Route path="browse" element={<BrowseJobs />} />
+          <Route path="interview-prep" element={<InterviewPrep />} />
+          <Route path="resumes" element={<MyResumes />} />
+          <Route path="resume-optimizer" element={<ResumeOptimizer />} />
+          <Route path="ats-checker" element={<ATSChecker />} />
+          <Route path="saved-jobs" element={<SavedJobs />} />
+          <Route path="applications" element={<MyApplications />} />
+          <Route path="profile" element={<JobSeekerProfile />} />
+        </Route>
+        
+        {/* Recruiter Routes */}
+        <Route path="/recruiter" element={<ProtectedRoute role="recruiter" />}>
+          <Route path="dashboard" element={<RecruiterDashboard />} />
+          <Route path="jobs" element={<MyJobs />} />
+          <Route path="jobs/create" element={<CreateJob />} />
+          <Route path="jobs/edit/:id" element={<EditJob />} />
+          <Route path="jobs/:jobId/applications" element={<JobApplications />} />
+          <Route path="jobs/:jobId/stats" element={<JobStats />} />
+          <Route path="applications" element={<AllApplications />} />
+          <Route path="shortlisted" element={<ShortlistedCandidates />} />
+          <Route path="settings" element={<RecruiterSettings />} />
+        </Route>
+        
+        {/* Admin Routes */}
+        <Route path="/admin" element={<ProtectedRoute role="admin" />}>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="jobs" element={<JobManagement />} />
+        </Route>
+        
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AuthenticatedLayout>
   );
 }
 
