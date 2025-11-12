@@ -137,4 +137,22 @@ public class UserController {
         response.put("message", "Profile picture deleted successfully");
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * DELETE ACCOUNT - Hard delete user and all related data
+     * This endpoint allows authenticated users to permanently delete their account
+     */
+    @DeleteMapping("/account")
+    public ResponseEntity<Map<String, String>> deleteAccount(@AuthenticationPrincipal User user) {
+        try {
+            userService.deleteUserAccount(user.getId());
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Your account has been permanently deleted");
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
 }

@@ -1,7 +1,12 @@
 package com.talentiq.backend.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "resumes")
@@ -13,6 +18,7 @@ public class Resume {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     @Column(nullable = false)
@@ -29,6 +35,14 @@ public class Resume {
 
     @Column(columnDefinition = "TEXT")
     private String extractedText;
+
+    // Applications using this resume - cascade delete when resume is deleted
+    @OneToMany(mappedBy = "resume", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Application> applications = new ArrayList<>();
+
+    // Matches for this resume - cascade delete when resume is deleted
+    @OneToMany(mappedBy = "resume", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Match> matches = new ArrayList<>();
 
     @Column(nullable = false)
     private LocalDateTime uploadedAt;
@@ -96,6 +110,22 @@ public class Resume {
 
     public void setExtractedText(String extractedText) {
         this.extractedText = extractedText;
+    }
+
+    public List<Application> getApplications() {
+        return applications;
+    }
+
+    public void setApplications(List<Application> applications) {
+        this.applications = applications;
+    }
+
+    public List<Match> getMatches() {
+        return matches;
+    }
+
+    public void setMatches(List<Match> matches) {
+        this.matches = matches;
     }
 
     public LocalDateTime getUploadedAt() {

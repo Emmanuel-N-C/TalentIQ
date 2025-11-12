@@ -4,7 +4,9 @@ import com.talentiq.backend.dto.ChangePasswordRequest;
 import com.talentiq.backend.dto.ProfileResponse;
 import com.talentiq.backend.dto.UpdateProfileRequest;
 import com.talentiq.backend.model.AuthProvider;
+import com.talentiq.backend.model.Resume;
 import com.talentiq.backend.model.User;
+import com.talentiq.backend.repository.ResumeRepository;
 import com.talentiq.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -31,10 +34,16 @@ public class UserService {
     private UserRepository userRepository;
 
     @Autowired
+    private ResumeRepository resumeRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Value("${file.upload-dir:uploads/profile-pictures}")
     private String uploadDir;
+
+    @Value("${file.resume-upload-dir:uploads/resumes}")
+    private String resumeUploadDir;
 
     public ProfileResponse getCurrentUserProfile(User user) {
         User fullUser = userRepository.findById(user.getId())
@@ -225,6 +234,65 @@ public class UserService {
             }
         } catch (MalformedURLException e) {
             throw new RuntimeException("Error loading profile picture: " + e.getMessage());
+        }
+    }
+
+    /**
+     * DELETE USER ACCOUNT - Hard delete with full cascade
+     * This method permanently deletes a user and all related data:
+     * - For Recruiters: Jobs, Applications to those jobs, Matches
+     * - For Job Seekers: Resumes, Applications, Matches
+     * - Profile pictures and resume files
+     *
+     * @param userId The ID of the user to delete
+     */
+    @Transactional
+    public void deleteUserAccount(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        try {
+            // Step 1: Delete profile picture file from disk
+            if (user.getProfilePicturePath() != null) {
+                try {
+                    Path profilePicturePath = Paths.get(user.getProfilePicturePath());
+                    Files.deleteIfExists(profilePicturePath);
+                    System.out.println("Deleted profile picture: " + user.getProfilePicturePath());
+                } catch (IOException e) {
+                    System.err.println("Could not delete profile picture: " + e.getMessage());
+                    // Continue with deletion even if file deletion fails
+                }
+            }
+
+            // Step 2: Delete resume files from disk (for job seekers)
+            List<Resume> resumes = resumeRepository.findByUserId(userId);
+            for (Resume resume : resumes) {
+                if (resume.getFilePath() != null) {
+                    try {
+                        Path resumePath = Paths.get(resume.getFilePath());
+                        Files.deleteIfExists(resumePath);
+                        System.out.println("Deleted resume file: " + resume.getFilePath());
+                    } catch (IOException e) {
+                        System.err.println("Could not delete resume file: " + e.getMessage());
+                        // Continue with deletion even if file deletion fails
+                    }
+                }
+            }
+
+            // Step 3: Delete user from database
+            // Thanks to cascade configuration, this will automatically delete:
+            // - All jobs created by this recruiter (if recruiter)
+            // - All applications to those jobs (if recruiter)
+            // - All resumes uploaded by this user (if job seeker)
+            // - All applications submitted by this user (if job seeker)
+            // - All matches related to user's resumes or jobs
+            userRepository.delete(user);
+
+            System.out.println("Successfully deleted user account: " + user.getEmail());
+
+        } catch (Exception e) {
+            System.err.println("Error deleting user account: " + e.getMessage());
+            throw new RuntimeException("Failed to delete user account: " + e.getMessage());
         }
     }
 }

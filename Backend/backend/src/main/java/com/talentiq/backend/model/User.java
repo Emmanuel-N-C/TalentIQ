@@ -1,11 +1,14 @@
 package com.talentiq.backend.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -85,6 +88,20 @@ public class User implements UserDetails {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    // ===== RELATIONSHIPS FOR CASCADE DELETE =====
+
+    // Jobs created by this user (if recruiter)
+    @OneToMany(mappedBy = "recruiter", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Job> jobsCreated = new ArrayList<>();
+
+    // Resumes uploaded by this user (if job seeker)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Resume> resumes = new ArrayList<>();
+
+    // Applications submitted by this user (if job seeker)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Application> applications = new ArrayList<>();
 
     public User() {
     }
@@ -278,6 +295,30 @@ public class User implements UserDetails {
 
     public void setLastLoginAt(LocalDateTime lastLoginAt) {
         this.lastLoginAt = lastLoginAt;
+    }
+
+    public List<Job> getJobsCreated() {
+        return jobsCreated;
+    }
+
+    public void setJobsCreated(List<Job> jobsCreated) {
+        this.jobsCreated = jobsCreated;
+    }
+
+    public List<Resume> getResumes() {
+        return resumes;
+    }
+
+    public void setResumes(List<Resume> resumes) {
+        this.resumes = resumes;
+    }
+
+    public List<Application> getApplications() {
+        return applications;
+    }
+
+    public void setApplications(List<Application> applications) {
+        this.applications = applications;
     }
 
     // UserDetails interface methods
