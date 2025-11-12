@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import { useState } from 'react';
 import ResumeAnalyzer from './components/ai/ResumeAnalyzer';
 import ResumeOptimizer from './components/resume/ResumeOptimizer';
 import ATSChecker from './components/resume/ATSChecker';
@@ -48,6 +49,7 @@ import AdminSidebar from './components/layout/AdminSidebar';
 function AuthenticatedLayout({ children }) {
   const { user } = useAuth();
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Check if user is logged in and on a protected route
   const isProtectedRoute = location.pathname.startsWith('/jobseeker') || 
@@ -55,6 +57,15 @@ function AuthenticatedLayout({ children }) {
                           location.pathname.startsWith('/admin');
   
   const showNewLayout = user && isProtectedRoute;
+
+  // Close sidebar when route changes (mobile only)
+  const handleCloseSidebar = () => {
+    setSidebarOpen(false);
+  };
+
+  const handleToggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
 
   if (showNewLayout) {
     // Determine which sidebar to show based on user role
@@ -69,15 +80,15 @@ function AuthenticatedLayout({ children }) {
 
     return (
       <div className="flex min-h-screen bg-slate-900">
-        {/* Sidebar - conditionally render based on user role */}
-        <SidebarComponent />
+        {/* Sidebar - with mobile responsiveness */}
+        <SidebarComponent isOpen={sidebarOpen} onClose={handleCloseSidebar} />
         
-        <div className="flex-1 flex flex-col">
-          {/* New Navbar */}
-          <Navbar />
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Navbar with hamburger toggle */}
+          <Navbar onToggleSidebar={handleToggleSidebar} />
           
           {/* Main Content */}
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto">
             {children}
           </main>
         </div>

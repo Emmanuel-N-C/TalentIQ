@@ -73,22 +73,22 @@ export default function UserManagement() {
   );
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">User Management</h1>
-        <p className="text-slate-400 mt-2">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">User Management</h1>
+        <p className="text-slate-400 mt-2 text-sm sm:text-base">
           Manage all platform users ({totalElements} total)
         </p>
       </div>
 
       {/* Filters */}
-      <div className="mb-6 bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="mb-4 sm:mb-6 bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-4 sm:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
           {/* Search */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              <Search className="w-4 h-4 inline mr-2" />
+            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">
+              <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline mr-2" />
               Search Users
             </label>
             <input
@@ -96,20 +96,20 @@ export default function UserManagement() {
               placeholder="Search by name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 sm:px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm sm:text-base"
             />
           </div>
 
           {/* Role Filter */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              <Filter className="w-4 h-4 inline mr-2" />
+            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">
+              <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline mr-2" />
               Filter by Role
             </label>
             <select
               value={roleFilter}
               onChange={(e) => handleRoleFilterChange(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 sm:px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm sm:text-base"
             >
               <option value="all">All Roles</option>
               <option value="jobseeker">Job Seekers</option>

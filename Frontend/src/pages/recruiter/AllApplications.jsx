@@ -190,91 +190,91 @@ export default function AllApplications() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
         {/* Header with Back Button */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <button
             onClick={() => navigate('/recruiter/dashboard')}
-            className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors"
+            className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors text-sm sm:text-base"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </button>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2 flex items-center gap-3">
-            <FileText className="w-10 h-10 text-blue-400" />
+          <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2 flex items-center gap-3">
+            <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-blue-400" />
             All Applications
           </h1>
-          <p className="text-slate-400">Manage all applications across your job postings</p>
+          <p className="text-slate-400 text-sm sm:text-base">Manage all applications across your job postings</p>
         </div>
 
         {/* Stats Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-4 mb-4 sm:mb-6">
           <button
             onClick={() => handleFilterChange('ALL')}
-            className={`p-4 rounded-xl text-left transition-all ${
+            className={`p-3 sm:p-4 rounded-xl text-left transition-all ${
               statusFilter === 'ALL'
                 ? 'bg-blue-500/20 border-2 border-blue-400'
                 : 'bg-slate-800/50 border border-slate-700 hover:border-slate-600'
             }`}
           >
-            <div className="text-2xl font-bold text-white">{applications.length}</div>
-            <div className="text-slate-400 text-sm">Total</div>
+            <div className="text-xl sm:text-2xl font-bold text-white">{applications.length}</div>
+            <div className="text-slate-400 text-xs sm:text-sm">Total</div>
           </button>
 
           {['PENDING', 'REVIEWING', 'SHORTLISTED', 'INTERVIEWED', 'ACCEPTED', 'REJECTED'].map((status) => (
             <button
               key={status}
               onClick={() => handleFilterChange(status)}
-              className={`p-4 rounded-xl text-left transition-all ${
+              className={`p-3 sm:p-4 rounded-xl text-left transition-all ${
                 statusFilter === status
                   ? `${getStatusColor(status).bg} border-2 ${getStatusColor(status).border.replace('/30', '')}`
                   : 'bg-slate-800/50 border border-slate-700 hover:border-slate-600'
               }`}
             >
-              <div className={`text-2xl font-bold ${getStatusColor(status).text}`}>
+              <div className={`text-xl sm:text-2xl font-bold ${getStatusColor(status).text}`}>
                 {getStatusCount(status)}
               </div>
-              <div className="text-slate-400 text-sm capitalize">{status.toLowerCase()}</div>
+              <div className="text-slate-400 text-xs sm:text-sm capitalize">{status.toLowerCase()}</div>
             </button>
           ))}
         </div>
 
         {/* Applications List */}
         {filteredApplications.length === 0 ? (
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-12 text-center">
-            <FileText className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">
+          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-8 sm:p-12 text-center">
+            <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-slate-600 mx-auto mb-4" />
+            <h2 className="text-xl sm:text-2xl font-semibold mb-2">
               {statusFilter === 'ALL'
                 ? 'No Applications Yet'
                 : `No ${statusFilter} Applications`}
             </h2>
-            <p className="text-slate-400">
+            <p className="text-slate-400 text-sm sm:text-base">
               {statusFilter === 'ALL'
                 ? 'Applications will appear here once candidates apply'
                 : 'No applications match this status filter'}
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {filteredApplications.map((application) => {
               const statusColors = getStatusColor(application.status);
               
               return (
                 <div
                   key={application.id}
-                  className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 hover:border-slate-600 transition-all"
+                  className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 sm:p-6 hover:border-slate-600 transition-all"
                 >
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-3">
                         <ProfilePicture application={application} size="md" />
-                        <div>
-                          <h3 className="text-xl font-bold text-white">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-lg sm:text-xl font-bold text-white truncate">
                             {application.userName || 'Anonymous'}
                           </h3>
-                          <div className="flex items-center gap-2 text-slate-400 text-sm">
+                          <div className="flex items-center gap-2 text-slate-400 text-xs sm:text-sm">
                             <Mail className="w-3 h-3" />
-                            {application.userEmail || 'N/A'}
+                            <span className="truncate">{application.userEmail || 'N/A'}</span>
                           </div>
                           {application.userLocation && (
                             <p className="text-slate-500 text-xs flex items-center gap-1 mt-0.5">
@@ -285,50 +285,51 @@ export default function AllApplications() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4 mb-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3">
                         <div className="flex items-center gap-2 text-slate-400">
                           <Briefcase className="w-4 h-4" />
-                          <span className="text-sm">{application.jobTitle || 'Job Title N/A'}</span>
+                          <span className="text-xs sm:text-sm">{application.jobTitle || 'Job Title N/A'}</span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-400">
                           <Clock className="w-4 h-4" />
-                          <span className="text-sm">
+                          <span className="text-xs sm:text-sm">
                             Applied {formatDate(application.appliedAt)}
                           </span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors.bg} ${statusColors.text} ${statusColors.border} flex items-center gap-1`}>
+                        <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium border ${statusColors.bg} ${statusColors.text} ${statusColors.border} flex items-center gap-1`}>
                           {getStatusIcon(application.status)}
                           {application.status}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-auto">
                       {application.resumeId && (
                         <button
                           onClick={() => handleViewResume(application)}
-                          className="px-3 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm font-medium flex items-center gap-1"
+                          className="flex-1 sm:flex-none px-2 sm:px-3 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-xs sm:text-sm font-medium flex items-center justify-center gap-1"
                         >
-                          <FileText className="w-4 h-4" />
-                          View Resume
+                          <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span className="hidden sm:inline">View Resume</span>
+                          <span className="sm:hidden">Resume</span>
                         </button>
                       )}
                       {application.status !== 'ACCEPTED' && application.status !== 'REJECTED' && (
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-1 sm:flex-none">
                           <button
                             onClick={() => handleStatusUpdate(application.id, 'SHORTLISTED')}
                             disabled={updatingId === application.id}
-                            className="px-3 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-sm font-medium disabled:opacity-50"
+                            className="flex-1 sm:flex-none px-2 sm:px-3 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-xs sm:text-sm font-medium disabled:opacity-50"
                           >
                             Shortlist
                           </button>
                           <button
                             onClick={() => handleStatusUpdate(application.id, 'REJECTED')}
                             disabled={updatingId === application.id}
-                            className="px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-medium disabled:opacity-50"
+                            className="flex-1 sm:flex-none px-2 sm:px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-xs sm:text-sm font-medium disabled:opacity-50"
                           >
                             Reject
                           </button>
@@ -336,9 +337,10 @@ export default function AllApplications() {
                       )}
                       <button
                         onClick={() => navigate(`/recruiter/jobs/${application.jobId}/applications`)}
-                        className="px-3 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors text-sm font-medium"
+                        className="flex-1 sm:flex-none px-2 sm:px-3 py-2 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors text-xs sm:text-sm font-medium"
                       >
-                        View Details
+                        <span className="hidden sm:inline">View Details</span>
+                        <span className="sm:hidden">Details</span>
                       </button>
                     </div>
                   </div>
@@ -350,18 +352,18 @@ export default function AllApplications() {
 
         {/* Resume Preview Modal */}
         {selectedResume && (
-          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-slate-800 border border-slate-700 rounded-xl max-w-6xl w-full h-[90vh] flex flex-col">
-              <div className="p-4 border-b border-slate-700 flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-bold text-white">{selectedResume.resumeFilename || 'Resume'}</h2>
-                  <p className="text-slate-400 text-sm">{selectedResume.userName || 'Anonymous'}</p>
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 z-50">
+            <div className="bg-slate-800 border border-slate-700 rounded-xl max-w-6xl w-full h-[95vh] sm:h-[90vh] flex flex-col">
+              <div className="p-3 sm:p-4 border-b border-slate-700 flex justify-between items-center">
+                <div className="flex-1 min-w-0 pr-4">
+                  <h2 className="text-lg sm:text-xl font-bold text-white truncate">{selectedResume.resumeFilename || 'Resume'}</h2>
+                  <p className="text-slate-400 text-xs sm:text-sm truncate">{selectedResume.userName || 'Anonymous'}</p>
                 </div>
                 <button
                   onClick={handleClosePreview}
-                  className="text-slate-400 hover:text-white transition-colors"
+                  className="text-slate-400 hover:text-white transition-colors flex-shrink-0"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
               </div>
               <div className="flex-1 overflow-hidden bg-slate-900">
@@ -377,23 +379,23 @@ export default function AllApplications() {
                     style={{ border: 'none' }}
                   />
                 ) : selectedResume.resumeFilename?.toLowerCase().match(/\.(docx?|doc)$/) ? (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <FileText className="w-16 h-16 text-slate-600 mb-4" />
-                    <p className="text-slate-300 mb-4">Word documents cannot be previewed directly in browser</p>
+                  <div className="flex flex-col items-center justify-center h-full p-4">
+                    <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-slate-600 mb-4" />
+                    <p className="text-slate-300 mb-4 text-center text-sm sm:text-base">Word documents cannot be previewed directly in browser</p>
                     <a
                       href={previewUrl}
                       download={selectedResume.resumeFilename}
-                      className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors inline-flex items-center gap-2"
+                      className="bg-blue-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-blue-600 transition-colors inline-flex items-center gap-2 text-sm sm:text-base"
                     >
-                      <Download className="w-5 h-5" />
+                      <Download className="w-4 h-4 sm:w-5 sm:h-5" />
                       Download to View
                     </a>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full">
+                  <div className="flex items-center justify-center h-full p-4">
                     <div className="text-center">
-                      <FileText className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                      <p className="text-slate-400">Preview not available for this file type</p>
+                      <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-slate-600 mx-auto mb-4" />
+                      <p className="text-slate-400 text-sm sm:text-base">Preview not available for this file type</p>
                     </div>
                   </div>
                 )}

@@ -14,7 +14,6 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [isOAuthLoading, setIsOAuthLoading] = useState(false);
   
-  // Email verification state
   const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
   const [resendingOtp, setResendingOtp] = useState(false);
@@ -26,7 +25,6 @@ export default function Login() {
     e.preventDefault();
     e.stopPropagation();
     
-    // Prevent submission if already loading
     if (loading) return;
     
     setLoading(true);
@@ -46,27 +44,22 @@ export default function Login() {
         authProvider: authProvider || 'LOCAL'
       };
       
-      // Login successful - update auth context
       login(user, token);
       toast.success('Login successful!');
       
-      // Navigate after a brief delay to ensure auth state is updated
       setTimeout(() => {
         navigate(`/${user.role}/dashboard`, { replace: true });
       }, 100);
     } catch (error) {
       console.error('Login error:', error);
       
-      // Handle specific error cases
       if (error.response?.data?.requiresVerification) {
         setUnverifiedEmail(error.response.data.email || email);
         setShowVerificationPrompt(true);
         toast.error('Please verify your email to continue');
       } else if (error.response?.status === 401) {
-        // Invalid credentials
         toast.error('Invalid email or password');
       } else {
-        // Other errors
         const errorMessage = error.response?.data?.error || 
                            error.response?.data?.message || 
                            'Login failed. Please try again.';
@@ -90,7 +83,6 @@ export default function Login() {
       const response = await authAPI.resendOtp(unverifiedEmail);
       toast.success(response.message || 'OTP sent to your email');
       
-      // Navigate after brief delay
       setTimeout(() => {
         navigate('/verify-otp', { state: { email: unverifiedEmail }, replace: true });
       }, 500);
@@ -107,14 +99,12 @@ export default function Login() {
     
     setIsOAuthLoading(true);
     try {
-      // Check if user exists
       const checkResponse = await authAPI.checkOAuthUser(
         credentialResponse.credential,
         'GOOGLE'
       );
 
       if (checkResponse.exists) {
-        // User exists - proceed with login
         const loginResponse = await authAPI.oauthLoginExisting(
           credentialResponse.credential,
           'GOOGLE'
@@ -137,7 +127,6 @@ export default function Login() {
           navigate(`/${user.role}/dashboard`, { replace: true });
         }, 100);
       } else {
-        // New user - redirect to register
         toast.error('No account found. Please sign up first.');
         setTimeout(() => {
           navigate('/register', { replace: true });
@@ -164,18 +153,18 @@ export default function Login() {
       <nav className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center shadow-lg">
-                <Sparkles className="w-6 h-6 text-white" />
+            <Link to="/" className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center shadow-lg">
+                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">TalentIQ</h1>
-                <p className="text-xs text-slate-400">AI-Powered Hiring</p>
+                <h1 className="text-lg sm:text-xl font-bold text-white">TalentIQ</h1>
+                <p className="text-xs text-slate-400 hidden sm:block">AI-Powered Hiring</p>
               </div>
             </Link>
             <Link
               to="/register"
-              className="text-slate-300 hover:text-white transition-colors"
+              className="text-slate-300 hover:text-white transition-colors text-sm sm:text-base"
             >
               Need an account?
             </Link>
@@ -184,17 +173,17 @@ export default function Login() {
       </nav>
 
       {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center px-4 py-12">
+      <div className="flex-1 flex items-center justify-center px-4 py-8 sm:py-12">
         <div className="max-w-md w-full">
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl mb-4 shadow-lg">
-              <LogIn className="w-8 h-8 text-white" />
+          <div className="text-center mb-6 sm:mb-8">
+            <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl mb-4 shadow-lg">
+              <LogIn className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
             </div>
-            <h2 className="text-4xl font-bold text-white mb-2">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-2">
               Welcome Back
             </h2>
-            <p className="text-slate-400 text-lg">
+            <p className="text-slate-400 text-base sm:text-lg">
               Sign in to continue to TalentIQ
             </p>
           </div>
@@ -213,7 +202,7 @@ export default function Login() {
                     type="button"
                     onClick={handleResendOtp}
                     disabled={resendingOtp}
-                    className="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 px-4 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 px-4 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
                     {resendingOtp ? 'Sending...' : 'Send Verification Code'}
                   </button>
@@ -223,8 +212,8 @@ export default function Login() {
           )}
           
           {/* Form Card */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 shadow-2xl">
-            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 sm:p-8 shadow-2xl">
+            <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6" noValidate>
               {/* Email Field */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
@@ -240,7 +229,7 @@ export default function Login() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={loading}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                     placeholder="you@gmail.com"
                   />
                 </div>
@@ -263,7 +252,7 @@ export default function Login() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
-                    className="w-full pl-11 pr-12 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full pl-11 pr-12 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                     placeholder="Enter your password"
                   />
                   <button
@@ -294,7 +283,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading || !email || !password}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group text-sm sm:text-base"
               >
                 {loading ? (
                   <>
@@ -322,12 +311,11 @@ export default function Login() {
 
             {/* OAuth Buttons */}
             <div className="space-y-3">
-              {/* Google Login */}
               <div className="relative">
                 {isOAuthLoading ? (
                   <div className="w-full flex items-center justify-center py-3 bg-slate-700 rounded-lg">
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span className="ml-2 text-white">Connecting...</span>
+                    <span className="ml-2 text-white text-sm">Connecting...</span>
                   </div>
                 ) : (
                   <GoogleLogin
@@ -345,7 +333,7 @@ export default function Login() {
 
             {/* Footer */}
             <div className="mt-6 pt-6 border-t border-slate-700">
-              <p className="text-center text-slate-400">
+              <p className="text-center text-slate-400 text-sm">
                 Don't have an account?{' '}
                 <Link 
                   to="/register" 
@@ -361,7 +349,7 @@ export default function Login() {
           <div className="text-center mt-6">
             <Link 
               to="/" 
-              className="text-slate-400 hover:text-slate-300 transition-colors inline-flex items-center gap-2"
+              className="text-slate-400 hover:text-slate-300 transition-colors inline-flex items-center gap-2 text-sm"
             >
               <ArrowRight className="w-4 h-4 rotate-180" />
               Back to home

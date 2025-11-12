@@ -1,10 +1,10 @@
 import { useAuth } from '../../context/AuthContext';
-import { ChevronDown, User as UserIcon, Settings } from 'lucide-react';
+import { ChevronDown, User as UserIcon, Settings, Menu } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getCurrentUserProfile } from '../../api/user';
 
-export default function Navbar() {
+export default function Navbar({ onToggleSidebar }) {
   const { user, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [profileData, setProfileData] = useState(null);
@@ -12,22 +12,22 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-  if (user) {
-    fetchProfile();
-  }
-}, [user]);
-
-// Listen for profile update events
-useEffect(() => {
-  const handleProfileUpdate = () => {
     if (user) {
       fetchProfile();
     }
-  };
-  
-  window.addEventListener('profileUpdated', handleProfileUpdate);
-  return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
-}, [user]);
+  }, [user]);
+
+  // Listen for profile update events
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      if (user) {
+        fetchProfile();
+      }
+    };
+    
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
+  }, [user]);
 
   const fetchProfile = async () => {
     try {
@@ -70,13 +70,25 @@ useEffect(() => {
     : null;
 
   return (
-    <nav className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-6 py-4 sticky top-0 z-50 shadow-xl">
+    <nav className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 py-4 sticky top-0 z-50 shadow-xl">
       <div className="flex items-center justify-between">
-        {/* Left - Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-slate-400">{breadcrumb.section}</span>
-          <span className="text-slate-600">/</span>
-          <span className="text-white font-medium">{breadcrumb.page}</span>
+        {/* Left - Hamburger + Breadcrumb */}
+        <div className="flex items-center gap-4">
+          {/* Hamburger Button - Only visible on mobile */}
+          <button
+            onClick={onToggleSidebar}
+            className="lg:hidden p-2 hover:bg-slate-800 rounded-lg transition-colors"
+            aria-label="Toggle menu"
+          >
+            <Menu className="w-6 h-6 text-white" />
+          </button>
+          
+          {/* Breadcrumb - Hidden on smallest screens */}
+          <div className="hidden sm:flex items-center gap-2 text-sm">
+            <span className="text-slate-400">{breadcrumb.section}</span>
+            <span className="text-slate-600">/</span>
+            <span className="text-white font-medium">{breadcrumb.page}</span>
+          </div>
         </div>
 
         {/* Right - Profile Only */}
@@ -85,7 +97,7 @@ useEffect(() => {
           <div className="relative">
             <button 
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center gap-3 p-2 hover:bg-slate-800 rounded-lg transition-colors"
+              className="flex items-center gap-2 sm:gap-3 p-2 hover:bg-slate-800 rounded-lg transition-colors"
             >
               {profilePictureUrl ? (
                 <img
@@ -102,10 +114,10 @@ useEffect(() => {
                   {user?.name?.charAt(0) || 'U'}
                 </div>
               )}
-              <span className="text-sm font-medium text-white hidden md:block">
+              <span className="text-sm font-medium text-white hidden md:block truncate max-w-[150px]">
                 {user?.name || 'User'}
               </span>
-              <ChevronDown className="w-4 h-4 text-slate-400" />
+              <ChevronDown className="w-4 h-4 text-slate-400 hidden sm:block" />
             </button>
 
             {/* Dropdown Menu */}

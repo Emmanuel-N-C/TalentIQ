@@ -73,22 +73,22 @@ export default function CreateJob() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto p-4 sm:p-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2 flex items-center gap-3">
-            <Briefcase className="w-10 h-10 text-green-400" />
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-2 flex items-center gap-2 sm:gap-3">
+            <Briefcase className="w-8 h-8 sm:w-10 sm:h-10 text-green-400" />
             Post New Job
           </h1>
-          <p className="text-slate-400">Create a new job listing to attract top talent</p>
+          <p className="text-slate-400 text-sm sm:text-base">Create a new job listing to attract top talent</p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           {/* Job Title */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-            <label className="block text-sm font-medium mb-3 text-slate-300 flex items-center gap-2">
-              <Briefcase className="w-5 h-5 text-blue-400" />
+          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 sm:p-6">
+            <label className="block text-xs sm:text-sm font-medium mb-2 sm:mb-3 text-slate-300 flex items-center gap-2">
+              <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
               Job Title
               <span className="text-red-400">*</span>
             </label>
@@ -97,16 +97,16 @@ export default function CreateJob() {
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="w-full p-4 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              className="w-full p-3 sm:p-4 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm sm:text-base"
               placeholder="e.g., Senior Software Engineer"
               required
             />
           </div>
 
           {/* Company */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-            <label className="block text-sm font-medium mb-3 text-slate-300 flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-purple-400" />
+          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 sm:p-6">
+            <label className="block text-xs sm:text-sm font-medium mb-2 sm:mb-3 text-slate-300 flex items-center gap-2">
+              <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
               Company Name
               <span className="text-red-400">*</span>
             </label>
@@ -115,16 +115,16 @@ export default function CreateJob() {
               name="company"
               value={formData.company}
               onChange={handleChange}
-              className="w-full p-4 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              className="w-full p-3 sm:p-4 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm sm:text-base"
               placeholder="e.g., TechCorp Inc."
               required
             />
           </div>
 
           {/* Experience Level */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
-            <label className="block text-sm font-medium mb-3 text-slate-300 flex items-center gap-2">
-              <Award className="w-5 h-5 text-orange-400" />
+          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 sm:p-6">
+            <label className="block text-xs sm:text-sm font-medium mb-2 sm:mb-3 text-slate-300 flex items-center gap-2">
+              <Award className="w-4 h-4 sm:w-5 sm:h-5 text-orange-400" />
               Experience Level
               <span className="text-red-400">*</span>
             </label>
@@ -132,7 +132,7 @@ export default function CreateJob() {
               name="experienceLevel"
               value={formData.experienceLevel}
               onChange={handleChange}
-              className="w-full p-4 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              className="w-full p-3 sm:p-4 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm sm:text-base"
               required
             >
               <option value="Entry">Entry Level</option>
