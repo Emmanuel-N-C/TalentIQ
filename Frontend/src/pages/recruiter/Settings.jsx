@@ -1,17 +1,22 @@
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Calendar, Shield, AlertCircle } from 'lucide-react';
-import { getCurrentUserProfile } from '../../api/user';
+import { Settings as SettingsIcon, Calendar, Shield, AlertCircle, Trash2 } from 'lucide-react';
+import { getCurrentUserProfile, deleteAccount } from '../../api/user';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import ProfilePictureUpload from '../../components/profile/ProfilePictureUpload';
 import ProfileInfoForm from '../../components/profile/ProfileInfoForm';
 import PasswordChangeForm from '../../components/profile/PasswordChangeForm';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
 export default function Settings() {
-  const { user: authUser, updateUser } = useAuth();
+  const { user: authUser, updateUser, logout } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -36,6 +41,24 @@ export default function Settings() {
     updateUser(updatedProfile);
     // Force navbar refresh
     window.dispatchEvent(new Event('profileUpdated'));
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteAccount();
+      toast.success('Your account has been deleted successfully');
+      
+      // Log out user and redirect
+      setTimeout(() => {
+        logout();
+        navigate('/');
+      }, 1500);
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast.error(error.response?.data?.error || 'Failed to delete account');
+      setIsDeleting(false);
+    }
   };
 
   if (loading) {
@@ -130,35 +153,61 @@ export default function Settings() {
             </h3>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <PasswordChangeForm user={profile} />
+              
+              {/* Delete Account Section */}
               <div className="bg-slate-900/50 rounded-lg p-6 border border-slate-700">
-                <h4 className="text-white font-semibold mb-3">Security Tips</h4>
-                <ul className="space-y-2 text-sm text-slate-400">
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-0.5">•</span>
-                    <span>Use a strong, unique password with at least 8 characters</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-0.5">•</span>
-                    <span>Include uppercase, lowercase, numbers, and special characters</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-0.5">•</span>
-                    <span>Never share your password with anyone</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-0.5">•</span>
-                    <span>Change your password regularly</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400 mt-0.5">•</span>
-                    <span>Keep your company information up to date</span>
-                  </li>
-                </ul>
+                <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+                  <Trash2 className="w-5 h-5 text-red-400" />
+                  Delete Account
+                </h4>
+                <p className="text-sm text-slate-400 mb-4">
+                  Permanently delete your account and all associated data. This action cannot be undone.
+                </p>
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-red-300">
+                    <strong>Warning:</strong> Deleting your account will:
+                  </p>
+                  <ul className="text-xs text-red-300 mt-2 space-y-1 ml-4">
+                    <li>• Remove all your job postings</li>
+                    <li>• Delete all applications to your jobs</li>
+                    <li>• Remove your profile and company data</li>
+                    <li>• This action is permanent and irreversible</li>
+                  </ul>
+                </div>
+                <button
+                  onClick={() => setShowDeleteDialog(true)}
+                  disabled={isDeleting}
+                  className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:cursor-not-allowed text-white rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Delete My Account
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDeleteAccount}
+        title="Delete Account"
+        message="Are you absolutely sure you want to delete your account? This will permanently remove all your data including job postings, applications, and company information. This action cannot be undone."
+        confirmText="Yes, Delete My Account"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 }

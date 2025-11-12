@@ -42,3 +42,8 @@ export const deleteProfilePicture = async () => {
   return response.data;
 };
 
+// DELETE ACCOUNT - New endpoint
+export const deleteAccount = async () => {
+  const response = await apiClient.delete('/user/account');
+  return response.data;
+};
