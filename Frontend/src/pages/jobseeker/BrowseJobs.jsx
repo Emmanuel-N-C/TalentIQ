@@ -6,7 +6,7 @@ import { applyToJob, getMyApplications } from '../../api/applications';
 import { useAI } from '../../hooks/useAI';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, MapPin, Clock, Bookmark, Send, X, Search, Filter, FileText, Upload, Plus, Sparkles, Wand2, Loader2, Check } from 'lucide-react';
+import { Briefcase, MapPin, Clock, Bookmark, Send, X, Search, Filter, FileText, Upload, Plus, Sparkles, Wand2, Loader2, Check, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 export default function BrowseJobs() {
   const [jobs, setJobs] = useState([]);
@@ -19,6 +19,7 @@ export default function BrowseJobs() {
   const [applying, setApplying] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [experienceFilter, setExperienceFilter] = useState('ALL');
+  const [sortOrder, setSortOrder] = useState('NEWEST'); // NEW: Sort state
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [jobToApply, setJobToApply] = useState(null);
   const [userResumes, setUserResumes] = useState([]);
@@ -39,10 +40,12 @@ export default function BrowseJobs() {
     loadData();
   }, []);
 
+  // Updated useEffect to include sortOrder dependency
   useEffect(() => {
     filterJobs();
-  }, [searchTerm, experienceFilter, jobs]);
+  }, [searchTerm, experienceFilter, sortOrder, jobs]);
 
+  // Enhanced filterJobs function with sorting logic
   const filterJobs = () => {
     let filtered = jobs;
 
@@ -59,6 +62,18 @@ export default function BrowseJobs() {
     if (experienceFilter !== 'ALL') {
       filtered = filtered.filter(job => job.experienceLevel === experienceFilter);
     }
+
+    // Sort by date
+    filtered = [...filtered].sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      
+      if (sortOrder === 'NEWEST') {
+        return dateB - dateA; // Newest first (descending)
+      } else {
+        return dateA - dateB; // Oldest first (ascending)
+      }
+    });
 
     setFilteredJobs(filtered);
   };
@@ -302,24 +317,99 @@ export default function BrowseJobs() {
             />
           </div>
 
-          {/* Experience Level Filter */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <Filter className="w-5 h-5 text-slate-400" />
-            <span className="text-sm text-slate-400">Filter by experience:</span>
-            {['ALL', 'Entry', 'Mid-Level', 'Senior', 'Lead'].map((level) => (
+          {/* Filter Controls Container */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            {/* Experience Level Filter */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <Filter className="w-5 h-5 text-slate-400" />
+              <span className="text-sm text-slate-400">Filter by experience:</span>
+              {['ALL', 'Entry', 'Mid-Level', 'Senior', 'Lead'].map((level) => (
+                <button
+                  key={level}
+                  onClick={() => setExperienceFilter(level)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    experienceFilter === level
+                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                      : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
+                  }`}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+
+            {/* NEW: Sort by Date Controls */}
+            <div className="flex items-center gap-3 flex-wrap lg:flex-nowrap">
+              <ArrowUpDown className="w-5 h-5 text-slate-400" />
+              <span className="text-sm text-slate-400">Sort by date:</span>
               <button
-                key={level}
-                onClick={() => setExperienceFilter(level)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  experienceFilter === level
-                    ? 'bg-blue-500 text-white shadow-lg'
-                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700'
+                onClick={() => setSortOrder('NEWEST')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                  sortOrder === 'NEWEST'
+                    ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
+                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
                 }`}
               >
-                {level}
+                <ArrowDown className="w-4 h-4" />
+                Newest
               </button>
-            ))}
+              <button
+                onClick={() => setSortOrder('OLDEST')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                  sortOrder === 'OLDEST'
+                    ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
+                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
+                }`}
+              >
+                <ArrowUp className="w-4 h-4" />
+                Oldest
+              </button>
+            </div>
           </div>
+
+          {/* Active Filters Summary */}
+          {(searchTerm || experienceFilter !== 'ALL' || sortOrder !== 'NEWEST') && (
+            <div className="flex items-center gap-2 flex-wrap p-4 bg-slate-800/30 border border-slate-700/50 rounded-lg">
+              <span className="text-sm text-slate-400">Active filters:</span>
+              {searchTerm && (
+                <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg text-sm flex items-center gap-2">
+                  Search: "{searchTerm}"
+                  <X 
+                    className="w-3 h-3 cursor-pointer hover:text-blue-300" 
+                    onClick={() => setSearchTerm('')}
+                  />
+                </span>
+              )}
+              {experienceFilter !== 'ALL' && (
+                <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg text-sm flex items-center gap-2">
+                  Experience: {experienceFilter}
+                  <X 
+                    className="w-3 h-3 cursor-pointer hover:text-blue-300" 
+                    onClick={() => setExperienceFilter('ALL')}
+                  />
+                </span>
+              )}
+              {sortOrder !== 'NEWEST' && (
+                <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-lg text-sm flex items-center gap-2">
+                  Sort: {sortOrder === 'OLDEST' ? 'Oldest First' : 'Newest First'}
+                  <X 
+                    className="w-3 h-3 cursor-pointer hover:text-purple-300" 
+                    onClick={() => setSortOrder('NEWEST')}
+                  />
+                </span>
+              )}
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setExperienceFilter('ALL');
+                  setSortOrder('NEWEST');
+                }}
+                className="ml-auto px-3 py-1 text-sm text-slate-400 hover:text-white transition-colors"
+              >
+                Clear All
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Jobs List */}
@@ -332,6 +422,7 @@ export default function BrowseJobs() {
               onClick={() => {
                 setSearchTerm('');
                 setExperienceFilter('ALL');
+                setSortOrder('NEWEST');
               }}
               className="px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
             >
