@@ -102,6 +102,10 @@ export default function Register() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    // Prevent double submission
+    if (loading) return;
     
     // Mark all fields as touched
     setTouched({ email: true, password: true, fullName: true });
@@ -127,11 +131,11 @@ export default function Register() {
 
     try {
       const response = await authAPI.register(formData);
-      toast.success(response.message);
+      toast.success(response.message || 'Registration successful! Please check your email for OTP.');
       setStep(2); // Move to OTP verification
     } catch (error) {
       console.error('Registration error:', error);
-      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Registration failed';
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Registration failed. Please try again.';
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -140,6 +144,10 @@ export default function Register() {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    if (loading) return;
+    
     setLoading(true);
 
     try {
@@ -157,26 +165,38 @@ export default function Register() {
       
       login(user, token);
       toast.success('Account verified successfully!');
-      navigate(`/${user.role}/dashboard`);
+      
+      setTimeout(() => {
+        navigate(`/${user.role}/dashboard`, { replace: true });
+      }, 100);
     } catch (error) {
       console.error('OTP verification error:', error);
-      toast.error(error.response?.data?.error || error.response?.data?.message || 'Invalid OTP');
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Invalid OTP. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResendOtp = async () => {
+  const handleResendOtp = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     try {
       const response = await authAPI.resendOtp(formData.email);
-      toast.success(response.message);
+      toast.success(response.message || 'OTP sent successfully');
     } catch (error) {
-      toast.error('Failed to resend OTP');
+      console.error('Resend OTP error:', error);
+      toast.error(error.response?.data?.error || 'Failed to resend OTP');
     }
   };
 
   // OAuth Handlers
   const handleGoogleSuccess = async (credentialResponse) => {
+    if (isOAuthLoading) return;
+    
     setIsOAuthLoading(true);
     try {
       // Check if user exists
@@ -188,7 +208,9 @@ export default function Register() {
       if (checkResponse.exists) {
         // User exists - redirect to login
         toast.error('Account already exists. Please use login instead.');
-        setTimeout(() => navigate('/login'), 1500);
+        setTimeout(() => {
+          navigate('/login', { replace: true });
+        }, 1500);
       } else {
         // New user - show role selection
         setOauthCredential(credentialResponse.credential);
@@ -201,13 +223,16 @@ export default function Register() {
       }
     } catch (error) {
       console.error('Google OAuth error:', error);
-      toast.error(error.response?.data?.error || error.response?.data?.message || 'Google registration failed');
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Google registration failed. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsOAuthLoading(false);
     }
   };
 
   const completeOAuthRegistration = async () => {
+    if (isOAuthLoading) return;
+    
     setIsOAuthLoading(true);
     try {
       const response = await authAPI.oauthRegister(
@@ -222,18 +247,27 @@ export default function Register() {
       
       login(user, token);
       toast.success('Registration successful!');
-      navigate(`/${user.role}/dashboard`);
+      
+      setShowRoleDialog(false);
+      setTimeout(() => {
+        navigate(`/${user.role}/dashboard`, { replace: true });
+      }, 100);
     } catch (error) {
-      toast.error(error.response?.data?.error || error.response?.data?.message || 'Registration failed');
+      console.error('OAuth registration error:', error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || 'Registration failed. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsOAuthLoading(false);
-      setShowRoleDialog(false);
     }
   };
 
   const handleGitHubRegister = () => {
     toast.error('GitHub registration coming soon!');
     // TODO: Implement GitHub OAuth flow
+  };
+
+  const handleGoogleError = () => {
+    toast.error('Google registration failed. Please try again.');
   };
 
   return (
@@ -273,7 +307,7 @@ export default function Register() {
           <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 shadow-2xl">
             {step === 1 ? (
               <>
-                <form onSubmit={handleRegister} className="space-y-5">
+                <form onSubmit={handleRegister} className="space-y-5" noValidate>
                   {/* Full Name */}
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">Full Name</label>
@@ -284,7 +318,8 @@ export default function Register() {
                         value={formData.fullName}
                         onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                         onBlur={() => handleBlur('fullName')}
-                        className={`w-full pl-11 pr-4 py-3 bg-slate-900/50 border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ${
+                        disabled={loading}
+                        className={`w-full pl-11 pr-4 py-3 bg-slate-900/50 border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                           errors.fullName && touched.fullName
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                             : 'border-slate-600 focus:border-purple-500 focus:ring-purple-500/20'
@@ -310,7 +345,8 @@ export default function Register() {
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         onBlur={() => handleBlur('email')}
-                        className={`w-full pl-11 pr-4 py-3 bg-slate-900/50 border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ${
+                        disabled={loading}
+                        className={`w-full pl-11 pr-4 py-3 bg-slate-900/50 border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                           errors.email && touched.email
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                             : 'border-slate-600 focus:border-purple-500 focus:ring-purple-500/20'
@@ -336,7 +372,8 @@ export default function Register() {
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         onBlur={() => handleBlur('password')}
-                        className={`w-full pl-11 pr-12 py-3 bg-slate-900/50 border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ${
+                        disabled={loading}
+                        className={`w-full pl-11 pr-12 py-3 bg-slate-900/50 border rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                           errors.password && touched.password
                             ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                             : 'border-slate-600 focus:border-purple-500 focus:ring-purple-500/20'
@@ -346,7 +383,8 @@ export default function Register() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300"
+                        disabled={loading}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 disabled:opacity-50"
                       >
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
@@ -371,7 +409,8 @@ export default function Register() {
                       <select
                         value={formData.role}
                         onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                        className="w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                        disabled={loading}
+                        className="w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <option value="JOB_SEEKER">Job Seeker</option>
                         <option value="RECRUITER">Recruiter</option>
@@ -417,7 +456,7 @@ export default function Register() {
                     ) : (
                       <GoogleLogin
                         onSuccess={handleGoogleSuccess}
-                        onError={() => toast.error('Google registration failed')}
+                        onError={handleGoogleError}
                         theme="filled_black"
                         size="large"
                         width="100%"
@@ -425,25 +464,18 @@ export default function Register() {
                       />
                     )}
                   </div>
-
-                  {/* GitHub Registration */}
-                  <button
-                    onClick={handleGitHubRegister}
-                    disabled={isOAuthLoading}
-                    className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 border border-slate-600"
-                  >
-                    <FaGithub className="w-5 h-5" />
-                    <span>Sign up with GitHub</span>
-                  </button>
                 </div>
               </>
             ) : (
-              <form onSubmit={handleVerifyOtp} className="space-y-6">
+              <form onSubmit={handleVerifyOtp} className="space-y-6" noValidate>
                 <div className="text-center mb-6">
                   <p className="text-slate-300">
                     We sent a 6-digit code to <br />
                     <span className="font-semibold text-white">{formData.email}</span>
                   </p>
+                  <p className="text-slate-500 text-sm mt-2">
+                    Didn’t get the email? Check your spam or junk folder.
+                </p>
                 </div>
 
                 <div>
@@ -454,7 +486,8 @@ export default function Register() {
                     maxLength={6}
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-center text-2xl tracking-widest focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                    disabled={loading}
+                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white text-center text-2xl tracking-widest focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="000000"
                   />
                 </div>
@@ -462,7 +495,7 @@ export default function Register() {
                 <button
                   type="submit"
                   disabled={loading || otp.length !== 6}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 transition-all shadow-lg"
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
                 >
                   {loading ? 'Verifying...' : 'Verify & Continue'}
                 </button>
@@ -471,7 +504,8 @@ export default function Register() {
                   <button
                     type="button"
                     onClick={handleResendOtp}
-                    className="text-purple-400 hover:text-purple-300 text-sm font-medium"
+                    disabled={loading}
+                    className="text-purple-400 hover:text-purple-300 text-sm font-medium disabled:opacity-50"
                   >
                     Didn't receive code? Resend
                   </button>
@@ -503,7 +537,8 @@ export default function Register() {
             <div className="space-y-3 mb-6">
               <button
                 onClick={() => setSelectedRole('JOB_SEEKER')}
-                className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                disabled={isOAuthLoading}
+                className={`w-full p-4 rounded-lg border-2 transition-all text-left disabled:opacity-50 ${
                   selectedRole === 'JOB_SEEKER'
                     ? 'border-purple-500 bg-purple-500/10'
                     : 'border-slate-600 hover:border-slate-500'
@@ -526,7 +561,8 @@ export default function Register() {
 
               <button
                 onClick={() => setSelectedRole('RECRUITER')}
-                className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                disabled={isOAuthLoading}
+                className={`w-full p-4 rounded-lg border-2 transition-all text-left disabled:opacity-50 ${
                   selectedRole === 'RECRUITER'
                     ? 'border-purple-500 bg-purple-500/10'
                     : 'border-slate-600 hover:border-slate-500'
@@ -555,7 +591,8 @@ export default function Register() {
                   setOauthCredential(null);
                   setOauthProvider(null);
                 }}
-                className="flex-1 px-4 py-3 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
+                disabled={isOAuthLoading}
+                className="flex-1 px-4 py-3 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>

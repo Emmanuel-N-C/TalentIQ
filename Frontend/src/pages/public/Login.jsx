@@ -6,8 +6,6 @@ import apiClient from '../../api/client';
 import { authAPI } from '../../api/auth';
 import { Sparkles, Mail, Lock, ArrowRight, LogIn, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
-import { FcGoogle } from 'react-icons/fc';
-import { FaGithub } from 'react-icons/fa';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -26,13 +24,18 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    
+    // Prevent submission if already loading
+    if (loading) return;
+    
     setLoading(true);
     setShowVerificationPrompt(false);
 
     try {
       const response = await apiClient.post('/auth/login', { email, password });
       
-      const { token, id, email: userEmail, fullName, role } = response.data;
+      const { token, id, email: userEmail, fullName, role, authProvider } = response.data;
       const normalizedRole = role.toLowerCase().replace('_', '');
       
       const user = {
@@ -40,34 +43,59 @@ export default function Login() {
         email: userEmail,
         name: fullName,
         role: normalizedRole,
+        authProvider: authProvider || 'LOCAL'
       };
       
+      // Login successful - update auth context
       login(user, token);
       toast.success('Login successful!');
-      navigate(`/${user.role}/dashboard`);
+      
+      // Navigate after a brief delay to ensure auth state is updated
+      setTimeout(() => {
+        navigate(`/${user.role}/dashboard`, { replace: true });
+      }, 100);
     } catch (error) {
       console.error('Login error:', error);
       
-      // Check if error is due to unverified email
+      // Handle specific error cases
       if (error.response?.data?.requiresVerification) {
-        setUnverifiedEmail(error.response.data.email);
+        setUnverifiedEmail(error.response.data.email || email);
         setShowVerificationPrompt(true);
         toast.error('Please verify your email to continue');
+      } else if (error.response?.status === 401) {
+        // Invalid credentials
+        toast.error('Invalid email or password');
       } else {
-        toast.error(error.response?.data?.error || error.response?.data?.message || 'Login failed. Please check your credentials.');
+        // Other errors
+        const errorMessage = error.response?.data?.error || 
+                           error.response?.data?.message || 
+                           'Login failed. Please try again.';
+        toast.error(errorMessage);
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResendOtp = async () => {
+  const handleResendOtp = async (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    if (resendingOtp) return;
+    
     setResendingOtp(true);
     try {
       const response = await authAPI.resendOtp(unverifiedEmail);
       toast.success(response.message || 'OTP sent to your email');
-      navigate('/verify-otp', { state: { email: unverifiedEmail } });
+      
+      // Navigate after brief delay
+      setTimeout(() => {
+        navigate('/verify-otp', { state: { email: unverifiedEmail }, replace: true });
+      }, 500);
     } catch (error) {
+      console.error('Resend OTP error:', error);
       toast.error(error.response?.data?.error || 'Failed to resend OTP');
     } finally {
       setResendingOtp(false);
@@ -75,6 +103,8 @@ export default function Login() {
   };
 
   const handleGoogleSuccess = async (credentialResponse) => {
+    if (isOAuthLoading) return;
+    
     setIsOAuthLoading(true);
     try {
       // Check if user exists
@@ -90,29 +120,42 @@ export default function Login() {
           'GOOGLE'
         );
 
-        const { token, id, email, fullName, role } = loginResponse;
+        const { token, id, email, fullName, role, authProvider } = loginResponse;
         const normalizedRole = role.toLowerCase().replace('_', '');
-        const user = { id, email, name: fullName, role: normalizedRole };
+        const user = { 
+          id, 
+          email, 
+          name: fullName, 
+          role: normalizedRole,
+          authProvider: authProvider || 'GOOGLE'
+        };
         
         login(user, token);
         toast.success('Login successful!');
-        navigate(`/${user.role}/dashboard`);
+        
+        setTimeout(() => {
+          navigate(`/${user.role}/dashboard`, { replace: true });
+        }, 100);
       } else {
         // New user - redirect to register
         toast.error('No account found. Please sign up first.');
-        setTimeout(() => navigate('/register'), 1500);
+        setTimeout(() => {
+          navigate('/register', { replace: true });
+        }, 1500);
       }
     } catch (error) {
       console.error('Google OAuth error:', error);
-      toast.error(error.response?.data?.error || error.response?.data?.message || 'Google login failed');
+      const errorMessage = error.response?.data?.error || 
+                         error.response?.data?.message || 
+                         'Google login failed. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsOAuthLoading(false);
     }
   };
 
-  const handleGitHubLogin = () => {
-    toast.error('GitHub login coming soon!');
-    // TODO: Implement GitHub OAuth flow
+  const handleGoogleError = () => {
+    toast.error('Google login failed. Please try again.');
   };
 
   return (
@@ -167,9 +210,10 @@ export default function Login() {
                     Please verify your email address to continue. We'll send you a verification code.
                   </p>
                   <button
+                    type="button"
                     onClick={handleResendOtp}
                     disabled={resendingOtp}
-                    className="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 px-4 rounded-lg font-medium transition-colors disabled:opacity-50"
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 px-4 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {resendingOtp ? 'Sending...' : 'Send Verification Code'}
                   </button>
@@ -180,7 +224,7 @@ export default function Login() {
           
           {/* Form Card */}
           <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8 shadow-2xl">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
               {/* Email Field */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
@@ -192,9 +236,11 @@ export default function Login() {
                     id="email"
                     type="email"
                     required
+                    autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                    disabled={loading}
+                    className="w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="you@gmail.com"
                   />
                 </div>
@@ -213,15 +259,19 @@ export default function Login() {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     required
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-11 pr-12 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                    disabled={loading}
+                    className="w-full pl-11 pr-12 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="Enter your password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
+                    disabled={loading}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors disabled:opacity-50"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -230,18 +280,20 @@ export default function Login() {
                     )}
                   </button>
                 </div>
-                <Link 
+                <div className="flex justify-end">
+                  <Link 
                     to="/forgot-password" 
-                    className="text-sm text-purple-400 hover:text-purple-300 transition-colors inline-block mt-2"
+                    className="text-sm text-purple-400 hover:text-purple-300 transition-colors mt-2"
                   >
                     Forgot password?
                   </Link>
+                </div>
               </div>
 
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !email || !password}
                 className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
               >
                 {loading ? (
@@ -280,24 +332,15 @@ export default function Login() {
                 ) : (
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
-                    onError={() => toast.error('Google login failed')}
+                    onError={handleGoogleError}
                     theme="filled_black"
                     size="large"
                     width="100%"
                     text="signin_with"
+                    useOneTap={false}
                   />
                 )}
               </div>
-
-              {/* GitHub Login */}
-              <button
-                onClick={handleGitHubLogin}
-                disabled={isOAuthLoading}
-                className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 border border-slate-600"
-              >
-                <FaGithub className="w-5 h-5" />
-                <span>Sign in with GitHub</span>
-              </button>
             </div>
 
             {/* Footer */}

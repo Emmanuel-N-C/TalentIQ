@@ -26,9 +26,25 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Only redirect to login on 401 if:
+    // 1. User was authenticated (had a token)
+    // 2. Not already on auth pages (login/register)
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      const hadToken = localStorage.getItem('token');
+      const currentPath = window.location.pathname;
+      const isAuthPage = currentPath === '/login' || 
+                        currentPath === '/register' || 
+                        currentPath === '/verify-otp' ||
+                        currentPath === '/forgot-password' ||
+                        currentPath.startsWith('/reset-password');
+      
+      // Only redirect if user had a valid token and it expired
+      // Don't redirect if on auth pages or during login/registration
+      if (hadToken && !isAuthPage) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
