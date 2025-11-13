@@ -38,22 +38,40 @@ export default function Navbar({ onToggleSidebar }) {
     }
   };
 
-  // Get breadcrumb based on current path
+  // Get breadcrumb based on current path and user role
   const getBreadcrumb = () => {
     const path = location.pathname;
+    
+    // Dashboard - Common for all roles
     if (path.includes('/dashboard')) return { section: 'Overview', page: 'Dashboard' };
-    if (path.includes('/users')) return { section: 'Management', page: 'User Management' };
-    if (path.includes('/jobs')) return { section: 'Management', page: 'Job Management' };
-    if (path.includes('/applications')) return { section: 'Activity', page: 'Applications' };
-    if (path.includes('/browse')) return { section: 'Account', page: 'Browse Jobs' };
-    if (path.includes('/resumes')) return { section: 'Account', page: 'My Resumes' };
-    if (path.includes('/saved-jobs')) return { section: 'Account', page: 'Saved Jobs' };
-    if (path.includes('/interview-prep')) return { section: 'Activity', page: 'Interview Prep' };
-    if (path.includes('/ats-checker')) return { section: 'Others', page: 'ATS Checker' };
-    if (path.includes('/resume-optimizer')) return { section: 'Others', page: 'Resume Optimizer' };
-    if (path.includes('/shortlisted')) return { section: 'Insights', page: 'Shortlisted' };
-    if (path.includes('/profile')) return { section: 'Settings', page: 'Profile' };
-    if (path.includes('/settings')) return { section: 'Settings', page: 'Settings' };
+    
+    // Job Seeker specific routes
+    if (user?.role === 'jobseeker') {
+      if (path.includes('/browse')) return { section: 'Job Management', page: 'Browse Jobs' };
+      if (path.includes('/saved-jobs')) return { section: 'Job Management', page: 'Saved Jobs' };
+      if (path.includes('/applications')) return { section: 'Job Management', page: 'My Applications' };
+      if (path.includes('/interview-prep')) return { section: 'AI Tools', page: 'Interview Prep' };
+      if (path.includes('/ats-checker')) return { section: 'AI Tools', page: 'ATS Checker' };
+      if (path.includes('/resume-optimizer')) return { section: 'AI Tools', page: 'Resume Optimizer' };
+      if (path.includes('/resumes')) return { section: 'Resume', page: 'My Resumes' };
+      if (path.includes('/profile')) return { section: 'Settings', page: 'Profile' };
+    }
+    
+    // Recruiter specific routes
+    if (user?.role === 'recruiter') {
+      if (path.includes('/jobs/create')) return { section: 'Management', page: 'Post New Job' };
+      if (path.includes('/jobs')) return { section: 'Management', page: 'My Jobs' };
+      if (path.includes('/applications')) return { section: 'Management', page: 'All Applications' };
+      if (path.includes('/shortlisted')) return { section: 'Candidates', page: 'Shortlisted' };
+      if (path.includes('/settings')) return { section: 'Settings', page: 'Settings' };
+    }
+    
+    // Admin specific routes
+    if (user?.role === 'admin') {
+      if (path.includes('/users')) return { section: 'Management', page: 'User Management' };
+      if (path.includes('/jobs')) return { section: 'Management', page: 'Job Management' };
+    }
+    
     return { section: 'Overview', page: 'Dashboard' };
   };
 
@@ -61,7 +79,7 @@ export default function Navbar({ onToggleSidebar }) {
 
   const getSettingsPath = () => {
     if (user?.role === 'recruiter') return '/recruiter/settings';
-    if (user?.role === 'admin') return '/admin/settings';
+    if (user?.role === 'admin') return '/admin/dashboard'; // Admin doesn't have settings page
     return '/jobseeker/profile';
   };
 
@@ -149,16 +167,18 @@ export default function Navbar({ onToggleSidebar }) {
                     {user?.role?.replace('_', ' ') || 'User'}
                   </span>
                 </div>
-                <button 
-                  onClick={() => {
-                    navigate(getSettingsPath());
-                    setShowProfileMenu(false);
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors flex items-center gap-2"
-                >
-                  <Settings className="w-4 h-4" />
-                  {user?.role === 'jobseeker' ? 'Profile' : 'Settings'}
-                </button>
+                {user?.role !== 'admin' && (
+                  <button 
+                    onClick={() => {
+                      navigate(getSettingsPath());
+                      setShowProfileMenu(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition-colors flex items-center gap-2"
+                  >
+                    <Settings className="w-4 h-4" />
+                    {user?.role === 'jobseeker' ? 'Profile' : 'Settings'}
+                  </button>
+                )}
                 <button 
                   onClick={logout}
                   className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-slate-700 transition-colors flex items-center gap-2"
