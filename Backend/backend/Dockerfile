@@ -8,6 +8,9 @@ COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
 
+# FIX: Ensure mvnw is executable
+RUN chmod +x mvnw
+
 # Download dependencies (cached layer)
 RUN ./mvnw dependency:go-offline -B
 
@@ -25,7 +28,7 @@ WORKDIR /app
 # Copy the JAR from build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Create uploads directory
+# Create uploads directory (non-persistent on Render)
 RUN mkdir -p /app/uploads/resumes /app/uploads/profile-pictures
 
 # Expose port
