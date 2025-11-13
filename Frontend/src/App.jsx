@@ -83,7 +83,8 @@ function AuthenticatedLayout({ children }) {
         {/* Sidebar - with mobile responsiveness */}
         <SidebarComponent isOpen={sidebarOpen} onClose={handleCloseSidebar} />
         
-        <div className="flex-1 flex flex-col min-w-0">
+        {/* Main content wrapper with left margin on desktop to account for fixed sidebar */}
+        <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
           {/* Navbar with hamburger toggle */}
           <Navbar onToggleSidebar={handleToggleSidebar} />
           
