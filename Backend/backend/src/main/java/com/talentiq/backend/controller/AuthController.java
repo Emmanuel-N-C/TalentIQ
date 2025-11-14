@@ -13,7 +13,8 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:5173")
+// REMOVE: @CrossOrigin(origins = "http://localhost:5173")
+// CORS is now handled globally in CorsConfig.java
 public class AuthController {
 
     @Autowired
