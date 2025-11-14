@@ -49,7 +49,7 @@ public class EmailService {
     }
 
     /**
-     * Send password reset email
+     * Send password reset email with dynamic frontend URL
      */
     public void sendPasswordResetEmail(String toEmail, String resetToken, String fullName) {
         String resetUrl = frontendUrl + "/reset-password?token=" + resetToken;
@@ -70,7 +70,7 @@ public class EmailService {
     }
 
     /**
-     * Send welcome email after verification
+     * Send welcome email after verification with dynamic frontend URL
      */
     public void sendWelcomeEmail(String toEmail, String fullName) {
         String subject = "Welcome to TalentIQ!";
@@ -78,10 +78,49 @@ public class EmailService {
         String textContent = String.format(
                 "Hello %s,\n\n" +
                         "Welcome to TalentIQ! Your email has been successfully verified.\n\n" +
-                        "You can now log in and start using our platform.\n\n" +
+                        "You can now log in and start using our platform at: %s/login\n\n" +
                         "Best regards,\n" +
                         "The TalentIQ Team",
-                fullName
+                fullName, frontendUrl
+        );
+
+        sendEmail(toEmail, subject, textContent, htmlContent);
+    }
+
+    /**
+     * Send email verification link (alternative to OTP)
+     */
+    public void sendVerificationEmail(String toEmail, String verificationToken, String fullName) {
+        String verificationUrl = frontendUrl + "/verify-email?token=" + verificationToken;
+        String subject = "TalentIQ - Verify Your Email Address";
+        String htmlContent = buildVerificationEmailHtml(fullName, verificationUrl);
+        String textContent = String.format(
+                "Hello %s,\n\n" +
+                        "Thank you for registering with TalentIQ!\n\n" +
+                        "Please verify your email address by clicking the link below:\n%s\n\n" +
+                        "This link will expire in 24 hours.\n\n" +
+                        "If you didn't create an account, please ignore this email.\n\n" +
+                        "Best regards,\n" +
+                        "The TalentIQ Team",
+                fullName, verificationUrl
+        );
+
+        sendEmail(toEmail, subject, textContent, htmlContent);
+    }
+
+    /**
+     * Send password change confirmation email
+     */
+    public void sendPasswordChangeConfirmationEmail(String toEmail, String fullName) {
+        String subject = "TalentIQ - Password Changed Successfully";
+        String htmlContent = buildPasswordChangeConfirmationHtml(fullName);
+        String textContent = String.format(
+                "Hello %s,\n\n" +
+                        "Your TalentIQ password has been changed successfully.\n\n" +
+                        "If you didn't make this change, please contact us immediately at: %s\n\n" +
+                        "Best regards,\n" +
+                        "The TalentIQ Team",
+                fullName, fromEmail
         );
 
         sendEmail(toEmail, subject, textContent, htmlContent);
@@ -217,6 +256,61 @@ public class EmailService {
                         "</body>" +
                         "</html>",
                 fullName, frontendUrl
+        );
+    }
+
+    /**
+     * HTML template for email verification link
+     */
+    private String buildVerificationEmailHtml(String fullName, String verificationUrl) {
+        return String.format(
+                "<!DOCTYPE html>" +
+                        "<html>" +
+                        "<head><meta charset='UTF-8'></head>" +
+                        "<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>" +
+                        "<div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;'>" +
+                        "<h2 style='color: #4F46E5;'>Verify Your Email Address</h2>" +
+                        "<p>Hello <strong>%s</strong>,</p>" +
+                        "<p>Thank you for registering with TalentIQ! Please verify your email address to complete your registration.</p>" +
+                        "<div style='text-align: center; margin: 30px 0;'>" +
+                        "<a href='%s' style='background-color: #4F46E5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;'>Verify Email</a>" +
+                        "</div>" +
+                        "<p style='color: #6B7280; font-size: 14px;'>This link will expire in <strong>24 hours</strong>.</p>" +
+                        "<p style='font-size: 14px;'>If the button doesn't work, copy and paste this link into your browser:</p>" +
+                        "<p style='word-break: break-all; background-color: #F3F4F6; padding: 10px; border-radius: 5px; font-size: 12px;'>%s</p>" +
+                        "<p>If you didn't create an account, please ignore this email.</p>" +
+                        "<hr style='border: none; border-top: 1px solid #E5E7EB; margin: 20px 0;'>" +
+                        "<p style='font-size: 12px; color: #9CA3AF;'>Best regards,<br>The TalentIQ Team</p>" +
+                        "</div>" +
+                        "</body>" +
+                        "</html>",
+                fullName, verificationUrl, verificationUrl
+        );
+    }
+
+    /**
+     * HTML template for password change confirmation
+     */
+    private String buildPasswordChangeConfirmationHtml(String fullName) {
+        return String.format(
+                "<!DOCTYPE html>" +
+                        "<html>" +
+                        "<head><meta charset='UTF-8'></head>" +
+                        "<body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>" +
+                        "<div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;'>" +
+                        "<h2 style='color: #4F46E5;'>Password Changed Successfully</h2>" +
+                        "<p>Hello <strong>%s</strong>,</p>" +
+                        "<p>Your TalentIQ password has been changed successfully.</p>" +
+                        "<p>If you didn't make this change, please contact us immediately at <strong>%s</strong>.</p>" +
+                        "<div style='text-align: center; margin: 30px 0;'>" +
+                        "<a href='%s/login' style='background-color: #4F46E5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;'>Go to Login</a>" +
+                        "</div>" +
+                        "<hr style='border: none; border-top: 1px solid #E5E7EB; margin: 20px 0;'>" +
+                        "<p style='font-size: 12px; color: #9CA3AF;'>Best regards,<br>The TalentIQ Team</p>" +
+                        "</div>" +
+                        "</body>" +
+                        "</html>",
+                fullName, fromEmail, frontendUrl
         );
     }
 }
