@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Use environment variable for API base URL
+// Falls back to localhost if not set
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+
+console.log('🔗 API Base URL:', API_BASE_URL);
 
 // Create axios instance
 const apiClient = axios.create({
@@ -8,6 +12,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Important for CORS with credentials
 });
 
 // Request interceptor - add auth token
@@ -36,7 +41,8 @@ apiClient.interceptors.response.use(
                         currentPath === '/register' || 
                         currentPath === '/verify-otp' ||
                         currentPath === '/forgot-password' ||
-                        currentPath.startsWith('/reset-password');
+                        currentPath.startsWith('/reset-password') ||
+                        currentPath.startsWith('/auth/callback');
       
       // Only redirect if user had a valid token and it expired
       // Don't redirect if on auth pages or during login/registration
