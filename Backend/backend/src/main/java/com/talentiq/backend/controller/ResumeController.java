@@ -20,7 +20,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/resumes")
-@CrossOrigin(origins = "http://localhost:5173")
+
 public class ResumeController {
 
     @Autowired

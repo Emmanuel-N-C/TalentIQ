@@ -15,7 +15,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/match")
-@CrossOrigin(origins = "http://localhost:5173")
 public class MatchController {
 
     @Autowired
