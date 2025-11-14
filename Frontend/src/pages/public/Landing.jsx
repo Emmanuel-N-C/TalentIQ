@@ -23,7 +23,7 @@ import {
   BriefcaseBusiness,
   BarChart3
 } from 'lucide-react';
-import AtsChecker from '../../assets/AtsChecker.png';
+import AtsChecker from '../../assets/Atschecker.png';
 import InterviewPrep from '../../assets/InterviewPrep.png';
 import PostJob from '../../assets/PostJob.png';
 import ResumeUpload from '../../assets/ResumeUpload.png';
