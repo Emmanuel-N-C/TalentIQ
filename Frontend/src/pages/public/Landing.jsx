@@ -24,7 +24,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import AtsChecker from '../../assets/Atschecker.png';
-import InterviewPrep from '../../assets/InterviewPrep.png';
+import InterviewPrep from '../../assets/Interviewprep.png';
 import PostJob from '../../assets/PostJob.png';
 import ResumeUpload from '../../assets/ResumeUpload.png';
 
