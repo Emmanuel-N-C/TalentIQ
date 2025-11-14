@@ -46,3 +46,6 @@ Backend/.idea/
 
 # Ignore backend env
 .env
+
+.idea/
+*.iml

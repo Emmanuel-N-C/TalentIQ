@@ -45,12 +45,14 @@ public class JobService {
         return convertToResponse(job);
     }
 
+    // FIXED: Use findAllWithRecruiter() to eagerly load recruiter
     public List<JobResponse> getAllJobs() {
-        return jobRepository.findAll().stream()
+        return jobRepository.findAllWithRecruiter().stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
 
+    // FIXED: Use findAllWithRecruiter(pageable) to eagerly load recruiter
     public PagedResponse<JobResponse> getAllJobsPaginated(int page, int size, String sortBy, String sortDirection) {
         // Validate and set defaults
         if (page < 0) page = 0;
@@ -65,8 +67,8 @@ public class JobService {
         // Create pageable object
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        // Get paginated results
-        Page<Job> jobPage = jobRepository.findAll(pageable);
+        // FIXED: Get paginated results WITH recruiter
+        Page<Job> jobPage = jobRepository.findAllWithRecruiter(pageable);
 
         // Convert to JobResponse DTOs
         List<JobResponse> jobResponses = jobPage.getContent().stream()
@@ -84,7 +86,8 @@ public class JobService {
                 jobPage.isFirst()
         );
     }
-    // Simple keyword search across multiple fields
+
+    // FIXED: searchByKeyword now includes JOIN FETCH in repository
     public PagedResponse<JobResponse> searchJobs(String keyword, int page, int size, String sortBy, String sortDirection) {
         // Validate and set defaults
         if (page < 0) page = 0;
@@ -97,7 +100,7 @@ public class JobService {
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        // Search by keyword
+        // Search by keyword (now includes recruiter via JOIN FETCH)
         Page<Job> jobPage = jobRepository.searchByKeyword(keyword, pageable);
 
         // Convert to JobResponse DTOs
@@ -116,7 +119,7 @@ public class JobService {
         );
     }
 
-    // Advanced search with multiple filters
+    // FIXED: advancedSearch now includes JOIN FETCH in repository
     public PagedResponse<JobResponse> advancedSearchJobs(String title, String company, String skills,
                                                          String experienceLevel, int page, int size,
                                                          String sortBy, String sortDirection) {
@@ -137,7 +140,7 @@ public class JobService {
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        // Perform advanced search
+        // Perform advanced search (now includes recruiter via JOIN FETCH)
         Page<Job> jobPage = jobRepository.advancedSearch(title, company, skills, experienceLevel, pageable);
 
         // Convert to JobResponse DTOs
@@ -156,8 +159,9 @@ public class JobService {
         );
     }
 
+    // FIXED: Use findByIdWithRecruiter() to eagerly load recruiter
     public Job getJobById(Long id) {
-        return jobRepository.findById(id)
+        return jobRepository.findByIdWithRecruiter(id)
                 .orElseThrow(() -> new RuntimeException("Job not found with id: " + id));
     }
 

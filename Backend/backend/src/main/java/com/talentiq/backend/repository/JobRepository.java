@@ -9,9 +9,27 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface JobRepository extends JpaRepository<Job, Long> {
+
+    // ========== NEW: EAGER FETCH QUERIES (FIX FOR LAZY LOADING) ==========
+
+    @Query("SELECT j FROM Job j JOIN FETCH j.recruiter")
+    List<Job> findAllWithRecruiter();
+
+    @Query("SELECT DISTINCT j FROM Job j JOIN FETCH j.recruiter")
+    Page<Job> findAllWithRecruiter(Pageable pageable);
+
+    @Query("SELECT j FROM Job j JOIN FETCH j.recruiter WHERE j.id = :id")
+    Optional<Job> findByIdWithRecruiter(@Param("id") Long id);
+
+    @Query("SELECT j FROM Job j JOIN FETCH j.recruiter WHERE j.recruiter.id = :recruiterId")
+    List<Job> findByRecruiterIdWithRecruiter(@Param("recruiterId") Long recruiterId);
+
+    // ========== EXISTING METHODS ==========
+
     List<Job> findByRecruiterId(Long recruiterId);
 
     // Search by title (case-insensitive, partial match)
@@ -26,15 +44,16 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     // Search by skills (case-insensitive, partial match)
     Page<Job> findBySkillsRequiredContainingIgnoreCase(String skills, Pageable pageable);
 
-    // Combined search - title OR company OR skills
-    @Query("SELECT j FROM Job j WHERE " +
+    // Combined search - title OR company OR skills (WITH EAGER FETCH)
+    @Query("SELECT DISTINCT j FROM Job j JOIN FETCH j.recruiter WHERE " +
             "LOWER(j.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(j.company) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+            "LOWER(j.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(j.skillsRequired) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Job> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
-    // Advanced search with multiple criteria - FIXED VERSION
-    @Query("SELECT j FROM Job j WHERE " +
+    // Advanced search with multiple criteria (WITH EAGER FETCH)
+    @Query("SELECT DISTINCT j FROM Job j JOIN FETCH j.recruiter WHERE " +
             "(:title IS NULL OR :title = '' OR LOWER(j.title) LIKE LOWER(CONCAT('%', :title, '%'))) AND " +
             "(:company IS NULL OR :company = '' OR LOWER(j.company) LIKE LOWER(CONCAT('%', :company, '%'))) AND " +
             "(:skills IS NULL OR :skills = '' OR LOWER(j.skillsRequired) LIKE LOWER(CONCAT('%', :skills, '%'))) AND " +
