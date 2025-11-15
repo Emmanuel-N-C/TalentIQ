@@ -57,8 +57,8 @@ export default function MyResumes() {
     setLoadingPreview(true);
     
     try {
-      const blobUrl = await getResumeFileBlob(resume.id);
-      setPreviewUrl(blobUrl);
+      const s3Url = await getResumeFileBlob(resume.id);
+      setPreviewUrl(s3Url); // Now this is an S3 URL, not a blob URL
     } catch (error) {
       console.error('Error loading preview:', error);
       toast.error('Failed to load preview');
@@ -69,10 +69,8 @@ export default function MyResumes() {
   };
 
   const handleClosePreview = () => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
+    // No need to revoke URL anymore since it's an S3 URL, not a blob URL
+    setPreviewUrl(null);
     setSelectedResume(null);
   };
 

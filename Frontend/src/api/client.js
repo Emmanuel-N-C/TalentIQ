@@ -1,10 +1,9 @@
 import axios from 'axios';
 
 // Use environment variable for API base URL
-// Falls back to localhost if not set
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
-console.log('🔗 API Base URL:', API_BASE_URL);
+
 
 // Create axios instance
 const apiClient = axios.create({
@@ -12,7 +11,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Important for CORS with credentials
+  withCredentials: true,
 });
 
 // Request interceptor - add auth token
@@ -31,9 +30,6 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Only redirect to login on 401 if:
-    // 1. User was authenticated (had a token)
-    // 2. Not already on auth pages (login/register)
     if (error.response?.status === 401) {
       const hadToken = localStorage.getItem('token');
       const currentPath = window.location.pathname;
@@ -44,8 +40,6 @@ apiClient.interceptors.response.use(
                         currentPath.startsWith('/reset-password') ||
                         currentPath.startsWith('/auth/callback');
       
-      // Only redirect if user had a valid token and it expired
-      // Don't redirect if on auth pages or during login/registration
       if (hadToken && !isAuthPage) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');

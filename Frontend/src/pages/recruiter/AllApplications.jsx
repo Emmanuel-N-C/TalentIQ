@@ -93,8 +93,8 @@ export default function AllApplications() {
     setLoadingPreview(true);
     
     try {
-      const blobUrl = await getResumeFileBlobForRecruiter(application.resumeId);
-      setPreviewUrl(blobUrl);
+      const s3Url = await getResumeFileBlobForRecruiter(application.resumeId);
+      setPreviewUrl(s3Url); // Now stores S3 URL directly
     } catch (error) {
       console.error('Error loading resume:', error);
       toast.error('Failed to load resume');
@@ -106,10 +106,7 @@ export default function AllApplications() {
 
   const handleClosePreview = () => {
     setSelectedResume(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
+    setPreviewUrl(null); // No need to revoke S3 URL
   };
 
   const formatDate = (dateValue) => {
@@ -172,7 +169,7 @@ export default function AllApplications() {
 
     return (
       <img
-        src={`http://localhost:8080/api/user/profile-picture/${application.userId}`}
+        src={application.userProfilePicturePath} // Direct S3 URL
         alt={application.userName || 'Applicant'}
         className={`${sizeClasses[size]} rounded-full object-cover border-2 border-blue-500`}
         onError={() => setImageError(true)}

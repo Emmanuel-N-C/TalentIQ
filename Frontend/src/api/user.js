@@ -7,14 +7,14 @@ export const getCurrentUserProfile = async () => {
 };
 
 // Update user profile
-export const updateProfile = async (profileData) => {
+export const updateUserProfile = async (profileData) => {
   const response = await apiClient.put('/user/profile', profileData);
   return response.data;
 };
 
 // Change password
 export const changePassword = async (passwordData) => {
-  const response = await apiClient.put('/user/password', passwordData);
+  const response = await apiClient.post('/user/change-password', passwordData);
   return response.data;
 };
 
@@ -22,19 +22,18 @@ export const changePassword = async (passwordData) => {
 export const uploadProfilePicture = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
-  
+
   const response = await apiClient.post('/user/profile-picture', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   });
+
   return response.data;
 };
 
-// Get profile picture URL
-export const getProfilePictureUrl = (userId) => {
-  return `http://localhost:8080/api/user/profile-picture/${userId}`;
-};
+// NO LONGER NEEDED - S3 URLs are returned directly in profile
+// export const getProfilePictureUrl = (userId) => { ... };
 
 // Delete profile picture
 export const deleteProfilePicture = async () => {
@@ -42,7 +41,7 @@ export const deleteProfilePicture = async () => {
   return response.data;
 };
 
-// DELETE ACCOUNT - New endpoint
+// Delete user account
 export const deleteAccount = async () => {
   const response = await apiClient.delete('/user/account');
   return response.data;

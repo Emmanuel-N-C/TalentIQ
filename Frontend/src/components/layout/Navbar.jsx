@@ -83,10 +83,8 @@ export default function Navbar({ onToggleSidebar }) {
     return '/jobseeker/profile';
   };
 
-  const profilePictureUrl = profileData?.profilePictureUrl 
-    ? `http://localhost:8080${profileData.profilePictureUrl}`
-    : null;
-
+  const profilePictureUrl = profileData?.profilePictureUrl; // Direct S3 URL!
+  
   return (
     <nav className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 sm:px-6 py-4 sticky top-0 z-50 shadow-xl">
       <div className="flex items-center justify-between">

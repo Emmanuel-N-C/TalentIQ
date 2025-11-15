@@ -53,3 +53,76 @@ body {
 .glow {
   box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
 }
+/* ... existing code ... */
+
+/* CRITICAL: Fix dropdown overflow on mobile devices */
+@media (max-width: 640px) {
+  /* Ensure dropdowns don't overflow viewport */
+  select {
+    font-size: 16px !important; /* Prevents iOS zoom */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    max-height: 48px;
+  }
+  
+  /* Fix for dropdown options going off-screen */
+  select option {
+    background-color: #1e293b;
+    color: #fff;
+    padding: 12px;
+  }
+  
+  /* Ensure parent containers don't overflow */
+  .bg-slate-800\/50,
+  .bg-gradient-to-r {
+    overflow: visible;
+    position: relative;
+  }
+  
+  /* Fix modal/form containers that might clip dropdowns */
+  form {
+    overflow: visible;
+  }
+  
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+    position: relative;
+  }
+  
+  html {
+    overflow-x: hidden;
+  }
+}
+
+/* Additional mobile viewport fix */
+@supports (-webkit-touch-callout: none) {
+  /* iOS-specific fixes */
+  select {
+    font-size: 16px !important;
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 8px;
+  }
+  
+  /* Prevent zoom on focus */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Ensure dropdown container has proper stacking */
+select {
+  position: relative;
+  z-index: 1;
+}
+
+/* Fix for select appearing behind other elements */
+select:focus {
+  z-index: 10;
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User, Mail, Phone, MapPin, FileText, Building2, Save } from 'lucide-react';
-import { updateProfile } from '../../api/user';
+import { updateUserProfile } from '../../api/user';
 import toast from 'react-hot-toast';
 
 export default function ProfileInfoForm({ user, onProfileUpdate }) {
@@ -34,7 +34,7 @@ export default function ProfileInfoForm({ user, onProfileUpdate }) {
 
     try {
       setLoading(true);
-      const response = await updateProfile(formData);
+      const response = await updateUserProfile(formData);
       toast.success('Profile updated successfully!');
       if (onProfileUpdate) {
         onProfileUpdate(response);

@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Camera, X, Upload, Trash2 } from 'lucide-react';
-import { uploadProfilePicture, deleteProfilePicture, getProfilePictureUrl } from '../../api/user';
+import { uploadProfilePicture, deleteProfilePicture } from '../../api/user';
 import toast from 'react-hot-toast';
 
 export default function ProfilePictureUpload({ user, onProfileUpdate }) {
@@ -9,9 +9,8 @@ export default function ProfilePictureUpload({ user, onProfileUpdate }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const fileInputRef = useRef(null);
 
-  const currentProfilePicture = user?.profilePictureUrl 
-    ? `http://localhost:8080${user.profilePictureUrl}`
-    : null;
+  // FIXED: Use S3 URL directly - no more localhost!
+  const currentProfilePicture = user?.profilePictureUrl;
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
@@ -103,13 +102,14 @@ export default function ProfilePictureUpload({ user, onProfileUpdate }) {
           )}
         </div>
 
-        {/* Action Buttons */}
+                {/* Action Buttons */}
         {previewUrl ? (
-          <div className="flex gap-2">
+          // Show upload/cancel when new file is selected
+          <div className="flex gap-2 w-full">
             <button
               onClick={handleUpload}
               disabled={uploading}
-              className="px-4 py-2 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-lg hover:from-green-600 hover:to-blue-600 disabled:opacity-50 transition-all flex items-center gap-2"
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium flex items-center justify-center gap-2"
             >
               {uploading ? (
                 <>
@@ -125,33 +125,35 @@ export default function ProfilePictureUpload({ user, onProfileUpdate }) {
             </button>
             <button
               onClick={handleCancel}
-              className="px-4 py-2 border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 transition-colors flex items-center gap-2"
+              disabled={uploading}
+              className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               <X className="w-4 h-4" />
-              Cancel
             </button>
           </div>
         ) : (
-          <div className="flex gap-2">
+          // Show change/delete when no new file is selected
+          <div className="flex gap-2 w-full">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+              className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-all font-medium flex items-center justify-center gap-2"
             >
               <Camera className="w-4 h-4" />
-              {currentProfilePicture ? 'Change Photo' : 'Upload Photo'}
+              {currentProfilePicture ? 'Change Picture' : 'Upload Picture'}
             </button>
             {currentProfilePicture && (
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/10 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2"
+                title="Delete profile picture"
               >
                 <Trash2 className="w-4 h-4" />
-                Remove
               </button>
             )}
           </div>
         )}
 
+        {/* Hidden file input */}
         <input
           ref={fileInputRef}
           type="file"
@@ -160,11 +162,11 @@ export default function ProfilePictureUpload({ user, onProfileUpdate }) {
           className="hidden"
         />
 
+        {/* File size info */}
         <p className="text-xs text-slate-400 text-center">
-          JPEG or PNG. Max size 5MB.
+          JPG or PNG. Max size 5MB.
         </p>
-      </div>
+        </div>
     </div>
   );
 }
-

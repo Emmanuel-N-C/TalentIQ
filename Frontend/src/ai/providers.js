@@ -14,13 +14,7 @@ if (apiKey && !apiKey.startsWith('gsk_')) {
   console.warn('⚠️ VITE_GROQ_API_KEY might be invalid. Groq API keys should start with "gsk_"');
 }
 
-// Log configuration status
-console.log('🔑 Groq Configuration:', {
-  apiKeyExists: !!apiKey,
-  apiKeyValid: apiKey?.startsWith('gsk_'),
-  modelName: modelName,
-  apiKeyPreview: apiKey ? `${apiKey.substring(0, 10)}...${apiKey.substring(apiKey.length - 4)}` : 'undefined'
-});
+
 
 // Initialize Groq with API key
 let groq;

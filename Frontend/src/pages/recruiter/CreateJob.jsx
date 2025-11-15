@@ -128,29 +128,37 @@ export default function CreateJob() {
               Experience Level
               <span className="text-red-400">*</span>
             </label>
-            <select
-              name="experienceLevel"
-              value={formData.experienceLevel}
-              onChange={handleChange}
-              className="w-full p-3 sm:p-4 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm sm:text-base"
-              required
-            >
-              <option value="Entry">Entry Level</option>
-              <option value="Mid-Level">Mid-Level</option>
-              <option value="Senior">Senior</option>
-              <option value="Lead">Lead</option>
-            </select>
+            <div className="relative">
+              <select
+                name="experienceLevel"
+                value={formData.experienceLevel}
+                onChange={handleChange}
+                className="w-full p-3 sm:p-4 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm sm:text-base appearance-none cursor-pointer"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23cbd5e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 0.75rem center',
+                  backgroundSize: '1.25rem',
+                }}
+                required
+              >
+                <option value="Entry-Level">Entry Level</option>
+                <option value="Mid-Level">Mid-Level</option>
+                <option value="Senior">Senior</option>
+                <option value="Lead">Lead</option>
+              </select>
+            </div>
           </div>
 
           {/* AI Generator Button */}
-          <div className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
-            <div className="flex items-start justify-between gap-4">
+          <div className="bg-gradient-to-r from-purple-900/50 to-blue-900/50 backdrop-blur-sm border border-purple-500/30 rounded-xl p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div className="flex-1">
-                <h3 className="font-semibold text-purple-300 mb-2 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5" />
+                <h3 className="font-semibold text-purple-300 mb-1 sm:mb-2 flex items-center gap-2 text-sm sm:text-base">
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
                   AI Job Description Generator
                 </h3>
-                <p className="text-sm text-slate-400">
+                <p className="text-xs sm:text-sm text-slate-400">
                   Let AI write a professional job description based on the title, company, and experience level
                 </p>
               </div>
@@ -158,9 +166,9 @@ export default function CreateJob() {
                 type="button"
                 onClick={handleAIGenerate}
                 disabled={aiLoading || !formData.title || !formData.company}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-3 rounded-lg hover:from-purple-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex items-center gap-2 font-semibold transition-all"
+                className="w-full sm:w-auto bg-gradient-to-r from-purple-500 to-blue-500 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:from-purple-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex items-center justify-center gap-2 font-semibold transition-all text-sm sm:text-base"
               >
-                <Sparkles className="w-5 h-5" />
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
                 {aiLoading ? 'Generating...' : 'Generate'}
               </button>
             </div>
@@ -205,21 +213,21 @@ export default function CreateJob() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-4 rounded-lg hover:from-green-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center justify-center gap-2 transition-all"
+              className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-lg hover:from-green-600 hover:to-blue-600 disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center justify-center gap-2 transition-all text-sm sm:text-base"
             >
-              <Save className="w-5 h-5" />
+              <Save className="w-4 h-4 sm:w-5 sm:h-5" />
               {loading ? 'Posting Job...' : 'Post Job'}
             </button>
             <button
               type="button"
               onClick={() => navigate('/recruiter/jobs')}
-              className="px-8 py-4 bg-slate-700 text-white rounded-lg hover:bg-slate-600 font-semibold flex items-center justify-center gap-2 transition-all"
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-slate-700 text-white rounded-lg hover:bg-slate-600 font-semibold flex items-center justify-center gap-2 transition-all text-sm sm:text-base"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
               Cancel
             </button>
           </div>

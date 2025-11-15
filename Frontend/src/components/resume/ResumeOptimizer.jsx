@@ -40,10 +40,8 @@ export default function ResumeOptimizer() {
     setOptimization(null);
     setShowPreview(false);
     
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-    }
+    // Clear preview URL when switching resumes
+    setPreviewUrl(null);
     
     try {
       const data = await getResumeText(resume.id);
@@ -56,10 +54,7 @@ export default function ResumeOptimizer() {
   const handleTogglePreview = async () => {
     if (showPreview) {
       setShowPreview(false);
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-        setPreviewUrl(null);
-      }
+      setPreviewUrl(null);
     } else {
       setShowPreview(true);
       if (previewMode === 'file' && !previewUrl) {
@@ -73,8 +68,8 @@ export default function ResumeOptimizer() {
     
     setLoadingPreview(true);
     try {
-      const blobUrl = await getResumeFileBlob(selectedResume.id);
-      setPreviewUrl(blobUrl);
+      const s3Url = await getResumeFileBlob(selectedResume.id);
+      setPreviewUrl(s3Url); // Now stores S3 URL directly
     } catch (error) {
       console.error('Error loading file preview:', error);
       toast.error('Failed to load file preview');
@@ -108,14 +103,6 @@ export default function ResumeOptimizer() {
       toast.error('Failed to optimize resume');
     }
   };
-
-  useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
 
   if (loading) {
     return (
@@ -285,7 +272,7 @@ export default function ResumeOptimizer() {
           </div>
         )}
 
-        {/* Results */}
+        {/* Results - keeping all existing optimization result display logic */}
         {optimization && (
           <div className="space-y-6">
             {/* Quality Score */}
@@ -480,10 +467,7 @@ export default function ResumeOptimizer() {
                   setSelectedResume(null);
                   setResumeText('');
                   setShowPreview(false);
-                  if (previewUrl) {
-                    URL.revokeObjectURL(previewUrl);
-                    setPreviewUrl(null);
-                  }
+                  setPreviewUrl(null); // No need to revoke S3 URL
                 }}
                 className="flex-1 bg-slate-700 text-white px-6 py-3 rounded-lg hover:bg-slate-600 font-medium transition-colors flex items-center justify-center gap-2"
               >

@@ -41,23 +41,19 @@ export const downloadResume = async (resumeId) => {
   return response;
 };
 
-// Get resume file as blob for preview (Job Seeker - with authentication)
+// Get resume file URL for preview (Job Seeker - S3 URL)
 export const getResumeFileBlob = async (resumeId) => {
-  const response = await apiClient.get(`/resumes/${resumeId}/file`, {
-    responseType: 'blob'
-  });
-  return URL.createObjectURL(response.data);
+  const response = await apiClient.get(`/resumes/${resumeId}/url`);
+  return response.data.url; // Returns S3 URL directly
 };
 
-// NEW: Get resume file as blob for preview (Recruiter - with authentication)
+// Get resume file URL for preview (Recruiter - S3 URL)
 export const getResumeFileBlobForRecruiter = async (resumeId) => {
-  const response = await apiClient.get(`/resumes/${resumeId}/file/recruiter`, {
-    responseType: 'blob'
-  });
-  return URL.createObjectURL(response.data);
+  const response = await apiClient.get(`/resumes/${resumeId}/url/recruiter`);
+  return response.data.url; // Returns S3 URL directly
 };
 
-// Legacy function - kept for backward compatibility but not recommended for iframe use
+// Legacy function - kept for backward compatibility
 export const getResumeFileUrl = (resumeId) => {
   return `http://localhost:8080/api/resumes/${resumeId}/file`;
 };
