@@ -34,16 +34,8 @@ RUN mkdir -p /app/uploads/resumes /app/uploads/profile-pictures
 # Expose port
 EXPOSE 8080
 
-# Run with production profile and optimized JVM settings for Railway (512MB RAM)
-# Xms=128m (initial heap), Xmx=300m (max heap)
-# This leaves ~200MB for non-heap memory (metaspace, threads, native memory)
+# Use Railway's JAVA_TOOL_OPTIONS and NOT Dockerfile JVM flags
 ENTRYPOINT ["java", \
-    "-Xms128m", \
-    "-Xmx300m", \
-    "-XX:MaxMetaspaceSize=100m", \
-    "-XX:+UseG1GC", \
-    "-XX:MaxGCPauseMillis=200", \
-    "-XX:+UseStringDeduplication", \
     "-Djava.security.egd=file:/dev/./urandom", \
     "-Dspring.profiles.active=prod", \
     "-jar", \
