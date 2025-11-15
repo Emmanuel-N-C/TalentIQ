@@ -1,23 +1,23 @@
 package com.talentiq.backend.service;
 
 import com.talentiq.backend.dto.ResumeResponse;
-import com.talentiq.backend.model.Resume;
-import com.talentiq.backend.model.User;
 import com.talentiq.backend.model.Application;
 import com.talentiq.backend.model.Match;
-import com.talentiq.backend.repository.ResumeRepository;
+import com.talentiq.backend.model.Resume;
+import com.talentiq.backend.model.User;
 import com.talentiq.backend.repository.ApplicationRepository;
 import com.talentiq.backend.repository.MatchRepository;
+import com.talentiq.backend.repository.ResumeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.net.MalformedURLException;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,7 +34,7 @@ public class ResumeService {
     private MatchRepository matchRepository;
 
     @Autowired
-    private FileStorageService fileStorageService;
+    private S3StorageService s3StorageService;
 
     @Autowired
     private ResumeParserService resumeParserService;
@@ -68,19 +68,19 @@ public class ResumeService {
         System.out.println("   Size: " + file.getSize() + " bytes");
         System.out.println("   Type: " + contentType);
 
-        // Save file to disk
-        String filePath = fileStorageService.storeFile(file);
-        System.out.println("✅ File stored at: " + filePath);
+        // Upload file to S3
+        String s3Url = s3StorageService.uploadFile(file, "resumes");
+        System.out.println("✅ Resume uploaded to S3: " + s3Url);
 
-        // Parse resume text
-        String extractedText = resumeParserService.extractText(filePath);
+        // FIXED: Parse resume text from MultipartFile (save to temp file first)
+        String extractedText = extractTextFromMultipartFile(file);
         System.out.println("✅ Extracted text length: " + (extractedText != null ? extractedText.length() : 0) + " chars");
 
         // Create and save resume entity
         Resume resume = new Resume();
         resume.setUser(user);
         resume.setFilename(file.getOriginalFilename());
-        resume.setFilePath(filePath);
+        resume.setFilePath(s3Url);  // Store S3 URL instead of local path
         resume.setFileSize(file.getSize());
         resume.setMimeType(contentType);
         resume.setExtractedText(extractedText);
@@ -89,6 +89,29 @@ public class ResumeService {
         System.out.println("✅ Resume saved with ID: " + resume.getId());
 
         return convertToResponse(resume);
+    }
+
+    /**
+     * Helper method to extract text from MultipartFile
+     * FIXED: ResumeParserService expects a file path, so we save temporarily
+     */
+    private String extractTextFromMultipartFile(MultipartFile file) {
+        try {
+            // Create temporary file
+            Path tempFile = Files.createTempFile("resume_", "_" + file.getOriginalFilename());
+            file.transferTo(tempFile.toFile());
+
+            // Extract text using the temporary file path
+            String extractedText = resumeParserService.extractText(tempFile.toString());
+
+            // Delete temporary file
+            Files.deleteIfExists(tempFile);
+
+            return extractedText;
+        } catch (IOException e) {
+            System.err.println("⚠️ Warning: Could not extract text from resume: " + e.getMessage());
+            return ""; // Return empty string if extraction fails
+        }
     }
 
     /**
@@ -117,26 +140,22 @@ public class ResumeService {
     }
 
     /**
-     * Get resume file for download
+     * Get resume file URL (now returns S3 URL directly)
      */
-    public Resource getResumeFile(Long id, User user) {
+    public String getResumeFileUrl(Long id, User user) {
         Resume resume = getResumeById(id, user);
-        return loadFileAsResource(resume.getFilePath());
+        return resume.getFilePath();  // Returns S3 URL
     }
 
     /**
-     * Get resume file for recruiter (from application)
-     * FLEXIBLE VERSION: Works with old and new applications
+     * Get resume file URL for recruiter (from application)
      */
-    public Resource getResumeFileForRecruiter(Long resumeId, User recruiter) {
+    public String getResumeFileUrlForRecruiter(Long resumeId, User recruiter) {
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new RuntimeException("Resume not found with id: " + resumeId));
 
-        // FLEXIBLE CHECK: Accept both old and new application types
-        // 1. Direct check: Does application have resume_id pointing to this resume AND recruiter owns the job?
+        // Check if recruiter has access through application
         boolean hasAccessThroughApplication = applicationRepository.existsByResumeIdAndJobRecruiterId(resumeId, recruiter.getId());
-
-        // 2. Indirect check: Does application link this user to a job owned by this recruiter? (old applications)
         boolean hasAccessThroughJobApplication = applicationRepository.existsByUserIdAndJobRecruiterId(resume.getUser().getId(), recruiter.getId());
 
         System.out.println("🔍 Resume access check:");
@@ -147,22 +166,19 @@ public class ResumeService {
             throw new RuntimeException("You do not have permission to access this resume");
         }
 
-        return loadFileAsResource(resume.getFilePath());
+        return resume.getFilePath();  // Returns S3 URL
     }
 
     /**
      * Get resume filename for recruiter
-     * FLEXIBLE VERSION: Works with old and new applications
      */
     public String getResumeFilenameForRecruiter(Long resumeId, User recruiter) {
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new RuntimeException("Resume not found with id: " + resumeId));
 
-        // Same flexible check as above
+        // Check permissions (same as above)
         boolean hasAccessThroughApplication = applicationRepository.existsByResumeIdAndJobRecruiterId(resumeId, recruiter.getId());
         boolean hasAccessThroughJobApplication = applicationRepository.existsByUserIdAndJobRecruiterId(resume.getUser().getId(), recruiter.getId());
-
-        System.out.println("🔍 Filename check - Direct access: " + hasAccessThroughApplication + ", Indirect access: " + hasAccessThroughJobApplication);
 
         if (!hasAccessThroughApplication && !hasAccessThroughJobApplication) {
             throw new RuntimeException("You do not have permission to access this resume");
@@ -173,73 +189,49 @@ public class ResumeService {
 
     /**
      * Delete a resume
-     * FIXED: Now handles cascade deletion of related data
      */
     @Transactional
-    public void deleteResume(Long resumeId, User user) {
-        Resume resume = resumeRepository.findById(resumeId)
-                .orElseThrow(() -> new RuntimeException("Resume not found with id: " + resumeId));
+    public void deleteResume(Long id, User user) {
+        Resume resume = getResumeById(id, user);
 
-        // Verify ownership
-        if (!resume.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("You can only delete your own resumes");
-        }
+        System.out.println("🗑️ Deleting resume with ID: " + id);
 
-        System.out.println("🗑️ Deleting resume: " + resume.getFilename());
-
-        // STEP 1: Delete all applications that reference this resume
-        List<Application> userApplications = applicationRepository.findByUserId(user.getId());
-        List<Application> relatedApplications = userApplications.stream()
-                .filter(app -> app.getResume() != null && app.getResume().getId().equals(resumeId))
-                .collect(Collectors.toList());
-
-        if (!relatedApplications.isEmpty()) {
-            System.out.println("   🗑️ Deleting " + relatedApplications.size() + " related applications");
-            applicationRepository.deleteAll(relatedApplications);
-        }
-
-        // STEP 2: Delete all matches that reference this resume
-        List<Match> userMatches = matchRepository.findByResumeUserId(user.getId());
-        List<Match> relatedMatches = userMatches.stream()
-                .filter(match -> match.getResume().getId().equals(resumeId))
+        // FIXED: Use correct repository method names
+        // Delete related matches by job ID
+        List<Match> relatedMatches = matchRepository.findByResumeUserId(user.getId())
+                .stream()
+                .filter(match -> match.getResume() != null && match.getResume().getId().equals(id))
                 .collect(Collectors.toList());
 
         if (!relatedMatches.isEmpty()) {
-            System.out.println("   🗑️ Deleting " + relatedMatches.size() + " related matches");
             matchRepository.deleteAll(relatedMatches);
+            System.out.println("   ✅ Deleted " + relatedMatches.size() + " related matches");
         }
 
-        // STEP 3: Delete file from disk
+        // Delete related applications by user ID (filter by resume)
+        List<Application> relatedApplications = applicationRepository.findByUserId(user.getId())
+                .stream()
+                .filter(app -> app.getResume() != null && app.getResume().getId().equals(id))
+                .collect(Collectors.toList());
+
+        if (!relatedApplications.isEmpty()) {
+            applicationRepository.deleteAll(relatedApplications);
+            System.out.println("   ✅ Deleted " + relatedApplications.size() + " related applications");
+        }
+
+        // Delete file from S3
         try {
-            fileStorageService.deleteFile(resume.getFilePath());
-            System.out.println("   ✅ File deleted from disk");
+            s3StorageService.deleteFile(resume.getFilePath());
+            System.out.println("   ✅ Resume file deleted from S3");
         } catch (Exception e) {
-            System.err.println("   ⚠️ Warning: Could not delete file from disk: " + e.getMessage());
-            // Continue with database deletion even if file deletion fails
+            System.err.println("   ⚠️ Warning: Could not delete file from S3: " + e.getMessage());
+            // Continue with database deletion even if S3 deletion fails
         }
 
-        // STEP 4: Delete resume from database
+        // Delete resume from database
         resumeRepository.delete(resume);
 
         System.out.println("✅ Resume deleted successfully");
-    }
-
-    /**
-     * Load file as Resource for download
-     */
-    private Resource loadFileAsResource(String filePath) {
-        try {
-            Path path = Paths.get(filePath).normalize();
-            Resource resource = new UrlResource(path.toUri());
-
-            if (resource.exists() && resource.isReadable()) {
-                return resource;
-            } else {
-                throw new RuntimeException("File not found or not readable: " + filePath);
-            }
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException("File not found: " + filePath, ex);
-        }
     }
 
     /**
@@ -249,7 +241,7 @@ public class ResumeService {
         ResumeResponse response = new ResumeResponse(
                 resume.getId(),
                 resume.getFilename(),
-                resume.getFilePath(),
+                resume.getFilePath(),  // Now returns S3 URL
                 resume.getFileSize(),
                 resume.getMimeType(),
                 resume.getUploadedAt(),
@@ -266,5 +258,17 @@ public class ResumeService {
         }
 
         return response;
+    }
+
+    // NOTE: These methods are NO LONGER NEEDED with S3
+    // Resumes are accessed directly via S3 URLs
+    @Deprecated
+    public Resource getResumeFile(Long id, User user) {
+        throw new RuntimeException("Resume files are now served directly from S3. Use the S3 URL from getResumeFileUrl()");
+    }
+
+    @Deprecated
+    public Resource getResumeFileForRecruiter(Long resumeId, User recruiter) {
+        throw new RuntimeException("Resume files are now served directly from S3. Use the S3 URL from getResumeFileUrlForRecruiter()");
     }
 }

@@ -9,23 +9,13 @@ import com.talentiq.backend.model.User;
 import com.talentiq.backend.repository.ResumeRepository;
 import com.talentiq.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class UserService {
@@ -39,20 +29,15 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    @Value("${file.upload-dir:uploads/profile-pictures}")
-    private String uploadDir;
-
-    @Value("${file.resume-upload-dir:uploads/resumes}")
-    private String resumeUploadDir;
+    @Autowired
+    private S3StorageService s3StorageService;
 
     public ProfileResponse getCurrentUserProfile(User user) {
         User fullUser = userRepository.findById(user.getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String profilePictureUrl = null;
-        if (fullUser.getProfilePicturePath() != null) {
-            profilePictureUrl = "/api/user/profile-picture/" + fullUser.getId();
-        }
+        // Return the S3 URL directly (no need for /api/user/profile-picture endpoint)
+        String profilePictureUrl = fullUser.getProfilePicturePath();
 
         ProfileResponse response = new ProfileResponse(
                 fullUser.getId(),
@@ -60,7 +45,7 @@ public class UserService {
                 fullUser.getFullName(),
                 fullUser.getRole().name(),
                 fullUser.getProfilePicturePath(),
-                profilePictureUrl,
+                profilePictureUrl,  // Now returns full S3 URL
                 fullUser.getPhone(),
                 fullUser.getLocation(),
                 fullUser.getBio(),
@@ -80,38 +65,42 @@ public class UserService {
         User userToUpdate = userRepository.findById(user.getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (request.getFullName() != null && !request.getFullName().isBlank()) {
-            userToUpdate.setFullName(request.getFullName());
+        // Update basic info
+        if (request.getFullName() != null && !request.getFullName().trim().isEmpty()) {
+            userToUpdate.setFullName(request.getFullName().trim());
         }
+
         if (request.getPhone() != null) {
-            userToUpdate.setPhone(request.getPhone());
+            userToUpdate.setPhone(request.getPhone().trim());
         }
+
         if (request.getLocation() != null) {
-            userToUpdate.setLocation(request.getLocation());
+            userToUpdate.setLocation(request.getLocation().trim());
         }
+
         if (request.getBio() != null) {
-            userToUpdate.setBio(request.getBio());
+            userToUpdate.setBio(request.getBio().trim());
         }
+
+        // Update company name for recruiters
         if (request.getCompanyName() != null) {
-            userToUpdate.setCompanyName(request.getCompanyName());
+            userToUpdate.setCompanyName(request.getCompanyName().trim());
         }
 
         userRepository.save(userToUpdate);
+
         return getCurrentUserProfile(userToUpdate);
     }
 
-    /**
-     * Change password
-     * FIXED: Block OAuth users from changing passwords
-     */
     @Transactional
     public void changePassword(ChangePasswordRequest request, User user) {
         User userToUpdate = userRepository.findById(user.getId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Block OAuth users from changing passwords
+        // Check if user is using OAuth
         if (userToUpdate.getAuthProvider() != AuthProvider.LOCAL) {
-            throw new IllegalStateException("Password cannot be changed for " + userToUpdate.getAuthProvider().name() + " accounts");
+            throw new RuntimeException("Cannot change password for OAuth users. Please use your " +
+                    userToUpdate.getAuthProvider().name() + " account to manage your password.");
         }
 
         // Verify current password
@@ -119,13 +108,12 @@ public class UserService {
             throw new RuntimeException("Current password is incorrect");
         }
 
-        // Validate new password strength
-        if (request.getNewPassword().length() < 8) {
-            throw new RuntimeException("New password must be at least 8 characters long");
-        }
+        // FIXED: ChangePasswordRequest only has newPassword, not confirmPassword
+        // Frontend should validate confirmation before sending
 
         // Update password
         userToUpdate.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
         userRepository.save(userToUpdate);
     }
 
@@ -154,39 +142,31 @@ public class UserService {
                 throw new RuntimeException("File size exceeds maximum limit of 5MB");
             }
 
-            // Generate unique filename
-            String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
-            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            String newFilename = "profile_" + user.getId() + "_" + UUID.randomUUID() + fileExtension;
+            System.out.println("📸 Uploading profile picture for user: " + user.getId());
 
-            // Create upload directory if it doesn't exist
-            Path uploadPath = Paths.get(uploadDir);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            // Delete old profile picture if exists
+            // Delete old profile picture from S3 if exists
             if (userToUpdate.getProfilePicturePath() != null) {
                 try {
-                    Path oldFile = Paths.get(userToUpdate.getProfilePicturePath());
-                    Files.deleteIfExists(oldFile);
-                } catch (IOException e) {
-                    // Log but don't fail if old file can't be deleted
-                    System.err.println("Could not delete old profile picture: " + e.getMessage());
+                    s3StorageService.deleteFile(userToUpdate.getProfilePicturePath());
+                    System.out.println("🗑️ Old profile picture deleted from S3");
+                } catch (Exception e) {
+                    System.err.println("⚠️ Could not delete old profile picture: " + e.getMessage());
+                    // Continue anyway
                 }
             }
 
-            // Save new file
-            Path filePath = uploadPath.resolve(newFilename);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            // Upload to S3
+            String s3Url = s3StorageService.uploadFile(file, "profile-pictures");
+            System.out.println("✅ Profile picture uploaded to S3: " + s3Url);
 
-            // Update user
-            userToUpdate.setProfilePicturePath(filePath.toString());
+            // Update user with S3 URL
+            userToUpdate.setProfilePicturePath(s3Url);
             userRepository.save(userToUpdate);
 
             return getCurrentUserProfile(userToUpdate);
 
-        } catch (IOException e) {
+        } catch (Exception e) {
+            System.err.println("❌ Failed to upload profile picture: " + e.getMessage());
             throw new RuntimeException("Failed to store profile picture: " + e.getMessage());
         }
     }
@@ -201,11 +181,11 @@ public class UserService {
 
         if (userToUpdate.getProfilePicturePath() != null) {
             try {
-                // Delete file from disk
-                Path filePath = Paths.get(userToUpdate.getProfilePicturePath());
-                Files.deleteIfExists(filePath);
-            } catch (IOException e) {
-                System.err.println("Could not delete profile picture file: " + e.getMessage());
+                // Delete from S3
+                s3StorageService.deleteFile(userToUpdate.getProfilePicturePath());
+                System.out.println("✅ Profile picture deleted from S3");
+            } catch (Exception e) {
+                System.err.println("⚠️ Could not delete profile picture from S3: " + e.getMessage());
                 // Continue anyway to clear the database reference
             }
 
@@ -215,84 +195,49 @@ public class UserService {
         }
     }
 
+    // NOTE: This method is NO LONGER NEEDED with S3
+    // Profile pictures are served directly from S3 URLs
+    // You can remove the controller endpoint /api/user/profile-picture/{userId}
+    @Deprecated
     public Resource loadProfilePicture(Long userId) {
-        try {
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            if (user.getProfilePicturePath() == null) {
-                throw new RuntimeException("No profile picture found for this user");
-            }
-
-            Path filePath = Paths.get(user.getProfilePicturePath()).normalize();
-            Resource resource = new UrlResource(filePath.toUri());
-
-            if (resource.exists() && resource.isReadable()) {
-                return resource;
-            } else {
-                throw new RuntimeException("Profile picture not found or not readable");
-            }
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Error loading profile picture: " + e.getMessage());
-        }
+        throw new RuntimeException("Profile pictures are now served directly from S3. Use profilePictureUrl from the user profile.");
     }
 
     /**
      * DELETE USER ACCOUNT - Hard delete with full cascade
-     * This method permanently deletes a user and all related data:
-     * - For Recruiters: Jobs, Applications to those jobs, Matches
-     * - For Job Seekers: Resumes, Applications, Matches
-     * - Profile pictures and resume files
-     *
-     * @param userId The ID of the user to delete
      */
     @Transactional
     public void deleteUserAccount(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        try {
-            // Step 1: Delete profile picture file from disk
-            if (user.getProfilePicturePath() != null) {
-                try {
-                    Path profilePicturePath = Paths.get(user.getProfilePicturePath());
-                    Files.deleteIfExists(profilePicturePath);
-                    System.out.println("Deleted profile picture: " + user.getProfilePicturePath());
-                } catch (IOException e) {
-                    System.err.println("Could not delete profile picture: " + e.getMessage());
-                    // Continue with deletion even if file deletion fails
-                }
+        System.out.println("🗑️ Deleting user account: " + user.getEmail() + " (ID: " + userId + ")");
+
+        // Delete profile picture from S3 if exists
+        if (user.getProfilePicturePath() != null) {
+            try {
+                s3StorageService.deleteFile(user.getProfilePicturePath());
+                System.out.println("   ✅ Profile picture deleted from S3");
+            } catch (Exception e) {
+                System.err.println("   ⚠️ Could not delete profile picture: " + e.getMessage());
             }
-
-            // Step 2: Delete resume files from disk (for job seekers)
-            List<Resume> resumes = resumeRepository.findByUserId(userId);
-            for (Resume resume : resumes) {
-                if (resume.getFilePath() != null) {
-                    try {
-                        Path resumePath = Paths.get(resume.getFilePath());
-                        Files.deleteIfExists(resumePath);
-                        System.out.println("Deleted resume file: " + resume.getFilePath());
-                    } catch (IOException e) {
-                        System.err.println("Could not delete resume file: " + e.getMessage());
-                        // Continue with deletion even if file deletion fails
-                    }
-                }
-            }
-
-            // Step 3: Delete user from database
-            // Thanks to cascade configuration, this will automatically delete:
-            // - All jobs created by this recruiter (if recruiter)
-            // - All applications to those jobs (if recruiter)
-            // - All resumes uploaded by this user (if job seeker)
-            // - All applications submitted by this user (if job seeker)
-            // - All matches related to user's resumes or jobs
-            userRepository.delete(user);
-
-            System.out.println("Successfully deleted user account: " + user.getEmail());
-
-        } catch (Exception e) {
-            System.err.println("Error deleting user account: " + e.getMessage());
-            throw new RuntimeException("Failed to delete user account: " + e.getMessage());
         }
+
+        // Delete resumes from S3 if job seeker
+        if (user.getRole().name().equals("JOB_SEEKER")) {
+            List<Resume> userResumes = resumeRepository.findByUserId(userId);
+            for (Resume resume : userResumes) {
+                try {
+                    s3StorageService.deleteFile(resume.getFilePath());
+                    System.out.println("   ✅ Resume deleted from S3: " + resume.getFilename());
+                } catch (Exception e) {
+                    System.err.println("   ⚠️ Could not delete resume: " + e.getMessage());
+                }
+            }
+        }
+
+        // Delete user (cascade will handle database relations)
+        userRepository.delete(user);
+        System.out.println("✅ User account deleted successfully");
     }
 }

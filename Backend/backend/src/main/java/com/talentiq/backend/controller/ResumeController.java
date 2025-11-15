@@ -5,9 +5,6 @@ import com.talentiq.backend.model.Resume;
 import com.talentiq.backend.model.User;
 import com.talentiq.backend.service.ResumeService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,7 +17,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/resumes")
-
 public class ResumeController {
 
     @Autowired
@@ -48,7 +44,6 @@ public class ResumeController {
     public ResponseEntity<Map<String, String>> getExtractedText(
             @PathVariable Long id,
             @AuthenticationPrincipal User user) {
-        // Get the resume and extract text from it
         Resume resume = resumeService.getResumeById(id, user);
         String extractedText = resume.getExtractedText();
 
@@ -58,63 +53,37 @@ public class ResumeController {
         return ResponseEntity.ok(response);
     }
 
-    // Download/Preview resume file (Job Seeker only - their own resumes)
-    @GetMapping("/{id}/file")
+    // NEW: Get S3 URL for job seeker's own resume
+    @GetMapping("/{id}/url")
     @PreAuthorize("hasAuthority('ROLE_JOB_SEEKER')")
-    public ResponseEntity<Resource> downloadResumeFile(
+    public ResponseEntity<Map<String, String>> getResumeUrl(
             @PathVariable Long id,
             @AuthenticationPrincipal User user) {
-        // Get the resume and file
-        Resume resume = resumeService.getResumeById(id, user);
-        Resource file = resumeService.getResumeFile(id, user);
-        String filename = resume.getFilename();
-
-        // Determine content type based on file extension
-        String contentType = "application/octet-stream";
-        if (filename.toLowerCase().endsWith(".pdf")) {
-            contentType = "application/pdf";
-        } else if (filename.toLowerCase().endsWith(".docx")) {
-            contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        } else if (filename.toLowerCase().endsWith(".doc")) {
-            contentType = "application/msword";
-        }
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
-                .body(file);
+        String s3Url = resumeService.getResumeFileUrl(id, user);
+        Map<String, String> response = new HashMap<>();
+        response.put("url", s3Url);
+        response.put("message", "Resume is now served directly from S3");
+        return ResponseEntity.ok(response);
     }
 
-    // NEW: Recruiter endpoint to view resume from application
-    @GetMapping("/{id}/file/recruiter")
+    // NEW: Get S3 URL for recruiter to view resume from application
+    @GetMapping("/{id}/url/recruiter")
     @PreAuthorize("hasAuthority('ROLE_RECRUITER')")
-    public ResponseEntity<Resource> downloadResumeFileForRecruiter(
+    public ResponseEntity<Map<String, String>> getResumeUrlForRecruiter(
             @PathVariable Long id,
             @AuthenticationPrincipal User recruiter) {
-        System.out.println("🔍 ResumeController - Recruiter accessing resume:");
+        System.out.println("🔍 ResumeController - Recruiter requesting resume URL:");
         System.out.println("   Resume ID: " + id);
-        System.out.println("   Recruiter Email: " + recruiter.getEmail());
         System.out.println("   Recruiter ID: " + recruiter.getId());
-        System.out.println("   Recruiter Role: " + recruiter.getRole());
-        System.out.println("   Recruiter Authorities: " + recruiter.getAuthorities());
 
-        Resource file = resumeService.getResumeFileForRecruiter(id, recruiter);
+        String s3Url = resumeService.getResumeFileUrlForRecruiter(id, recruiter);
         String filename = resumeService.getResumeFilenameForRecruiter(id, recruiter);
 
-        // Determine content type based on file extension
-        String contentType = "application/octet-stream";
-        if (filename.toLowerCase().endsWith(".pdf")) {
-            contentType = "application/pdf";
-        } else if (filename.toLowerCase().endsWith(".docx")) {
-            contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        } else if (filename.toLowerCase().endsWith(".doc")) {
-            contentType = "application/msword";
-        }
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
-                .body(file);
+        Map<String, String> response = new HashMap<>();
+        response.put("url", s3Url);
+        response.put("filename", filename);
+        response.put("message", "Resume is now served directly from S3");
+        return ResponseEntity.ok(response);
     }
 
     // Delete resume
@@ -124,5 +93,37 @@ public class ResumeController {
                                              @AuthenticationPrincipal User user) {
         resumeService.deleteResume(id, user);
         return ResponseEntity.ok().build();
+    }
+
+    // DEPRECATED: Old file download endpoints (kept for backward compatibility)
+    // Frontend should now use the /url endpoints and open S3 URLs directly
+
+    @Deprecated
+    @GetMapping("/{id}/file")
+    @PreAuthorize("hasAuthority('ROLE_JOB_SEEKER')")
+    public ResponseEntity<Map<String, String>> downloadResumeFile(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user) {
+        String s3Url = resumeService.getResumeFileUrl(id, user);
+        Map<String, String> response = new HashMap<>();
+        response.put("url", s3Url);
+        response.put("message", "Files are now served from S3. Use the URL to access the file.");
+        return ResponseEntity.ok(response);
+    }
+
+    @Deprecated
+    @GetMapping("/{id}/file/recruiter")
+    @PreAuthorize("hasAuthority('ROLE_RECRUITER')")
+    public ResponseEntity<Map<String, String>> downloadResumeFileForRecruiter(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User recruiter) {
+        String s3Url = resumeService.getResumeFileUrlForRecruiter(id, recruiter);
+        String filename = resumeService.getResumeFilenameForRecruiter(id, recruiter);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("url", s3Url);
+        response.put("filename", filename);
+        response.put("message", "Files are now served from S3. Use the URL to access the file.");
+        return ResponseEntity.ok(response);
     }
 }
