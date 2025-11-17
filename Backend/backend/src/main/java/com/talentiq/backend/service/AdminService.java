@@ -155,7 +155,7 @@ public class AdminService {
         userRepository.delete(user);
     }
 
-    // Get all jobs (admin view) with pagination
+    // FIXED: Get all jobs (admin view) with pagination - NOW USES findAllWithRecruiter
     public PagedResponse<JobResponse> getAllJobsAdmin(int page, int size, String sortBy, String sortDirection) {
         // Validate and set defaults
         if (page < 0) page = 0;
@@ -168,8 +168,8 @@ public class AdminService {
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        // Get paginated jobs
-        Page<Job> jobPage = jobRepository.findAll(pageable);
+        // FIXED: Use findAllWithRecruiter to eagerly load recruiter relationship
+        Page<Job> jobPage = jobRepository.findAllWithRecruiter(pageable);
 
         // Convert to JobResponse DTOs
         List<JobResponse> jobResponses = jobPage.getContent().stream()
