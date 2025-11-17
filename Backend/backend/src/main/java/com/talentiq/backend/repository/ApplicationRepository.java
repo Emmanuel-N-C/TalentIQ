@@ -21,11 +21,12 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
             "ORDER BY a.appliedAt DESC")
     List<Application> findByJobId(@Param("jobId") Long jobId);
 
-    // Find all applications by a specific user (for jobseekers) - WITH EAGER LOADING
+    // FIXED: Find all applications by a specific user (for jobseekers) - WITH EAGER LOADING INCLUDING USER
     @Query("SELECT a FROM Application a " +
             "JOIN FETCH a.job j " +
             "JOIN FETCH j.recruiter rec " +
             "JOIN FETCH a.resume r " +
+            "JOIN FETCH a.user u " +
             "WHERE a.user.id = :userId " +
             "ORDER BY a.appliedAt DESC")
     List<Application> findByUserIdOrderByAppliedAtDesc(@Param("userId") Long userId);
