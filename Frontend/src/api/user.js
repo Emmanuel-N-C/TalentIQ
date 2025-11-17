@@ -12,9 +12,9 @@ export const updateUserProfile = async (profileData) => {
   return response.data;
 };
 
-// Change password
+// Change password - FIXED: Now calls the correct endpoint
 export const changePassword = async (passwordData) => {
-  const response = await apiClient.post('/user/change-password', passwordData);
+  const response = await apiClient.post('/auth/change-password', passwordData);
   return response.data;
 };
 
@@ -31,9 +31,6 @@ export const uploadProfilePicture = async (file) => {
 
   return response.data;
 };
-
-// NO LONGER NEEDED - S3 URLs are returned directly in profile
-// export const getProfilePictureUrl = (userId) => { ... };
 
 // Delete profile picture
 export const deleteProfilePicture = async () => {

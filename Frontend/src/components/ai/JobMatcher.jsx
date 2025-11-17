@@ -310,7 +310,7 @@ export default function JobMatcher() {
                 {matchResult.strengths.map((strength, idx) => (
                   <li key={idx} className="flex items-start">
                     <span className="text-blue-600 mr-2">▸</span>
-                    <span className="text-gray-700">{strength}</span>
+                    <span className="text-gray-700 whitespace-pre-line break-words">{strength}</span>
                   </li>
                 ))}
               </ul>
@@ -327,7 +327,7 @@ export default function JobMatcher() {
                 {matchResult.recommendations.map((rec, idx) => (
                   <li key={idx} className="flex items-start">
                     <span className="text-purple-600 mr-2">▸</span>
-                    <span className="text-gray-700">{rec}</span>
+                    <span className="text-gray-700 whitespace-pre-line break-words">{rec}</span>
                   </li>
                 ))}
               </ul>
@@ -338,7 +338,7 @@ export default function JobMatcher() {
           {matchResult.summary && (
             <div className="bg-gray-50 rounded-lg border-2 border-gray-200 p-6">
               <h3 className="text-xl font-bold mb-3">📝 Overall Assessment</h3>
-              <p className="text-gray-700 leading-relaxed">{matchResult.summary}</p>
+              <p className="text-gray-700 leading-relaxed whitespace-pre-line break-words">{matchResult.summary}</p>
             </div>
           )}
 

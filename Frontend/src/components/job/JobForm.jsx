@@ -205,7 +205,7 @@ export default function JobForm({ initialData = null, onSubmit, submitButtonText
           value={formData.description}
           onChange={handleChange}
           rows={12}
-          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 whitespace-pre-line ${
             errors.description ? 'border-red-500' : 'border-gray-300'
           }`}
           placeholder="Describe the role, responsibilities, and requirements..."

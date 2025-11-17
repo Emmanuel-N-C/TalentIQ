@@ -351,7 +351,7 @@ export default function ResumeOptimizer() {
                   {optimization.strengths.map((strength, idx) => (
                     <li key={idx} className="flex items-start">
                       <CheckCircle className="w-4 h-4 text-green-400 mr-2 mt-1 flex-shrink-0" />
-                      <span className="text-slate-300">{strength}</span>
+                      <span className="text-slate-300 whitespace-pre-line break-words">{strength}</span>
                     </li>
                   ))}
                 </ul>
@@ -369,7 +369,7 @@ export default function ResumeOptimizer() {
                   {optimization.weaknesses.map((weakness, idx) => (
                     <li key={idx} className="flex items-start">
                       <span className="text-orange-400 mr-2">▸</span>
-                      <span className="text-slate-300">{weakness}</span>
+                      <span className="text-slate-300 whitespace-pre-line break-words">{weakness}</span>
                     </li>
                   ))}
                 </ul>
@@ -387,7 +387,7 @@ export default function ResumeOptimizer() {
                   {optimization.recommendations.map((rec, idx) => (
                     <li key={idx} className="flex items-start">
                       <Lightbulb className="w-4 h-4 text-blue-400 mr-2 mt-1 flex-shrink-0" />
-                      <span className="text-slate-300">{rec}</span>
+                      <span className="text-slate-300 whitespace-pre-line break-words">{rec}</span>
                     </li>
                   ))}
                 </ul>
@@ -405,7 +405,7 @@ export default function ResumeOptimizer() {
                   {optimization.sectionsToAdd.map((section, idx) => (
                     <li key={idx} className="flex items-start">
                       <Plus className="w-4 h-4 text-purple-400 mr-2 mt-1 flex-shrink-0" />
-                      <span className="text-slate-300">{section}</span>
+                      <span className="text-slate-300 whitespace-pre-line break-words">{section}</span>
                     </li>
                   ))}
                 </ul>
@@ -423,7 +423,7 @@ export default function ResumeOptimizer() {
                   {optimization.sectionsToRemove.map((section, idx) => (
                     <li key={idx} className="flex items-start">
                       <Minus className="w-4 h-4 text-red-400 mr-2 mt-1 flex-shrink-0" />
-                      <span className="text-slate-300">{section}</span>
+                      <span className="text-slate-300 whitespace-pre-line break-words">{section}</span>
                     </li>
                   ))}
                 </ul>
@@ -441,7 +441,7 @@ export default function ResumeOptimizer() {
                   {optimization.formattingTips.map((tip, idx) => (
                     <li key={idx} className="flex items-start">
                       <span className="text-indigo-400 mr-2">▸</span>
-                      <span className="text-slate-300">{tip}</span>
+                      <span className="text-slate-300 whitespace-pre-line break-words">{tip}</span>
                     </li>
                   ))}
                 </ul>
@@ -455,7 +455,7 @@ export default function ResumeOptimizer() {
                   <FileText className="w-6 h-6 text-slate-400" />
                   Summary
                 </h3>
-                <p className="text-slate-300 leading-relaxed">{optimization.summary}</p>
+                <p className="text-slate-300 leading-relaxed whitespace-pre-line break-words">{optimization.summary}</p>
               </div>
             )}
 

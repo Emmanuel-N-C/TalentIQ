@@ -798,7 +798,7 @@ export default function BrowseJobs() {
                         <h3 className="font-semibold text-base sm:text-lg text-blue-400">Your Cover Letter</h3>
                         <span className="text-xs text-slate-400">{generatedCoverLetter.wordCount} words</span>
                       </div>
-                      <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-4 sm:p-6 text-sm sm:text-base text-slate-300 whitespace-pre-wrap leading-relaxed max-h-[300px] sm:max-h-[400px] overflow-y-auto">
+                      <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-4 sm:p-6 text-sm sm:text-base text-slate-300 whitespace-pre-line break-words leading-relaxed max-h-[300px] sm:max-h-[400px] overflow-y-auto">
                         {generatedCoverLetter.coverLetter}
                       </div>
                     </div>
@@ -811,7 +811,7 @@ export default function BrowseJobs() {
                           {generatedCoverLetter.highlights.map((highlight, idx) => (
                             <li key={idx} className="flex items-start gap-2 text-sm sm:text-base text-slate-300">
                               <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                              <span>{highlight}</span>
+                              <span className="whitespace-pre-line break-words">{highlight}</span>
                             </li>
                           ))}
                         </ul>

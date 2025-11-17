@@ -229,7 +229,7 @@ export default function EditJob() {
               value={formData.description}
               onChange={handleChange}
               rows="12"
-              className="w-full p-4 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              className="w-full p-4 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all whitespace-pre-line"
               placeholder="Provide a detailed job description including responsibilities, requirements, and benefits..."
               required
             />

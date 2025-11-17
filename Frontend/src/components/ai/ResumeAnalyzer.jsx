@@ -91,7 +91,7 @@ export default function ResumeAnalyzer() {
             <h3 className="text-xl font-bold mb-3 text-green-700">✓ Strengths</h3>
             <ul className="list-disc list-inside space-y-2">
               {analysis.strengths.map((strength, idx) => (
-                <li key={idx} className="text-gray-700">{strength}</li>
+                <li key={idx} className="text-gray-700 whitespace-pre-line break-words">{strength}</li>
               ))}
             </ul>
           </div>
@@ -101,7 +101,7 @@ export default function ResumeAnalyzer() {
             <h3 className="text-xl font-bold mb-3 text-orange-700">⚠ Areas for Improvement</h3>
             <ul className="list-disc list-inside space-y-2">
               {analysis.improvements.map((improvement, idx) => (
-                <li key={idx} className="text-gray-700">{improvement}</li>
+                <li key={idx} className="text-gray-700 whitespace-pre-line break-words">{improvement}</li>
               ))}
             </ul>
           </div>
@@ -111,7 +111,7 @@ export default function ResumeAnalyzer() {
             <h3 className="text-xl font-bold mb-3 text-blue-700">💡 Recommendations</h3>
             <ul className="list-disc list-inside space-y-2">
               {analysis.recommendations.map((rec, idx) => (
-                <li key={idx} className="text-gray-700">{rec}</li>
+                <li key={idx} className="text-gray-700 whitespace-pre-line break-words">{rec}</li>
               ))}
             </ul>
           </div>
@@ -119,7 +119,7 @@ export default function ResumeAnalyzer() {
           {/* Summary */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-xl font-bold mb-3">📝 Summary</h3>
-            <p className="text-gray-700">{analysis.summary}</p>
+            <p className="text-gray-700 whitespace-pre-line break-words leading-relaxed">{analysis.summary}</p>
           </div>
         </div>
       )}

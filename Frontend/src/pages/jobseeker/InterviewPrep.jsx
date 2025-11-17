@@ -199,7 +199,7 @@ export default function InterviewPrep() {
                       {feedback.strengths.map((s, i) => (
                         <li key={i} className="flex items-start">
                           <CheckCircle className="w-4 h-4 text-green-400 mr-2 mt-1 flex-shrink-0" />
-                          <span className="text-slate-300">{s}</span>
+                          <span className="text-slate-300 whitespace-pre-line break-words">{s}</span>
                         </li>
                       ))}
                     </ul>
@@ -217,7 +217,7 @@ export default function InterviewPrep() {
                       {feedback.improvements.map((i, idx) => (
                         <li key={idx} className="flex items-start">
                           <span className="text-orange-400 mr-2 mt-1">▸</span>
-                          <span className="text-slate-300">{i}</span>
+                          <span className="text-slate-300 whitespace-pre-line break-words">{i}</span>
                         </li>
                       ))}
                     </ul>
@@ -235,7 +235,7 @@ export default function InterviewPrep() {
                       {feedback.suggestions.map((s, i) => (
                         <li key={i} className="flex items-start">
                           <Lightbulb className="w-4 h-4 text-blue-400 mr-2 mt-1 flex-shrink-0" />
-                          <span className="text-slate-300">{s}</span>
+                          <span className="text-slate-300 whitespace-pre-line break-words">{s}</span>
                         </li>
                       ))}
                     </ul>
@@ -249,7 +249,7 @@ export default function InterviewPrep() {
                       <MessageSquare className="w-5 h-5 text-slate-400" />
                       Overall Feedback
                     </h4>
-                    <p className="text-slate-300 leading-relaxed">{feedback.overallFeedback}</p>
+                    <p className="text-slate-300 leading-relaxed whitespace-pre-line break-words">{feedback.overallFeedback}</p>
                   </div>
                 )}
 

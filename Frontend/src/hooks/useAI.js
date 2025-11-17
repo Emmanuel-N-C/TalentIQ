@@ -16,20 +16,31 @@ export function useAI() {
     }
   };
 
-  // Helper function to clean and parse JSON from AI response
+  // Helper function to clean and parse JSON from AI response - IMPROVED
   const parseAIResponse = (text) => {
     try {
       // Remove markdown code blocks if present
-      const cleaned = text
-        .trim()
-        .replace(/\n?/g, '')
-        .replace(/```\n?/g, '')
-        .trim();
+      let cleaned = text.trim();
       
-      return JSON.parse(cleaned);
+      // Remove ```json and ``` markers (but NOT whitespace inside the JSON!)
+      cleaned = cleaned.replace(/```json\s*/gi, '');
+      cleaned = cleaned.replace(/```\s*$/g, '');
+      
+      // Remove any leading/trailing whitespace again
+      cleaned = cleaned.trim();
+      
+      // Try to find JSON object or array in the text
+      const jsonMatch = cleaned.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+      if (jsonMatch) {
+        cleaned = jsonMatch[0];
+      }
+      
+      // Parse the JSON
+      const parsed = JSON.parse(cleaned);
+      
+      return parsed;
     } catch (parseError) {
       console.error('JSON Parse Error:', parseError);
-      console.log('Raw text:', text);
       throw new Error('Failed to parse AI response. The AI returned invalid JSON.');
     }
   };
@@ -86,7 +97,7 @@ Requirements:
 - Relevant to the specific role
 - Clear and professional
 
-IMPORTANT: Return ONLY a valid JSON array with NO markdown formatting, NO explanations, just pure JSON:
+CRITICAL: Return ONLY a valid JSON array. NO markdown, NO code blocks, NO explanations. Just the raw JSON array:
 
 [
   {
@@ -147,7 +158,7 @@ Provide constructive, detailed feedback with:
 4. Actionable suggestions (2-3 points)
 5. Overall encouraging feedback
 
-IMPORTANT: Return ONLY valid JSON with NO markdown formatting, NO explanations:
+CRITICAL: Return ONLY valid JSON. NO markdown, NO code blocks, NO explanations:
 
 {
   "score": 7,
@@ -208,7 +219,7 @@ Provide a comprehensive analysis including:
 5. Specific recommendations to improve fit
 6. Overall summary
 
-IMPORTANT: Return ONLY valid JSON with NO markdown formatting, NO explanations:
+CRITICAL: Return ONLY valid JSON. NO markdown, NO code blocks, NO explanations:
 
 {
   "matchScore": 75,
@@ -281,7 +292,7 @@ Consider:
 - ATS-friendly formatting
 - Industry-standard terminology
 
-IMPORTANT: Return ONLY valid JSON with NO markdown formatting, NO explanations:
+CRITICAL: Return ONLY valid JSON. NO markdown, NO code blocks, NO explanations:
 
 {
   "atsScore": 75,
@@ -350,7 +361,7 @@ Focus on:
 6. Quantifiable achievements
 7. Professional presentation
 
-IMPORTANT: Return ONLY valid JSON with NO markdown formatting, NO explanations:
+CRITICAL: Return ONLY valid JSON. NO markdown, NO code blocks, NO explanations:
 
 {
   "qualityScore": 75,
@@ -405,69 +416,100 @@ Analyze now:`,
     }
   };
 
-  // ATS Checker (job-specific analysis)
+  // ATS Checker (job-specific analysis) - FIXED JSON PARSING
   const checkATS = async (resumeText, jobDescription) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       checkGroqConfig();
-      console.log(`🤖 Running ATS check using model: ${groqConfig.modelName}`);
+      console.log(`🤖 Checking ATS compatibility using model: ${groqConfig.modelName}`);
       
       const { text } = await generateText({
         model: defaultProviders.analysis,
-        prompt: `You are an ATS (Applicant Tracking System) expert. Analyze how well this resume would perform against this specific job's ATS system.
+        prompt: `You are an expert ATS (Applicant Tracking System) analyzer. Analyze this resume against the job description and provide a detailed compatibility report.
 
-RESUME:
+Resume:
 ${resumeText}
 
-JOB DESCRIPTION:
+Job Description:
 ${jobDescription}
 
-Provide ATS-specific analysis:
-1. ATS Compatibility Score (0-100) - how well the resume passes ATS filters
-2. Keyword match analysis
-3. Missing critical keywords from job description
-4. Formatting issues that might confuse ATS
-5. Specific recommendations to improve ATS score for THIS job
+CRITICAL INSTRUCTIONS:
+1. Return ONLY valid JSON
+2. NO markdown code blocks (no \`\`\`json or \`\`\`)
+3. NO explanations before or after the JSON
+4. Just the raw JSON object starting with { and ending with }
 
-IMPORTANT: Return ONLY valid JSON with NO markdown formatting, NO explanations:
+Provide your analysis in this exact JSON format:
 
 {
-  "atsScore": 78,
-  "keywordMatchRate": 65,
-  "matchedKeywords": ["Python", "Machine Learning", "TensorFlow", "Agile"],
-  "missingKeywords": ["Docker", "Kubernetes", "CI/CD", "AWS Lambda"],
-  "criticalMissing": ["Docker", "Kubernetes"],
-  "formattingIssues": [
-    "Tables might not be parsed correctly by ATS",
-    "Headers contain complex formatting that ATS may skip"
+  "score": 75,
+  "atsScore": 75,
+  "keywordMatchRate": 68,
+  "matchedKeywords": ["React", "JavaScript", "Node.js", "AWS", "Agile", "Team Leadership"],
+  "missingKeywords": ["Docker", "Kubernetes", "GraphQL", "CI/CD", "Microservices"],
+  "recommendedKeywords": ["TypeScript", "REST APIs", "Git", "Jest", "Redux"],
+  "strengths": [
+    "Strong React and JavaScript experience (5+ years)",
+    "Demonstrated leadership with quantifiable results",
+    "Relevant cloud computing experience with AWS",
+    "Good use of action verbs throughout"
   ],
-  "recommendations": [
-    "Add 'Docker' and 'Kubernetes' in skills section if you have experience",
-    "Include exact phrases from job description like 'CI/CD pipeline'",
-    "Remove table formatting in work experience section",
-    "Ensure all dates are in MM/YYYY format",
-    "Add a skills section if missing"
+  "weaknesses": [
+    "Missing several key technologies mentioned in job description",
+    "Limited DevOps experience shown",
+    "No mention of testing frameworks",
+    "Lacks specific project metrics in some areas"
   ],
-  "alignment": {
-    "technical": 75,
-    "experience": 80,
-    "education": 90,
-    "overall": 78
-  },
-  "summary": "Your resume has a decent ATS compatibility score. The main issue is missing some critical keywords like 'Docker' and 'Kubernetes' that appear frequently in the job description. Adding these (if you have the skills) and removing complex formatting will significantly improve your chances of passing the ATS filter."
+  "optimizationTips": [
+    "Add Docker and Kubernetes if you have any containerization experience",
+    "Highlight any CI/CD pipeline work you've done",
+    "Include specific metrics for all major achievements (percentages, numbers, time saved)",
+    "Add a technical skills section prominently near the top",
+    "Use exact keywords from the job description where truthful",
+    "Reorganize experience to put most relevant projects first"
+  ],
+  "overallFeedback": "Your resume shows strong foundational skills that align well with this role, particularly in React and JavaScript development. However, to maximize your ATS score, you should incorporate more of the specific technologies mentioned in the job description. The overall structure is good, but adding quantifiable metrics and technical keywords will significantly improve your chances of passing ATS filters.",
+  "actionableSteps": [
+    "Review your past projects and add any experience with Docker, Kubernetes, or CI/CD tools",
+    "Quantify every achievement with specific numbers (e.g., 'Improved performance by 40%')",
+    "Add a 'Technical Skills' section at the top with all relevant technologies",
+    "Mirror the job description's language for skills you genuinely possess",
+    "Ensure all required qualifications are explicitly addressed somewhere in your resume",
+    "Have someone review for spelling/grammar - ATS systems penalize errors"
+  ]
 }
 
-Analyze now:`,
+Focus on:
+1. Skills and technical keywords matching
+2. Years of experience alignment
+3. Education requirements
+4. Soft skills mentioned in job description
+5. Industry-specific terminology
+6. Action verbs and quantifiable achievements
+7. ATS-friendly formatting
+
+Be specific, actionable, and honest in your recommendations. Only suggest adding keywords for skills the candidate likely has based on their experience.
+
+Return the JSON now:`,
       });
       
       console.log('✅ Received ATS check from Groq');
-      const atsResult = parseAIResponse(text);
       
-      console.log(`📊 ATS Score: ${atsResult.atsScore}/100`);
-      return atsResult;
+      const result = parseAIResponse(text);
+      
+      // Ensure both score and atsScore are set
+      if (!result.score && result.atsScore) {
+        result.score = result.atsScore;
+      } else if (result.score && !result.atsScore) {
+        result.atsScore = result.score;
+      }
+      
+      console.log(`📊 ATS Score: ${result.score || result.atsScore}/100`);
+      return result;
     } catch (err) {
+      console.error('Full error details:', err);
       throw handleAIError(err, 'checkATS');
     } finally {
       setLoading(false);
@@ -498,7 +540,7 @@ Create a comprehensive job description that includes:
 4. Preferred qualifications (2-3 bullet points)
 5. What makes this opportunity exciting
 
-IMPORTANT: Return ONLY valid JSON with NO markdown formatting:
+CRITICAL: Return ONLY valid JSON. NO markdown, NO code blocks, NO explanations:
 
 {
   "description": "A full, well-formatted job description as a single string with line breaks (\\n) separating sections. Include section headers like 'About the Role:', 'Responsibilities:', 'Required Qualifications:', etc.",
@@ -567,7 +609,7 @@ Structure:
 - Body (2-3 paragraphs): Relevant experiences and skills
 - Closing: Confident call to action
 
-IMPORTANT: Return ONLY valid JSON with NO markdown formatting:
+CRITICAL: Return ONLY valid JSON. NO markdown, NO code blocks, NO explanations:
 
 {
   "coverLetter": "The complete cover letter text as a single string. Use \\n\\n for paragraph breaks. Do NOT include 'Dear Hiring Manager' or signature - just the body paragraphs.",
@@ -603,7 +645,7 @@ Generate now:`,
     optimizeResume,
     checkATS,
     generateJobDescription,
-    generateCoverLetter, // ✅ NEW
+    generateCoverLetter,
     loading,
     error,
   };

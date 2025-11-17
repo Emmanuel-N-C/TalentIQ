@@ -11,7 +11,7 @@ export default function ResumeTextViewer({ resumeText, filename }) {
         <span className="text-xs text-gray-500">Preview</span>
       </div>
       <div className="p-6 max-h-96 overflow-y-auto bg-gray-50">
-        <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono leading-relaxed">
+        <pre className="whitespace-pre-wrap break-words text-sm text-gray-800 font-mono leading-relaxed">
           {resumeText}
         </pre>
       </div>

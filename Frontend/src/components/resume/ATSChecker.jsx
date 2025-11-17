@@ -49,6 +49,7 @@ export default function ATSChecker() {
       setResumeText(data.extractedText);
     } catch (error) {
       console.error('Error loading resume text:', error);
+      toast.error('Failed to load resume text');
     }
   };
 
@@ -298,7 +299,7 @@ export default function ATSChecker() {
           </div>
         </div>
 
-        {/* Results Section - keeping all the existing result display logic */}
+        {/* Results Section */}
         {atsResult && (
           <div className="space-y-6">
             {/* ATS Score */}
@@ -309,35 +310,35 @@ export default function ATSChecker() {
               </h3>
               <div className="flex items-center gap-4">
                 <div className="text-6xl font-bold text-green-400">
-                  {atsResult.atsScore}%
+                  {atsResult.score || atsResult.atsScore || 0}%
                 </div>
                 <div className="flex-1">
                   <div className="w-full bg-slate-700 rounded-full h-4">
                     <div
                       className={`h-4 rounded-full transition-all ${
-                        atsResult.atsScore >= 80
+                        (atsResult.score || atsResult.atsScore || 0) >= 80
                           ? 'bg-green-500'
-                          : atsResult.atsScore >= 65
+                          : (atsResult.score || atsResult.atsScore || 0) >= 65
                           ? 'bg-blue-500'
-                          : atsResult.atsScore >= 50
+                          : (atsResult.score || atsResult.atsScore || 0) >= 50
                           ? 'bg-yellow-500'
                           : 'bg-red-500'
                       }`}
-                      style={{ width: `${atsResult.atsScore}%` }}
+                      style={{ width: `${atsResult.score || atsResult.atsScore || 0}%` }}
                     />
                   </div>
                   <p className="text-sm text-slate-400 mt-2 flex items-center gap-2">
-                    {atsResult.atsScore >= 80 ? (
+                    {(atsResult.score || atsResult.atsScore || 0) >= 80 ? (
                       <>
                         <Award className="w-4 h-4 text-green-400" />
                         Excellent! High chance of passing ATS
                       </>
-                    ) : atsResult.atsScore >= 65 ? (
+                    ) : (atsResult.score || atsResult.atsScore || 0) >= 65 ? (
                       <>
                         <CheckCircle className="w-4 h-4 text-blue-400" />
                         Good score, minor improvements recommended
                       </>
-                    ) : atsResult.atsScore >= 50 ? (
+                    ) : (atsResult.score || atsResult.atsScore || 0) >= 50 ? (
                       <>
                         <AlertTriangle className="w-4 h-4 text-yellow-400" />
                         Acceptable, but needs keyword optimization
@@ -371,9 +372,161 @@ export default function ATSChecker() {
               )}
             </div>
 
-            {/* ... ALL OTHER RESULT SECTIONS REMAIN THE SAME ... */}
-            {/* Alignment Scores, Matched Keywords, Missing Keywords, etc. */}
-            {/* I'm omitting them here for brevity but they remain unchanged */}
+            {/* Matched Keywords */}
+            {atsResult.matchedKeywords && atsResult.matchedKeywords.length > 0 && (
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-green-500/30 rounded-xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                  <h3 className="text-xl font-bold text-green-400">Matched Keywords</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {atsResult.matchedKeywords.map((keyword, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1.5 bg-green-500/10 text-green-400 border border-green-500/30 rounded-lg text-sm font-medium"
+                    >
+                      ✓ {keyword}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Missing Keywords Section */}
+            {atsResult.missingKeywords && atsResult.missingKeywords.length > 0 && (
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-red-500/30 rounded-xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <AlertTriangle className="w-6 h-6 text-red-400" />
+                  <h3 className="text-xl font-bold text-red-400">Missing Keywords</h3>
+                </div>
+                <p className="text-slate-400 text-sm mb-3">
+                  These keywords appear in the job description but not in your resume:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {atsResult.missingKeywords.map((keyword, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/30 rounded-lg text-sm font-medium"
+                    >
+                      ✗ {keyword}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recommended Keywords Section */}
+            {atsResult.recommendedKeywords && atsResult.recommendedKeywords.length > 0 && (
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-500/30 rounded-xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Sparkles className="w-6 h-6 text-blue-400" />
+                  <h3 className="text-xl font-bold text-blue-400">Recommended Keywords to Add</h3>
+                </div>
+                <p className="text-slate-400 text-sm mb-3">
+                  Consider adding these relevant keywords if you have experience with them:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {atsResult.recommendedKeywords.map((keyword, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/30 rounded-lg text-sm font-medium"
+                    >
+                      + {keyword}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Strengths */}
+            {atsResult.strengths && atsResult.strengths.length > 0 && (
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-green-500/30 rounded-xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                  <h3 className="text-xl font-bold text-green-400">Strengths</h3>
+                </div>
+                <ul className="space-y-2">
+                  {atsResult.strengths.map((strength, index) => (
+                    <li key={index} className="flex items-start gap-3 text-slate-300">
+                      <span className="text-green-400 mt-1">✓</span>
+                      <span className="whitespace-pre-line break-words">{strength}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Weaknesses */}
+            {atsResult.weaknesses && atsResult.weaknesses.length > 0 && (
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-yellow-500/30 rounded-xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <AlertTriangle className="w-6 h-6 text-yellow-400" />
+                  <h3 className="text-xl font-bold text-yellow-400">Areas for Improvement</h3>
+                </div>
+                <ul className="space-y-2">
+                  {atsResult.weaknesses.map((weakness, index) => (
+                    <li key={index} className="flex items-start gap-3 text-slate-300">
+                      <span className="text-yellow-400 mt-1">!</span>
+                      <span className="whitespace-pre-line break-words">{weakness}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Optimization Tips Section */}
+            {atsResult.optimizationTips && atsResult.optimizationTips.length > 0 && (
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Award className="w-6 h-6 text-purple-400" />
+                  <h3 className="text-xl font-bold text-purple-400">Optimization Tips</h3>
+                </div>
+                <ul className="space-y-3">
+                  {atsResult.optimizationTips.map((tip, index) => (
+                    <li key={index} className="flex items-start gap-3 text-slate-300 bg-purple-500/5 p-3 rounded-lg">
+                      <span className="text-purple-400 font-bold flex-shrink-0">{index + 1}.</span>
+                      <span className="whitespace-pre-line break-words">{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Overall Feedback */}
+            {atsResult.overallFeedback && (
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <FileText className="w-6 h-6 text-slate-400" />
+                  <h3 className="text-xl font-bold text-white">Overall Feedback</h3>
+                </div>
+                <p className="text-slate-300 leading-relaxed whitespace-pre-line break-words">
+                  {atsResult.overallFeedback}
+                </p>
+              </div>
+            )}
+
+            {/* Actionable Steps Section */}
+            {atsResult.actionableSteps && atsResult.actionableSteps.length > 0 && (
+              <div className="bg-gradient-to-br from-green-500/10 to-blue-500/10 border border-green-500/30 rounded-xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                  <h3 className="text-xl font-bold text-green-400">🎯 Action Steps to Improve Your Score</h3>
+                </div>
+                <p className="text-slate-300 text-sm mb-4">
+                  Follow these specific steps to optimize your resume for this job:
+                </p>
+                <ol className="space-y-3">
+                  {atsResult.actionableSteps.map((step, index) => (
+                    <li key={index} className="flex items-start gap-3 text-slate-200 bg-slate-800/50 p-4 rounded-lg border border-green-500/20 hover:border-green-500/40 transition-all">
+                      <span className="flex-shrink-0 w-7 h-7 bg-gradient-to-br from-green-500 to-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                        {index + 1}
+                      </span>
+                      <span className="pt-0.5 flex-1 whitespace-pre-line break-words">{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex gap-4">
@@ -394,12 +547,12 @@ export default function ATSChecker() {
                   setJobDescription('');
                   setResumeText('');
                   setShowPreview(false);
-                  setPreviewUrl(null); // No need to revoke S3 URL
+                  setPreviewUrl(null);
                 }}
                 className="flex-1 bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 font-medium transition-colors flex items-center justify-center gap-2"
               >
                 <CheckCircle className="w-5 h-5" />
-                Done
+                Start Fresh
               </button>
             </div>
           </div>
