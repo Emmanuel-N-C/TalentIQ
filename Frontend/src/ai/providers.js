@@ -6,12 +6,12 @@ const modelName = import.meta.env.VITE_GROQ_MODEL || 'llama-3.3-70b-versatile';
 
 // Validate API key
 if (!apiKey) {
-  console.error('❌ VITE_GROQ_API_KEY is missing! Please add it to your .env file.');
+  console.error('VITE_GROQ_API_KEY is missing! Please add it to your .env file.');
   console.error('Get your API key from: https://console.groq.com/keys');
 }
 
 if (apiKey && !apiKey.startsWith('gsk_')) {
-  console.warn('⚠️ VITE_GROQ_API_KEY might be invalid. Groq API keys should start with "gsk_"');
+  console.warn('VITE_GROQ_API_KEY might be invalid. Groq API keys should start with "gsk_"');
 }
 
 
@@ -22,9 +22,8 @@ try {
   groq = createGroq({
     apiKey: apiKey,
   });
-  console.log('✅ Groq provider initialized successfully');
 } catch (error) {
-  console.error('❌ Failed to initialize Groq provider:', error);
+  console.error('Failed to initialize Groq provider:', error);
   throw new Error('Groq initialization failed. Check your API key.');
 }
 

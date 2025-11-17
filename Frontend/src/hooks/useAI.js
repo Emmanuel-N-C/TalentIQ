@@ -82,7 +82,6 @@ export function useAI() {
     
     try {
       checkGroqConfig();
-      console.log(`🤖 Generating interview questions using model: ${groqConfig.modelName}`);
       
       const { text } = await generateText({
         model: defaultProviders.interview,
@@ -117,13 +116,11 @@ CRITICAL: Return ONLY a valid JSON array. NO markdown, NO code blocks, NO explan
 Generate the 5 questions now:`,
       });
       
-      console.log('✅ Received response from Groq');
       const parsed = parseAIResponse(text);
       
       // Handle both array and object with questions property
       const questions = Array.isArray(parsed) ? parsed : (parsed.questions || []);
       
-      console.log(`📝 Questions generated: ${questions.length}`);
       return questions;
     } catch (err) {
       throw handleAIError(err, 'generateInterviewQuestions');
@@ -139,7 +136,6 @@ Generate the 5 questions now:`,
     
     try {
       checkGroqConfig();
-      console.log(`🤖 Evaluating answer using model: ${groqConfig.modelName}`);
       
       const { text } = await generateText({
         model: defaultProviders.interview,
@@ -180,10 +176,8 @@ CRITICAL: Return ONLY valid JSON. NO markdown, NO code blocks, NO explanations:
 Evaluate now:`,
       });
       
-      console.log('✅ Received evaluation from Groq');
       const evaluation = parseAIResponse(text);
       
-      console.log(`📊 Evaluation score: ${evaluation.score}/10`);
       return evaluation;
     } catch (err) {
       throw handleAIError(err, 'evaluateAnswer');
@@ -199,7 +193,6 @@ Evaluate now:`,
     
     try {
       checkGroqConfig();
-      console.log(`🤖 Matching resume to job using model: ${groqConfig.modelName}`);
       
       const { text } = await generateText({
         model: defaultProviders.matching,
@@ -248,10 +241,8 @@ CRITICAL: Return ONLY valid JSON. NO markdown, NO code blocks, NO explanations:
 Analyze now:`,
       });
       
-      console.log('✅ Received match analysis from Groq');
       const matchResult = parseAIResponse(text);
       
-      console.log(`📈 Match score: ${matchResult.matchScore}%`);
       return matchResult;
     } catch (err) {
       throw handleAIError(err, 'matchResumeToJob');
@@ -267,7 +258,6 @@ Analyze now:`,
     
     try {
       checkGroqConfig();
-      console.log(`🤖 Analyzing resume using model: ${groqConfig.modelName}`);
       
       const { text } = await generateText({
         model: defaultProviders.analysis,
@@ -323,11 +313,8 @@ CRITICAL: Return ONLY valid JSON. NO markdown, NO code blocks, NO explanations:
 Analyze now:`,
       });
       
-      console.log('✅ Received resume analysis from Groq');
       const analysis = parseAIResponse(text);
       
-      console.log(`📊 ATS Score: ${analysis.atsScore}/100`);
-      console.log(`🔧 Skills found: ${analysis.skills.length}`);
       return analysis;
     } catch (err) {
       throw handleAIError(err, 'analyzeResume');
@@ -343,7 +330,6 @@ Analyze now:`,
     
     try {
       checkGroqConfig();
-      console.log(`🤖 Optimizing resume using model: ${groqConfig.modelName}`);
       
       const { text } = await generateText({
         model: defaultProviders.analysis,
@@ -404,10 +390,8 @@ CRITICAL: Return ONLY valid JSON. NO markdown, NO code blocks, NO explanations:
 Analyze now:`,
       });
       
-      console.log('✅ Received resume optimization from Groq');
       const optimization = parseAIResponse(text);
       
-      console.log(`📊 Quality Score: ${optimization.qualityScore}/100`);
       return optimization;
     } catch (err) {
       throw handleAIError(err, 'optimizeResume');
@@ -423,7 +407,6 @@ Analyze now:`,
 
     try {
       checkGroqConfig();
-      console.log(`🤖 Checking ATS compatibility using model: ${groqConfig.modelName}`);
       
       const { text } = await generateText({
         model: defaultProviders.analysis,
@@ -495,8 +478,6 @@ Be specific, actionable, and honest in your recommendations. Only suggest adding
 Return the JSON now:`,
       });
       
-      console.log('✅ Received ATS check from Groq');
-      
       const result = parseAIResponse(text);
       
       // Ensure both score and atsScore are set
@@ -506,7 +487,6 @@ Return the JSON now:`,
         result.atsScore = result.score;
       }
       
-      console.log(`📊 ATS Score: ${result.score || result.atsScore}/100`);
       return result;
     } catch (err) {
       console.error('Full error details:', err);
@@ -523,7 +503,6 @@ Return the JSON now:`,
     
     try {
       checkGroqConfig();
-      console.log(`🤖 Generating job description using model: ${groqConfig.modelName}`);
       
       const { text } = await generateText({
         model: defaultProviders.interview,
@@ -550,10 +529,8 @@ CRITICAL: Return ONLY valid JSON. NO markdown, NO code blocks, NO explanations:
 Generate now:`,
       });
       
-      console.log('✅ Received job description from Groq');
       const result = parseAIResponse(text);
       
-      console.log(`📝 Generated description with ${result.suggestedSkills.length} skills`);
       return result;
     } catch (err) {
       throw handleAIError(err, 'generateJobDescription');
@@ -569,7 +546,6 @@ Generate now:`,
     
     try {
       checkGroqConfig();
-      console.log(`🤖 Generating cover letter using model: ${groqConfig.modelName}`);
       
       const { text } = await generateText({
         model: defaultProviders.analysis,
@@ -625,10 +601,8 @@ CRITICAL: Return ONLY valid JSON. NO markdown, NO code blocks, NO explanations:
 Generate now:`,
       });
       
-      console.log('✅ Received cover letter from Groq');
       const result = parseAIResponse(text);
       
-      console.log(`📝 Generated cover letter: ${result.wordCount} words`);
       return result;
     } catch (err) {
       throw handleAIError(err, 'generateCoverLetter');

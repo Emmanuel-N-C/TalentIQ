@@ -97,12 +97,10 @@ export default function JobMatcher() {
         analysisResult: JSON.stringify(matchResult),
       };
 
-      console.log('💾 Saving match data:', matchData);
       await saveMatch(matchData);
       toast.success('Job saved to your Saved Jobs! ✅');
     } catch (error) {
-      console.error('❌ Error saving match:', error);
-      console.error('Error details:', error.response?.data);
+      console.error('Error saving match:', error);
       toast.error(error.response?.data?.message || 'Failed to save job');
     } finally {
       setSaving(false);
