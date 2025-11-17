@@ -46,11 +46,11 @@ public class MatchService {
             throw new RuntimeException("You can only save matches for your own resumes");
         }
 
-        // Verify job exists
-        Job job = jobRepository.findById(request.getJobId())
+        // FIXED: Use findByIdWithRecruiter to eagerly load recruiter relationship
+        Job job = jobRepository.findByIdWithRecruiter(request.getJobId())
                 .orElseThrow(() -> new RuntimeException("Job not found with id: " + request.getJobId()));
 
-        // Check if match already exists
+        // Check if match already exists (now uses JOIN FETCH query)
         List<Match> existingMatches = matchRepository.findByResumeUserIdOrderByIdDesc(user.getId());
         for (Match existing : existingMatches) {
             if (existing.getJob().getId().equals(job.getId()) &&
@@ -75,8 +75,10 @@ public class MatchService {
 
     /**
      * Get all saved jobs for a user
+     * FIXED: Now uses JOIN FETCH query to prevent LazyInitializationException
      */
     public List<MatchResponse> getUserMatches(User user) {
+        // Uses findByResumeUserIdOrderByIdDesc which now has JOIN FETCH
         List<Match> matches = matchRepository.findByResumeUserIdOrderByIdDesc(user.getId());
         return matches.stream()
                 .map(this::convertToResponse)
@@ -85,12 +87,14 @@ public class MatchService {
 
     /**
      * Delete a saved job
+     * FIXED: Use findByIdWithRelations to eagerly load relationships
      */
     @Transactional
     public void deleteMatch(Long matchId, User user) {
         System.out.println("🗑️ Deleting match ID: " + matchId + " for user: " + user.getEmail());
 
-        Match match = matchRepository.findById(matchId)
+        // FIXED: Use eager-loading method instead of findById
+        Match match = matchRepository.findByIdWithRelations(matchId)
                 .orElseThrow(() -> new RuntimeException("Match not found with id: " + matchId));
 
         // Verify match belongs to user (check through resume ownership)

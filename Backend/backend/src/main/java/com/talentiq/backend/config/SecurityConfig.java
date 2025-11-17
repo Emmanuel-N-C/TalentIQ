@@ -96,13 +96,16 @@ public class SecurityConfig {
                         // Jobs - accessible to recruiters, job seekers, and admins
                         .requestMatchers("/api/jobs/**").hasAnyRole("RECRUITER", "JOB_SEEKER", "ADMIN")
 
+                        // FIXED: Applications - accessible to job seekers, recruiters, and admins
+                        .requestMatchers("/api/applications/**").hasAnyRole("JOB_SEEKER", "RECRUITER", "ADMIN")
+
                         // Resumes - accessible to job seekers, recruiters, and admins
                         .requestMatchers("/api/resumes/**").hasAnyRole("JOB_SEEKER", "RECRUITER", "ADMIN")
 
                         // AI/CV Analyzer - accessible to recruiters and admins
                         .requestMatchers("/api/ai/**", "/api/analyze/**").hasAnyRole("RECRUITER", "ADMIN")
 
-                        // Matching system
+                        // Matching system - accessible to job seekers, recruiters, and admins
                         .requestMatchers("/api/match/**").hasAnyRole("JOB_SEEKER", "RECRUITER", "ADMIN")
 
                         // File uploads (AWS S3) - authenticated users only
