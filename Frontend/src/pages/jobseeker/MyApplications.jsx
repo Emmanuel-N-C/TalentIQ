@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getMyApplications } from '../../api/applications';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
-import { ClipboardList, Filter, Eye, X, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ClipboardList, Filter, Eye, X, Clock, CheckCircle, XCircle, AlertCircle, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function MyApplications() {
