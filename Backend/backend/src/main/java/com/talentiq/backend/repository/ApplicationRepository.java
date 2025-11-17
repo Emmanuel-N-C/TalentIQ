@@ -12,14 +12,31 @@ import java.util.Optional;
 @Repository
 public interface ApplicationRepository extends JpaRepository<Application, Long> {
 
-    // Find all applications for a specific job (for recruiters)
-    List<Application> findByJobId(Long jobId);
+    // Find all applications for a specific job (for recruiters) - WITH EAGER LOADING
+    @Query("SELECT a FROM Application a " +
+            "JOIN FETCH a.job j " +
+            "JOIN FETCH a.user u " +
+            "JOIN FETCH a.resume r " +
+            "WHERE j.id = :jobId " +
+            "ORDER BY a.appliedAt DESC")
+    List<Application> findByJobId(@Param("jobId") Long jobId);
 
-    // Find all applications by a specific user (for jobseekers)
-    List<Application> findByUserId(Long userId);
+    // Find all applications by a specific user (for jobseekers) - WITH EAGER LOADING
+    @Query("SELECT a FROM Application a " +
+            "JOIN FETCH a.job j " +
+            "JOIN FETCH j.recruiter rec " +
+            "JOIN FETCH a.resume r " +
+            "WHERE a.user.id = :userId " +
+            "ORDER BY a.appliedAt DESC")
+    List<Application> findByUserIdOrderByAppliedAtDesc(@Param("userId") Long userId);
 
-    // Find all applications by user ordered by most recent
-    List<Application> findByUserIdOrderByAppliedAtDesc(Long userId);
+    // ADDED: Find all applications by user (without ordering) - needed by AdminService and ResumeService
+    @Query("SELECT a FROM Application a " +
+            "JOIN FETCH a.job j " +
+            "JOIN FETCH a.user u " +
+            "JOIN FETCH a.resume r " +
+            "WHERE a.user.id = :userId")
+    List<Application> findByUserId(@Param("userId") Long userId);
 
     // Check if user already applied to a job
     Optional<Application> findByJobIdAndUserId(Long jobId, Long userId);
@@ -30,20 +47,38 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     // Count applications by status for a specific job
     long countByJobIdAndStatus(Long jobId, Application.ApplicationStatus status);
 
-    // Find all applications for jobs posted by a specific recruiter
-    @Query("SELECT a FROM Application a JOIN FETCH a.job j JOIN FETCH j.recruiter WHERE j.recruiter.id = :recruiterId ORDER BY a.appliedAt DESC")
+    // Find all applications for jobs posted by a specific recruiter - WITH EAGER LOADING
+    @Query("SELECT a FROM Application a " +
+            "JOIN FETCH a.job j " +
+            "JOIN FETCH a.user u " +
+            "JOIN FETCH a.resume r " +
+            "JOIN FETCH j.recruiter rec " +
+            "WHERE rec.id = :recruiterId " +
+            "ORDER BY a.appliedAt DESC")
     List<Application> findByRecruiterId(@Param("recruiterId") Long recruiterId);
 
     // Get applications for a specific job with a specific status
-    List<Application> findByJobIdAndStatus(Long jobId, Application.ApplicationStatus status);
+    @Query("SELECT a FROM Application a " +
+            "JOIN FETCH a.job j " +
+            "JOIN FETCH a.user u " +
+            "JOIN FETCH a.resume r " +
+            "WHERE j.id = :jobId AND a.status = :status " +
+            "ORDER BY a.appliedAt DESC")
+    List<Application> findByJobIdAndStatus(@Param("jobId") Long jobId, @Param("status") Application.ApplicationStatus status);
 
-    // Check if recruiter has access to resume through applications (with resume relationship)
-    // IMPROVED: Uses explicit JOIN to avoid lazy loading issues
-    @Query("SELECT COUNT(a) > 0 FROM Application a JOIN a.resume r JOIN a.job j JOIN j.recruiter rec WHERE r.id = :resumeId AND rec.id = :recruiterId")
+    // Check if recruiter has access to resume through applications
+    @Query("SELECT COUNT(a) > 0 FROM Application a " +
+            "JOIN a.resume r " +
+            "JOIN a.job j " +
+            "JOIN j.recruiter rec " +
+            "WHERE r.id = :resumeId AND rec.id = :recruiterId")
     boolean existsByResumeIdAndJobRecruiterId(@Param("resumeId") Long resumeId, @Param("recruiterId") Long recruiterId);
 
-    // Check if user (resume owner) has applied to any of recruiter's jobs
-    // IMPROVED: Uses explicit JOIN to avoid lazy loading issues
-    @Query("SELECT COUNT(a) > 0 FROM Application a JOIN a.user u JOIN a.job j JOIN j.recruiter rec WHERE u.id = :userId AND rec.id = :recruiterId")
+    // Check if user has applied to any of recruiter's jobs
+    @Query("SELECT COUNT(a) > 0 FROM Application a " +
+            "JOIN a.user u " +
+            "JOIN a.job j " +
+            "JOIN j.recruiter rec " +
+            "WHERE u.id = :userId AND rec.id = :recruiterId")
     boolean existsByUserIdAndJobRecruiterId(@Param("userId") Long userId, @Param("recruiterId") Long recruiterId);
 }
