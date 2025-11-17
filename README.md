@@ -22,7 +22,20 @@ It features **role-based dashboards**, **resume management**, **ATS scanning**, 
 - Save jobs and track applications  
 - Resume upload, parsing, and text extraction  
 - Profile management (password, avatar, info)  
-- Interview prep and career tools powered by AI  
+- Interview prep and career tools powered by AI
+  <img width="1891" height="896" alt="Screenshot 2025-11-17 175637" src="https://github.com/user-attachments/assets/99b4ee8c-80b9-45bd-9f6b-7275ce206bd1" />
+  <img width="1900" height="906" alt="Screenshot 2025-11-17 175655" src="https://github.com/user-attachments/assets/bc1cd0c7-4b7c-4841-871e-b2f54d71ee9e" />
+
+  <img width="1900" height="909" alt="Atschecker" src="https://github.com/user-attachments/assets/97a640fc-76b7-4f9f-a87c-f32b6183c605" />
+  <img width="1899" height="898" alt="resumeopt" src="https://github.com/user-attachments/assets/8a024309-dff0-4fb9-913c-125d15e8065a" />
+  <img width="1896" height="908" alt="Interviewprep" src="https://github.com/user-attachments/assets/b8ca8a5e-676f-4ec0-b540-4822e390f973" />
+
+  
+
+
+  
+
+  
 
 ---
 
@@ -31,7 +44,13 @@ It features **role-based dashboards**, **resume management**, **ATS scanning**, 
 - Dashboard with job statistics  
 - View applications & shortlisted candidates  
 - Access candidate resumes (secure S3 URLs)  
-- AI-powered job description generation  
+- AI-powered job description generation
+  
+<img width="1906" height="899" alt="Screenshot 2025-11-17 175547" src="https://github.com/user-attachments/assets/9a114cae-f87d-422e-a89c-600c39028a91" />
+<img width="1913" height="904" alt="Screenshot 2025-11-17 180529" src="https://github.com/user-attachments/assets/5ef7696d-5595-44f9-b547-81625e3c2dac" />
+<img width="1906" height="905" alt="Screenshot 2025-11-17 180622" src="https://github.com/user-attachments/assets/4c58be0c-626a-413d-a6d6-cad51dc33c77" />
+
+
 
 ---
 
@@ -78,7 +97,7 @@ It features **role-based dashboards**, **resume management**, **ATS scanning**, 
 - React Hook Form + Zod  
 - Axios  
 - Google OAuth (`@react-oauth/google`)  
-- Groq AI (`@ai-sdk/groq` and `ai`)
+- Vercel AI SDK
 
 ### **Backend**
 - Spring Boot 3  
