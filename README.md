@@ -5,6 +5,13 @@ TalentIQ is a full-stack recruitment platform that connects **job seekers**, **r
 
 It features **role-based dashboards**, **resume management**, **ATS scanning**, **resume optimization**, **AI job descriptions**, **interview prep**, and more — powered by **React + Vite**, **Spring Boot**, **PostgreSQL**, **AWS S3**, and **Groq LLMs**.
 
+## 🚧 Application Status
+
+> **Note:** This application is currently **inactive** to manage hosting costs.
+
+If you’re interested in trying out **TalentIQ**, please feel free to reach out to me and I’ll be happy to **spin the application back up**.
+
+
 ---
 
 ## 🚀 Features
