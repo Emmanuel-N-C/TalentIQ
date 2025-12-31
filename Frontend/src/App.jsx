@@ -8,7 +8,7 @@ import ForgotPassword from './pages/public/ForgotPassword';
 import ResetPassword from './pages/public/ResetPassword';
 
 // Public pages
-import Landing from './pages/public/Landing';
+import LandingNew from './pages/public/LandingNew';
 import Login from './pages/public/Login';
 import Register from './pages/public/Register';
 import VerifyOtp from './pages/public/VerifyOtp';
@@ -110,7 +110,7 @@ function App() {
     <AuthenticatedLayout>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<LandingNew />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
