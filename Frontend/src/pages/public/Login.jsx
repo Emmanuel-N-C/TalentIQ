@@ -6,6 +6,7 @@ import apiClient from '../../api/client';
 import { authAPI } from '../../api/auth';
 import { Sparkles, Mail, Lock, ArrowRight, LogIn, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
+import Logo from '../../assets/Talentiqsymb.png';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -154,9 +155,9 @@ export default function Login() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center gap-2 sm:gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center shadow-lg">
-                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-              </div>
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
+                <img src={Logo} alt="TalentIQ Logo" className="w-full h-full object-contain" />
+               </div>
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-white">TalentIQ</h1>
                 <p className="text-xs text-slate-400 hidden sm:block">AI-Powered Hiring</p>

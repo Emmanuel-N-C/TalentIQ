@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { authAPI } from '../../api/auth';
 import { Sparkles, Mail, ArrowRight } from 'lucide-react';
+import Logo from '../../assets/Talentiqsymb.png';
 
 export default function VerifyOtp() {
   const location = useLocation();
@@ -69,8 +70,8 @@ export default function VerifyOtp() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center shadow-lg">
-                <Sparkles className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
+                <img src={Logo} alt="TalentIQ Logo" className="w-full h-full object-contain" />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">TalentIQ</h1>

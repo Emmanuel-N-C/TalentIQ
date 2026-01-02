@@ -8,6 +8,7 @@ import {
   Settings as SettingsIcon,
   LogOut
 } from 'lucide-react';
+import Logo from '../../assets/Talentiqsymb.png';
 
 export default function AdminSidebar({ isOpen, onClose }) {
   const location = useLocation();
@@ -52,8 +53,8 @@ export default function AdminSidebar({ isOpen, onClose }) {
         <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-900">
           {/* Logo */}
           <div className="mb-8 flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-pink-500 rounded-lg flex items-center justify-center shadow-lg">
-              <Shield className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
+              <img src={Logo} alt="TalentIQ Logo" className="w-full h-full object-contain" />
             </div>
             <div>
               <h1 className="text-xl font-bold">TalentIQ</h1>

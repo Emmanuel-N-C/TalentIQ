@@ -12,6 +12,7 @@ import { Sparkles, Mail, Lock, User, Briefcase, Eye, EyeOff, AlertCircle } from 
 import { GoogleLogin } from '@react-oauth/google';
 import { FaGithub } from 'react-icons/fa';
 import validator from 'validator';
+import Logo from '../../assets/Talentiqsymb.png';
 
 export default function Register() {
   const [step, setStep] = useState(1);
@@ -264,8 +265,8 @@ export default function Register() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center gap-2 sm:gap-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center shadow-lg">
-                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
+               <img src={Logo} alt="TalentIQ Logo" className="w-full h-full object-contain" />
               </div>
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-white">TalentIQ</h1>
