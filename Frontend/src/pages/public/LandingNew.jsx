@@ -755,7 +755,7 @@ export default function LandingNew() {
             What Our Users Say
           </h2>
           <p className="text-[15px] sm:text-[17px] text-slate-400 font-[500] max-w-2xl mx-auto mb-4 tracking-[-0.02em] text-transparent bg-clip-text bg-gradient-to-b from-slate-50 via-slate-200 to-slate-500 drop-shadow-[0_1px_0_rgba(255,255,255,0.06)]">
-            Real stories from people who transformed their careers with TalentIQ
+            Feedbacks from people who transformed their careers with TalentIQ
           </p>
         </motion.div>
 
