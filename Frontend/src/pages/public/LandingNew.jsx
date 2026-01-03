@@ -620,7 +620,7 @@ export default function LandingNew() {
           <h2 className="text-[32px] sm:text-[40px] lg:text-[48px] font-[700] mb-4 tracking-[-0.02em] text-transparent bg-clip-text bg-gradient-to-b from-slate-50 via-slate-200 to-slate-500 drop-shadow-[0_1px_0_rgba(255,255,255,0.06)] px-4">
             How It Works
           </h2>
-          <p className="text-[15px] sm:text-[17px] text-slate-400 font-[500] max-w-2xl mx-auto px-4">
+          <p className="text-[15px] sm:text-[17px] text-slate-400 font-[500] max-w-2xl mx-auto px-4 mb-4 tracking-[-0.02em] text-transparent bg-clip-text bg-gradient-to-b from-slate-50 via-slate-200 to-slate-500 drop-shadow-[0_1px_0_rgba(255,255,255,0.06)]">
             From uploading your resume to mastering interviews, every step is seamless and purposeful
           </p>
         </motion.div>
@@ -645,7 +645,7 @@ export default function LandingNew() {
                 <h3 className="text-[28px] sm:text-[32px] lg:text-[40px] font-[700] leading-tight tracking-[-0.02em] text-transparent bg-clip-text bg-gradient-to-b from-slate-50 via-slate-200 to-slate-500 drop-shadow-[0_1px_0_rgba(255,255,255,0.06)]">
                   {step.title}
                 </h3>
-                <p className="text-[16px] sm:text-[18px] text-slate-400 leading-relaxed font-[500]">
+                <p className="text-[16px] sm:text-[18px] text-slate-400 leading-relaxed font-[500] mb-4 tracking-[-0.02em] text-transparent bg-clip-text bg-gradient-to-b from-slate-50 via-slate-200 to-slate-500 drop-shadow-[0_1px_0_rgba(255,255,255,0.06)]">
                   {step.description}
                 </p>
               </div>
@@ -653,8 +653,8 @@ export default function LandingNew() {
               {/* Screenshot */}
               <motion.div whileHover={{ scale: 1.02 }} className="flex-1 w-full max-w-5xl">
                 <div className="relative group">
-                  <div className="absolute -inset-4 bg-gradient-to-br from-blue-500 to-purple-600 opacity-20 blur-3xl group-hover:opacity-40 transition-opacity rounded-3xl" />
-                  <div className="relative bg-[#1e2642]/50 backdrop-blur-sm border border-[#2a3350] rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
+                  <div />
+                  <div >
                     <img
                       src={step.screenshot}
                       alt={step.title}
@@ -754,7 +754,7 @@ export default function LandingNew() {
           <h2 className="text-[32px] sm:text-[40px] lg:text-[48px] font-[700] mb-4 tracking-[-0.02em] text-transparent bg-clip-text bg-gradient-to-b from-slate-50 via-slate-200 to-slate-500 drop-shadow-[0_1px_0_rgba(255,255,255,0.06)]">
             What Our Users Say
           </h2>
-          <p className="text-[15px] sm:text-[17px] text-slate-400 font-[500] max-w-2xl mx-auto">
+          <p className="text-[15px] sm:text-[17px] text-slate-400 font-[500] max-w-2xl mx-auto mb-4 tracking-[-0.02em] text-transparent bg-clip-text bg-gradient-to-b from-slate-50 via-slate-200 to-slate-500 drop-shadow-[0_1px_0_rgba(255,255,255,0.06)]">
             Real stories from people who transformed their careers with TalentIQ
           </p>
         </motion.div>
@@ -820,7 +820,7 @@ export default function LandingNew() {
           <h2 className="text-[32px] sm:text-[40px] lg:text-[48px] font-[700] mb-4 tracking-[-0.02em] text-transparent bg-clip-text bg-gradient-to-b from-slate-50 via-slate-200 to-slate-500 drop-shadow-[0_1px_0_rgba(255,255,255,0.06)]">
             Frequently Asked Questions
           </h2>
-          <p className="text-[15px] sm:text-[17px] text-slate-400 font-[500]">Everything you need to know about TalentIQ</p>
+          <p className="text-[15px] sm:text-[17px] text-slate-400 font-[500] mb-4 tracking-[-0.02em] text-transparent bg-clip-text bg-gradient-to-b from-slate-50 via-slate-200 to-slate-500 drop-shadow-[0_1px_0_rgba(255,255,255,0.06)] ">Everything you need to know about TalentIQ</p>
         </motion.div>
 
         <motion.div variants={staggerContainer} className="space-y-3 sm:space-y-4">
