@@ -25,6 +25,9 @@ public class Job {
     @Column(nullable = false)
     private String company;
 
+    @Column(nullable = true)
+    private String location;
+
     @Column(columnDefinition = "TEXT")
     private String skillsRequired;
 
@@ -95,6 +98,14 @@ public class Job {
 
     public void setCompany(String company) {
         this.company = company;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public String getSkillsRequired() {

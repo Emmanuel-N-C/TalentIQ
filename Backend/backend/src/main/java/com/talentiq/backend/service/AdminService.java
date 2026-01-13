@@ -245,6 +245,7 @@ public class AdminService {
                 job.getTitle(),
                 job.getDescription(),
                 job.getCompany(),
+                job.getLocation(),
                 job.getSkillsRequired(),
                 job.getExperienceLevel(),
                 job.getRecruiter().getId(),

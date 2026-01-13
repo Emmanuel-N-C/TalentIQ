@@ -37,6 +37,9 @@ public class JobService {
         job.setTitle(request.getTitle());
         job.setDescription(request.getDescription());
         job.setCompany(request.getCompany());
+        job.setLocation(request.getLocation() != null && !request.getLocation().isEmpty()
+                ? request.getLocation()
+                : "Not Specified");
         job.setSkillsRequired(request.getSkillsRequired());
         job.setExperienceLevel(request.getExperienceLevel());
         job.setRecruiter(recruiter);
@@ -180,6 +183,9 @@ public class JobService {
         job.setTitle(request.getTitle());
         job.setDescription(request.getDescription());
         job.setCompany(request.getCompany());
+        job.setLocation(request.getLocation() != null && !request.getLocation().isEmpty()
+                ? request.getLocation()
+                : "Not Specified");
         job.setSkillsRequired(request.getSkillsRequired());
         job.setExperienceLevel(request.getExperienceLevel());
 
@@ -220,6 +226,7 @@ public class JobService {
                 job.getTitle(),
                 job.getDescription(),
                 job.getCompany(),
+                job.getLocation(),
                 job.getSkillsRequired(),
                 job.getExperienceLevel(),
                 job.getRecruiter().getId(),
