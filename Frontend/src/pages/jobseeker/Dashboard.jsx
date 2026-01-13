@@ -191,14 +191,14 @@ export default function JobSeekerDashboard() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
                     <span className="text-xs text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
-                      {job.skillsRequired?.split(',')[0] || 'Skills Required'}
+                      {job.location || 'Not Specified'}
                     </span>
                     <Link 
                       to="/jobseeker/browse"
-                      className="ml-auto text-xs sm:text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors flex items-center gap-1 whitespace-nowrap"
+                      className="text-xs sm:text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors flex items-center gap-1 whitespace-nowrap"
                     >
                       View Details <ArrowRight className="w-4 h-4" />
                     </Link>
@@ -256,7 +256,6 @@ export default function JobSeekerDashboard() {
                           key={app.id} 
                           className="border-b border-slate-800 hover:bg-slate-700/30 transition-colors cursor-pointer"
                         >
-                          <td className="py-3 sm:py-4 px-4 text-slate-300 font-mono text-xs sm:text-sm whitespace-nowrap">#{index + 1}</td>
                           <td className="py-3 sm:py-4 px-4 font-medium text-xs sm:text-sm">{app.jobTitle}</td>
                           <td className="py-3 sm:py-4 px-4 text-slate-300 text-xs sm:text-sm whitespace-nowrap">{app.jobCompany}</td>
                           <td className="py-3 sm:py-4 px-4 text-slate-400 text-xs sm:text-sm whitespace-nowrap">

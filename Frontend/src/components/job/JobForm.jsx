@@ -6,6 +6,7 @@ export default function JobForm({ initialData = null, onSubmit, submitButtonText
   const [formData, setFormData] = useState({
     title: '',
     company: '',
+    location: '',
     description: '',
     skillsRequired: '',
     experienceLevel: 'Entry-Level',
@@ -21,6 +22,7 @@ export default function JobForm({ initialData = null, onSubmit, submitButtonText
       setFormData({
         title: initialData.title || '',
         company: initialData.company || '',
+        location: initialData.location || '',
         description: initialData.description || '',
         skillsRequired: initialData.skillsRequired || '',
         experienceLevel: initialData.experienceLevel || 'Entry-Level',
@@ -39,6 +41,10 @@ export default function JobForm({ initialData = null, onSubmit, submitButtonText
 
     if (!formData.company.trim()) {
       newErrors.company = 'Company name is required';
+    }
+
+    if (!formData.location.trim()) {
+      newErrors.location = 'Location is required';
     }
 
     if (!formData.description.trim()) {
@@ -146,6 +152,26 @@ export default function JobForm({ initialData = null, onSubmit, submitButtonText
         />
         {errors.company && (
           <p className="text-red-500 text-sm mt-1">{errors.company}</p>
+        )}
+      </div>
+
+      {/* Location */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Location <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          name="location"
+          value={formData.location}
+          onChange={handleChange}
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+            errors.location ? 'border-red-500' : 'border-gray-300'
+          }`}
+          placeholder="e.g., Remote, New York, NY, or Hybrid - San Francisco"
+        />
+        {errors.location && (
+          <p className="text-red-500 text-sm mt-1">{errors.location}</p>
         )}
       </div>
 
