@@ -449,7 +449,7 @@ export default function BrowseJobs() {
                     <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-slate-400 mt-3">
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-                        Remote
+                        {job.location || 'Not Specified'}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3 sm:w-4 sm:h-4" />

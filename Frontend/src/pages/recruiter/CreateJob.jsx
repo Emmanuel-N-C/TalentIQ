@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createJob } from '../../api/jobs';
 import { useAI } from '../../hooks/useAI';
 import toast from 'react-hot-toast';
-import { Briefcase, Building2, FileText, Award, Code, Save, X, Sparkles } from 'lucide-react';
+import { Briefcase, Building2, FileText, Award, Code, Save, X, Sparkles, MapPin } from 'lucide-react';
 
 export default function CreateJob() {
   const navigate = useNavigate();
@@ -12,6 +12,7 @@ export default function CreateJob() {
   const [formData, setFormData] = useState({
     title: '',
     company: '',
+    location: '',  // ADDED
     description: '',
     experienceLevel: 'Mid-Level',
     skillsRequired: ''
@@ -53,7 +54,7 @@ export default function CreateJob() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.title || !formData.company || !formData.description) {
+    if (!formData.title || !formData.company || !formData.location || !formData.description) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -117,6 +118,24 @@ export default function CreateJob() {
               onChange={handleChange}
               className="w-full p-3 sm:p-4 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm sm:text-base"
               placeholder="e.g., TechCorp Inc."
+              required
+            />
+          </div>
+
+          {/* Location - NEW FIELD */}
+          <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 sm:p-6">
+            <label className="block text-xs sm:text-sm font-medium mb-2 sm:mb-3 text-slate-300 flex items-center gap-2">
+              <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
+              Location
+              <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              name="location"
+              value={formData.location}
+              onChange={handleChange}
+              className="w-full p-3 sm:p-4 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm sm:text-base"
+              placeholder="e.g.,  New York, NY"
               required
             />
           </div>
