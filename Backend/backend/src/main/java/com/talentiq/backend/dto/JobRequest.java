@@ -13,6 +13,8 @@ public class JobRequest {
     @NotBlank(message = "Company is required")
     private String company;
 
+    private String location;
+
     private String skillsRequired;
 
     @NotBlank(message = "Experience level is required")
@@ -21,10 +23,11 @@ public class JobRequest {
     public JobRequest() {
     }
 
-    public JobRequest(String title, String description, String company, String skillsRequired, String experienceLevel) {
+    public JobRequest(String title, String description, String company, String location, String skillsRequired, String experienceLevel) {
         this.title = title;
         this.description = description;
         this.company = company;
+        this.location = location;
         this.skillsRequired = skillsRequired;
         this.experienceLevel = experienceLevel;
     }
@@ -52,6 +55,14 @@ public class JobRequest {
 
     public void setCompany(String company) {
         this.company = company;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public String getSkillsRequired() {

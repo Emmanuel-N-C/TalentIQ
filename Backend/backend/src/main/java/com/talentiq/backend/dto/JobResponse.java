@@ -8,31 +8,33 @@ public class JobResponse {
     private String title;
     private String description;
     private String company;
+    private String location;
     private String skillsRequired;
     private String experienceLevel;
     private Long recruiterId;
     private String recruiterName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private Long applicationCount; // NEW FIELD
+    private Long applicationCount;
 
     public JobResponse() {
     }
 
     public JobResponse(Long id, String title, String description, String company,
-                       String skillsRequired, String experienceLevel, Long recruiterId,
+                       String location, String skillsRequired, String experienceLevel, Long recruiterId,
                        String recruiterName, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.company = company;
+        this.location = location;
         this.skillsRequired = skillsRequired;
         this.experienceLevel = experienceLevel;
         this.recruiterId = recruiterId;
         this.recruiterName = recruiterName;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
-        this.applicationCount = 0L; // Default value
+        this.applicationCount = 0L;
     }
 
     // Getters and Setters
@@ -66,6 +68,14 @@ public class JobResponse {
 
     public void setCompany(String company) {
         this.company = company;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     public String getSkillsRequired() {
