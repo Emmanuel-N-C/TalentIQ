@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -173,6 +174,7 @@ public class JobService {
         return convertToResponse(job);
     }
 
+    @Transactional  // ADDED: Keeps session open to prevent lazy loading issues
     public JobResponse updateJob(Long id, JobRequest request, User recruiter) {
         Job job = getJobById(id);
 
