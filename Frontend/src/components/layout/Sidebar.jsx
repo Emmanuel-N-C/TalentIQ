@@ -11,13 +11,13 @@ import {
   User,
   Sparkles,
   LogOut,
-  Brain
+  CirclePlus  // NEW IMPORT
 } from 'lucide-react';
 import Logo from '../../assets/Talentiqsymb.png';
 
 export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();  // Added user from useAuth
   const userRole = 'jobseeker';
   
   const navigation = {
@@ -36,6 +36,10 @@ export default function Sidebar({ isOpen, onClose }) {
     ],
     Resume: [
       { name: 'My Resumes', icon: FileText, href: `/${userRole}/resumes` },
+      // NEW: Create Resume menu item - only for jobseekers
+      ...(user?.role === 'jobseeker' ? [
+        { name: 'Create Resume', icon: CirclePlus, href: `/${userRole}/resumes/new` }
+      ] : [])
     ]
   };
 
