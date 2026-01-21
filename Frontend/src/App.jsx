@@ -21,6 +21,8 @@ import MyResumes from './pages/jobseeker/MyResumes';
 import SavedJobs from './pages/jobseeker/SavedJobs';
 import MyApplications from './pages/jobseeker/MyApplications';
 import JobSeekerProfile from './pages/jobseeker/Profile';
+import CreateResumeEntry from './pages/jobseeker/CreateResumeEntry';
+import TemplateGallery from './components/resume/TemplateGallery';
 
 // Recruiter pages
 import RecruiterDashboard from './pages/recruiter/Dashboard';
@@ -132,6 +134,8 @@ function App() {
           <Route path="saved-jobs" element={<SavedJobs />} />
           <Route path="applications" element={<MyApplications />} />
           <Route path="profile" element={<JobSeekerProfile />} />
+          <Route path="resumes/new" element={<CreateResumeEntry />} />
+          <Route path="resumes/new/template" element={<TemplateGallery />} />
         </Route>
         
         {/* Recruiter Routes */}
