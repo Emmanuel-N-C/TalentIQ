@@ -38,7 +38,7 @@ export default function Sidebar({ isOpen, onClose }) {
       { name: 'My Resumes', icon: FileText, href: `/${userRole}/resumes` },
       // NEW: Create Resume menu item - only for jobseekers
       ...(user?.role === 'jobseeker' ? [
-        { name: 'Create Resume', icon: CirclePlus, href: `/${userRole}/resumes/new` }
+        { name: 'Beta Optimizer CV', icon: CirclePlus, href: `/${userRole}/resumes/new` }
       ] : [])
     ]
   };

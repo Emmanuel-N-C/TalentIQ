@@ -610,6 +610,132 @@ Generate now:`,
       setLoading(false);
     }
   };
+ 
+  // NEW METHOD 1: Analyze Resume-Job Match
+  const analyzeMatch = async (resumeText, jobDescription) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      checkGroqConfig();
+      
+      const { text } = await generateText({
+        model: defaultProviders.analysis,
+        prompt: `You are an expert recruiter and resume analyst. Analyze how well this resume matches the job description.
+
+RESUME:
+${resumeText}
+
+JOB DESCRIPTION:
+${jobDescription}
+
+Provide a comprehensive match analysis including:
+1. Match score (0-100) - how well the resume aligns with the job
+2. Keywords/skills from job description that ARE present in resume
+3. Keywords/skills from job description that are MISSING from resume
+4. Candidate's key strengths for this specific role
+5. Specific recommendations to improve fit
+
+CRITICAL: Return ONLY valid JSON. NO markdown, NO code blocks, NO explanations:
+
+{
+  "matchScore": 75,
+  "matchedKeywords": ["React", "JavaScript", "Node.js", "Agile", "Team Leadership"],
+  "missingKeywords": ["Docker", "Kubernetes", "GraphQL", "CI/CD"],
+  "strengths": [
+    "5+ years of React experience matches senior role requirement",
+    "Led team of 4 developers, demonstrating leadership skills required",
+    "Experience with Node.js backend aligns with full-stack requirement"
+  ],
+  "recommendations": [
+    "Highlight any containerization or DevOps experience you may have",
+    "Add specific metrics to quantify team leadership impact",
+    "Include any GraphQL projects if you've worked with it",
+    "Emphasize cloud deployment experience to compensate for missing Kubernetes"
+  ],
+  "summary": "Strong candidate with solid React and JavaScript experience that aligns well with the role's requirements. Main gaps are in DevOps/containerization technologies. With some resume adjustments to highlight relevant experience and metrics, this could be an excellent match."
+}
+
+Analyze now:`,
+      });
+      
+      const result = parseAIResponse(text);
+      return result;
+    } catch (err) {
+      throw handleAIError(err, 'analyzeMatch');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // NEW METHOD 2: Tailor Resume to Job
+  const tailorResume = async (resumeText, jobDescription, matchAnalysis) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      checkGroqConfig();
+      
+      const missingKeywords = matchAnalysis?.missingKeywords || [];
+      const recommendations = matchAnalysis?.recommendations || [];
+      
+      const { text } = await generateText({
+        model: defaultProviders.analysis,
+        prompt: `You are a professional resume writer. Rewrite/optimize this resume to better match the target job description.
+
+ORIGINAL RESUME:
+${resumeText}
+
+TARGET JOB DESCRIPTION:
+${jobDescription}
+
+MISSING KEYWORDS TO INCORPORATE (if truthful):
+${missingKeywords.join(', ')}
+
+RECOMMENDATIONS FROM ANALYSIS:
+${recommendations.join('\n')}
+
+CRITICAL RULES:
+1. NEVER invent experience, skills, or achievements that aren't in the original resume
+2. DO reorder sections/bullets to emphasize most relevant experience first
+3. DO incorporate missing keywords naturally IF the candidate likely has related experience
+4. DO strengthen bullet points with action verbs and quantifiable metrics where possible
+5. DO improve the professional summary to align with job requirements
+6. DO maintain truthfulness and authenticity
+7. Keep the same overall structure and length
+
+Your task:
+- Rewrite the resume to maximize relevance to this specific job
+- Use stronger action verbs (Led, Architected, Optimized, Implemented, etc.)
+- Add/improve quantifiable metrics where you can infer them from context
+- Reorder bullets to put most relevant achievements first
+- Strengthen the summary/objective to target this role
+- Naturally incorporate relevant keywords from the job description
+- Maintain professional tone
+
+CRITICAL: Return ONLY valid JSON. NO markdown, NO code blocks, NO explanations:
+
+{
+  "tailoredResume": "The complete rewritten resume text as a single string. Use \\n\\n for paragraph/section breaks. Make it well-formatted and ready to use.",
+  "changesSummary": "Brief summary of the main changes you made (2-3 sentences)",
+  "keyImprovements": [
+    "Reordered experience bullets to prioritize cloud architecture work",
+    "Added quantifiable metrics to 3 achievement statements",
+    "Strengthened professional summary to emphasize DevOps skills"
+  ]
+}
+
+Tailor the resume now:`,
+      });
+      
+      const result = parseAIResponse(text);
+      return result;
+    } catch (err) {
+      throw handleAIError(err, 'tailorResume');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
     generateInterviewQuestions,
@@ -620,6 +746,8 @@ Generate now:`,
     checkATS,
     generateJobDescription,
     generateCoverLetter,
+    analyzeMatch,      // NEW
+    tailorResume,
     loading,
     error,
   };
