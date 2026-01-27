@@ -11,7 +11,8 @@ import {
   User,
   Sparkles,
   LogOut,
-  CirclePlus  // NEW IMPORT
+  CirclePlus,  // NEW IMPORT
+  Layout
 } from 'lucide-react';
 import Logo from '../../assets/Talentiqsymb.png';
 
@@ -38,7 +39,8 @@ export default function Sidebar({ isOpen, onClose }) {
       { name: 'My Resumes', icon: FileText, href: `/${userRole}/resumes` },
       // NEW: Create Resume menu item - only for jobseekers
       ...(user?.role === 'jobseeker' ? [
-        { name: 'Beta Optimizer CV', icon: CirclePlus, href: `/${userRole}/resumes/new` }
+        { name: 'Beta Optimizer CV', icon: CirclePlus, href: `/${userRole}/resumes/new` },
+        { name: 'Beta CV Builder', icon: Layout, href: `/${userRole}/cv-builder` }
       ] : [])
     ]
   };
