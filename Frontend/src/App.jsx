@@ -22,6 +22,7 @@ import SavedJobs from './pages/jobseeker/SavedJobs';
 import MyApplications from './pages/jobseeker/MyApplications';
 import JobSeekerProfile from './pages/jobseeker/Profile';
 import CreateResumeEntry from './pages/jobseeker/CreateResumeEntry';
+import CVBuilder from './pages/jobseeker/CVBuilder';
 
 
 // Recruiter pages
@@ -135,6 +136,7 @@ function App() {
           <Route path="applications" element={<MyApplications />} />
           <Route path="profile" element={<JobSeekerProfile />} />
           <Route path="resumes/new" element={<CreateResumeEntry />} />
+          <Route path="cv-builder" element={<CVBuilder />} />
           
         </Route>
         
